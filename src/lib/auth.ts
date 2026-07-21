@@ -1,10 +1,10 @@
-import { dash } from "@better-auth/infra";
+import { dash, sentinel } from "@better-auth/infra";
 import { betterAuth } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
 import { Pool } from "pg";
 
 /**
- * Better Auth (Next.js) + Infrastructure dashboard via `dash()`.
+ * Better Auth (Next.js) + Infrastructure dashboard via `dash()` + `sentinel()`.
  * Uses Postgres (Neon) so auth works on Vercel serverless.
  * @see https://better-auth.com/docs/infrastructure/getting-started
  */
@@ -26,6 +26,17 @@ function createDatabase() {
 }
 
 const infraApiKey = process.env.BETTER_AUTH_API_KEY;
+
+function infraConnectionOptions() {
+  return {
+    ...(process.env.BETTER_AUTH_API_URL
+      ? { apiUrl: process.env.BETTER_AUTH_API_URL }
+      : {}),
+    ...(process.env.BETTER_AUTH_KV_URL
+      ? { kvUrl: process.env.BETTER_AUTH_KV_URL }
+      : {}),
+  };
+}
 
 export const auth = betterAuth({
   appName: "Pact",
@@ -65,12 +76,11 @@ export const auth = betterAuth({
           // @better-auth/infra defaults and break /dash/validate (JWKS fetch).
           dash({
             apiKey: infraApiKey,
-            ...(process.env.BETTER_AUTH_API_URL
-              ? { apiUrl: process.env.BETTER_AUTH_API_URL }
-              : {}),
-            ...(process.env.BETTER_AUTH_KV_URL
-              ? { kvUrl: process.env.BETTER_AUTH_KV_URL }
-              : {}),
+            ...infraConnectionOptions(),
+          }),
+          sentinel({
+            apiKey: infraApiKey,
+            ...infraConnectionOptions(),
           }),
         ]
       : []),
