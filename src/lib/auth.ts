@@ -32,6 +32,19 @@ export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL ?? process.env.NEXT_PUBLIC_SITE_URL,
   secret: process.env.BETTER_AUTH_SECRET,
   database: createDatabase(),
+  advanced: {
+    ipAddress: {
+      // Vercel sets x-vercel-forwarded-for; prefer it over client-spoofable XFF.
+      ipAddressHeaders: ["x-vercel-forwarded-for", "x-forwarded-for"],
+    },
+  },
+  rateLimit: {
+    // In-memory counters don't share across Vercel serverless instances.
+    storage: "database",
+  },
+  experimental: {
+    joins: true,
+  },
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false,
