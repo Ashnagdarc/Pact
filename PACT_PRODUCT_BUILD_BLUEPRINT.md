@@ -1,7 +1,7 @@
 ---
 title: "Pact — Product & Build Blueprint"
-version: "0.1"
-status: "Draft"
+version: "0.2"
+status: "Active build"
 owner: "Daniel"
 platform: "Installable Web App / PWA"
 last_updated: "2026-07-21"
@@ -12,8 +12,8 @@ last_updated: "2026-07-21"
 > **Working name:** Pact  
 > **Product type:** Personal task and accountability app  
 > **Initial platform:** Mobile-first Progressive Web App  
-> **Initial budget:** $0 infrastructure target  
-> **Primary stack:** Next.js, TypeScript, Convex, Web Push, IndexedDB
+> **Initial budget:** Free-tier infrastructure (Vercel + Convex + Neon + Better Auth)  
+> **Primary stack:** Next.js, TypeScript, Convex (app data), Better Auth + Neon Postgres (auth), Web Push (planned), IndexedDB (planned)
 
 ---
 
@@ -392,29 +392,29 @@ A generated summary of progress and participation.
 
 ### 10.1 Must-have features
 
-- [ ] Account creation and login
-- [ ] Profile setup
-- [ ] Create personal task
+- [x] Account creation and login — Better Auth (email/password; Google optional)
+- [x] Profile setup — basic display name / email via Convex user bridge
+- [ ] Create personal task — `tasks` table exists; UI/API not wired (solo commitments used today)
 - [ ] Edit and delete personal task
-- [ ] Create a Pact
-- [ ] Invite partner using a secure link
-- [ ] Accept or reject invitation
-- [ ] Select participant role
-- [ ] Select accountability style
-- [ ] Create shared commitment
-- [ ] Assign commitment
-- [ ] Add due date and reminder
-- [ ] Submit five-second progress signal
-- [ ] Add optional evidence
-- [ ] Send structured partner response
-- [ ] View Pact progress
-- [ ] Trigger Rescue Mode
-- [ ] Create recovery plan
-- [ ] Generate weekly review
-- [ ] View notifications inside the app
+- [x] Create a Pact
+- [x] Invite partner using a secure link
+- [x] Accept or reject invitation
+- [x] Select participant role
+- [x] Select accountability style
+- [x] Create shared commitment
+- [ ] Assign commitment — currently always assigns to creator
+- [x] Add due date and reminder — due dates wired; reminder scheduling / push not wired
+- [x] Submit five-second progress signal
+- [ ] Add optional evidence — schema/policy fields only; no uploads
+- [x] Send structured partner response
+- [x] View Pact progress
+- [x] Trigger Rescue Mode
+- [x] Create recovery plan
+- [x] Generate weekly review — Insights screen + Convex weekly review data
+- [x] View notifications inside the app
 - [ ] Enable Web Push notifications
-- [ ] Install the app as a PWA
-- [ ] Configure privacy permissions
+- [x] Install the app as a PWA — manifest, icons, service worker, `/install`, `/offline`
+- [ ] Configure privacy permissions — create hardcodes invite-only; no settings UI
 - [ ] Delete account
 
 ### 10.2 Should-have features
@@ -836,7 +836,14 @@ Do not rely on colour alone. Always add text and an icon.
 
 ## 19. Typography
 
-Use a clean sans-serif system stack initially.
+Implemented fonts (via `next/font`):
+
+```text
+Display / brand: Syne
+Body / UI: DM Sans
+```
+
+Fallback system stack:
 
 ```css
 font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
@@ -943,46 +950,61 @@ Build reusable components for:
 
 | Area | Technology |
 |---|---|
-| Framework | Next.js |
+| Framework | Next.js 16 (App Router, `src/`) |
 | Language | TypeScript |
-| UI library | React |
-| Styling | Tailwind CSS |
+| UI library | React 19 |
+| Styling | Tailwind CSS v4 + shadcn/ui |
 | Animation | Motion |
 | Forms | React Hook Form |
 | Validation | Zod |
 | Icons | Lucide |
 | Dates | date-fns |
-| Client state | Zustand only where necessary |
+| Fonts | Syne (display) + DM Sans (body) |
+| Client state | React state / Convex subscriptions (no Zustand yet) |
 | Server data | Convex React client |
-| Offline drafts | IndexedDB |
-| IndexedDB helper | Dexie |
-| PWA | Web App Manifest + Service Worker |
+| Auth client | Better Auth React client + `@better-auth/infra` (dash, sentinel) |
+| Offline drafts | IndexedDB / Dexie — **planned, not shipped** |
+| PWA | Web App Manifest + Service Worker + branded icons |
 
-### 23.2 Backend
+### 23.2 Backend and data
 
 | Area | Technology |
 |---|---|
-| Database | Convex |
+| Product database | **Convex** (commitments, pacts, check-ins, notifications, etc.) |
 | Backend functions | Convex queries, mutations, and actions |
 | Real-time updates | Convex reactive subscriptions |
-| Scheduled work | Convex scheduled functions / cron jobs |
-| File storage | Convex file storage |
-| Authentication | Convex Auth or another zero-cost provider after validation |
-| Push subscriptions | Stored in Convex |
-| Push delivery | Standards-based Web Push |
+| Scheduled work | Convex scheduled functions / cron jobs — **partial / planned** |
+| File storage | Convex file storage — **planned for evidence** |
+| Authentication | **Better Auth** on Next.js (`/api/auth/[...all]`) |
+| Auth database | **Neon Postgres** (`DATABASE_URL` + `pg` Pool) — sessions/users for Better Auth only |
+| Auth infrastructure | Better Auth Infrastructure: `dash()` + `sentinel()` |
+| App user bridge | Better Auth session → Convex `users.ensureAppUser({ authUserId, ... })` |
+| Push subscriptions | Stored in Convex — **planned** |
+| Push delivery | Standards-based Web Push — **planned** |
 
-### 23.3 Development and delivery
+### 23.3 Why two databases
+
+| Store | Owns |
+|---|---|
+| **Neon Postgres** | Better Auth identity: users, sessions, accounts, rate limits |
+| **Convex** | Pact product data and real-time collaboration |
+
+SQLite is **not** used in production (incompatible with Vercel serverless). Local Better Auth may still use env-driven Postgres (Neon) for parity.
+
+### 23.4 Development and delivery
 
 | Area | Technology |
 |---|---|
-| Repository | GitHub |
+| Repository | GitHub (`Ashnagdarc/Pact`) |
 | Project tracking | GitHub Projects and Issues |
 | Design | Figma free plan |
-| Deployment | Vercel Hobby for personal beta or a compatible free host |
+| App hosting | **Vercel** (`pact-two-ashy.vercel.app`) |
+| Convex | Convex Cloud (`grateful-crow-558`) |
+| Auth DB hosting | Neon via Vercel Marketplace |
 | Error tracking | Console logging first; add a free monitoring tier later if needed |
-| Analytics | Internal Convex event table first |
+| Analytics | Internal Convex `activityEvents` first; Better Auth Infrastructure dashboard for auth |
 
-### 23.4 Cost-control rule
+### 23.5 Cost-control rule
 
 Before adding any third-party service:
 
@@ -992,6 +1014,8 @@ Before adding any third-party service:
 4. Add a migration plan.
 5. Avoid services that require payment details during the MVP unless essential.
 
+Current free-tier stack: Vercel Hobby, Convex free tier, Neon free tier, Better Auth + Infrastructure.
+
 ---
 
 ## 24. Architecture overview
@@ -999,97 +1023,83 @@ Before adding any third-party service:
 ```text
 Mobile browser / Installed PWA
         │
-        ├── Next.js + React interface
-        ├── Service worker
-        ├── IndexedDB offline drafts
+        ├── Next.js + React UI (Vercel)
+        ├── Service worker + manifest
+        ├── Better Auth client (session cookies)
         └── Convex client subscriptions
-                   │
-                   ▼
-               Convex backend
-        ├── Authentication integration
-        ├── Database
-        ├── Queries
-        ├── Mutations
-        ├── Actions
-        ├── Scheduled jobs
-        ├── File storage
-        └── Web Push delivery
+               │                    │
+               │                    ▼
+               │         Better Auth API (/api/auth/*)
+               │                    │
+               │                    ▼
+               │              Neon Postgres
+               │           (auth users/sessions)
+               │
+               ▼
+         Convex backend
+        ├── App users (bridged via authUserId)
+        ├── Pacts / members / invitations
+        ├── Commitments / check-ins / responses
+        ├── Recovery plans / weekly reviews
+        ├── In-app notifications
+        ├── File storage (planned)
+        └── Web Push delivery (planned)
 ```
+
+**Security note (open work):** Convex mutations currently receive client-supplied `userId`. Next priority is verifying the Better Auth session server-side so Convex does not trust the client for authorization.
 
 ---
 
 ## 25. Suggested project structure
 
 ```text
-app/
-├── page.tsx
-├── install/page.tsx
-├── privacy/page.tsx
-├── terms/page.tsx
-├── sign-in/page.tsx
-├── manifest.ts
+src/app/
+├── page.tsx                    # Today
+├── layout.tsx
 ├── globals.css
-└── app/
-    ├── layout.tsx
-    ├── page.tsx
-    ├── today/page.tsx
-    ├── tasks/
-    │   ├── new/page.tsx
-    │   └── [taskId]/page.tsx
-    ├── pacts/
-    │   ├── page.tsx
-    │   ├── new/page.tsx
-    │   └── [pactId]/
-    │       ├── page.tsx
-    │       ├── commitments/page.tsx
-    │       ├── members/page.tsx
-    │       ├── review/page.tsx
-    │       └── settings/page.tsx
-    ├── commitments/[commitmentId]/page.tsx
-    ├── check-in/[commitmentId]/page.tsx
-    ├── rescue/[commitmentId]/page.tsx
-    ├── insights/page.tsx
-    ├── notifications/page.tsx
-    └── profile/page.tsx
-
-components/
-├── navigation/
-├── cards/
-├── forms/
-├── feedback/
+├── manifest.ts
+├── favicon.ico
+├── install/page.tsx
+├── offline/page.tsx
+├── sign-in/page.tsx
+├── api/auth/[...all]/route.ts  # Better Auth
 ├── pacts/
 ├── commitments/
+├── rescue/
+├── invite/
 ├── insights/
+├── notifications/
+├── profile/
+└── new/
+
+src/lib/
+├── auth.ts                     # Better Auth + dash + sentinel
+├── auth-client.ts
+├── auth-server.ts
+└── ...
+
+src/components/
+├── navigation/
+├── cards/
+├── screens/
+├── pwa/
+├── providers/
 └── ui/
 
 convex/
 ├── schema.ts
-├── auth.ts
-├── users.ts
-├── tasks.ts
-├── pacts.ts
-├── pactMembers.ts
+├── users.ts                    # ensureAppUser bridge
+├── pacts.ts / pactMembers / invitations
 ├── commitments.ts
-├── checkIns.ts
-├── evidence.ts
-├── responses.ts
+├── checkIns.ts / responses
 ├── recoveryPlans.ts
-├── weeklyReviews.ts
+├── weeklyReviews.ts / insights
 ├── notifications.ts
-├── pushSubscriptions.ts
-└── scheduledTasks.ts
-
-lib/
-├── validation/
-├── permissions/
-├── notifications/
-├── offline/
-└── analytics/
+├── health.ts
+└── seed.ts
 
 public/
-├── icons/
-├── screenshots/
-├── illustrations/
+├── icons/                      # PWA icons (branded)
 └── sw.js
 ```
 
@@ -1318,28 +1328,44 @@ activityEvents
 
 ## 28. Authentication plan
 
-### 28.1 MVP requirements
+### 28.1 Status — selected and running
 
-- Secure login
-- Session persistence
-- Logout
-- Account deletion
-- Invite-link continuation after login
+| Item | Decision |
+|---|---|
+| Provider | **Better Auth** (Next.js) |
+| Auth storage | **Neon Postgres** |
+| Methods live | Email + password |
+| Methods optional | Google OAuth when `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` set |
+| Infra plugins | `dash()` (dashboard) + `sentinel()` (abuse / PoW) |
+| App identity | Convex `users` row keyed by `authUserId` |
+| Production URL | `BETTER_AUTH_URL` / `NEXT_PUBLIC_SITE_URL` = deployed Vercel origin |
 
-### 28.2 Authentication decision checklist
+### 28.2 MVP requirements
 
-Before implementation, confirm:
+- [x] Secure login
+- [x] Session persistence
+- [x] Logout
+- [ ] Account deletion
+- [x] Invite-link continuation after login (`/sign-in?next=/invite/...`)
+- [ ] Convex authorization from verified Better Auth session (not client-trusted `userId`)
+- [ ] Next.js middleware route protection
 
-- [ ] Provider works with Next.js and Convex.
-- [ ] Provider has a usable free tier.
-- [ ] Provider supports production deployment.
-- [ ] Provider supports account deletion.
-- [ ] Provider does not require paid SMS.
-- [ ] Email-delivery requirements are understood.
+### 28.3 Authentication decision checklist
 
-### 28.3 Recommended first method
+- [x] Provider works with Next.js.
+- [x] Works alongside Convex for product data (bridge pattern).
+- [x] Usable free tier (Better Auth self-hosted + Neon + Vercel).
+- [x] Supports production deployment.
+- [ ] Account deletion end-to-end (auth DB + Convex data).
+- [x] Does not require paid SMS for MVP.
+- [ ] Email delivery (verification / reset) — deferred; verification currently off.
 
-Start with one low-friction method only, such as Google login, then add email login after the core workflow is validated.
+### 28.4 Recommended next auth work
+
+1. Stop trusting client-passed `userId` in Convex mutations.
+2. Add route middleware for authenticated app pages.
+3. Account deletion (Better Auth + Convex cleanup).
+4. Optional: enable email verification / password reset once transactional email is configured.
 
 ---
 
@@ -1347,38 +1373,38 @@ Start with one low-friction method only, such as Google login, then add email lo
 
 ### 29.1 Installability
 
-- [ ] Valid Web App Manifest
-- [ ] App name and short name
-- [ ] 192 × 192 icon
-- [ ] 512 × 512 icon
-- [ ] Maskable icon
-- [ ] Standalone display mode
-- [ ] Theme colour
-- [ ] Background colour
-- [ ] Start URL
-- [ ] Mobile viewport configuration
-- [ ] HTTPS deployment
+- [x] Valid Web App Manifest
+- [x] App name and short name
+- [x] 192 × 192 icon — branded handshake “P”
+- [x] 512 × 512 icon
+- [x] Maskable icon
+- [x] Standalone display mode
+- [x] Theme colour
+- [x] Background colour
+- [x] Start URL
+- [x] Mobile viewport configuration
+- [x] HTTPS deployment — Vercel
 
 ### 29.2 Service worker
 
-The service worker should support:
+Current support:
 
-- App-shell caching
-- Offline fallback page
-- Push notification handling
-- Notification click handling
-- Controlled update behaviour
+- [x] App-shell caching (basic)
+- [x] Offline fallback page (`/offline`)
+- [ ] Push notification handling
+- [ ] Notification click handling
+- [x] Controlled update behaviour (basic register)
 
 ### 29.3 Offline behaviour
 
 Version 1 should support:
 
-- Viewing recently loaded data where practical
-- Creating task drafts offline
-- Creating check-in drafts offline
-- Retrying failed submissions
+- [ ] Viewing recently loaded data where practical
+- [ ] Creating task drafts offline
+- [ ] Creating check-in drafts offline
+- [ ] Retrying failed submissions
 
-Shared server data remains authoritative.
+Shared server data remains authoritative. Online-first is acceptable until auth is secured.
 
 ### 29.4 Installation education
 
@@ -1748,66 +1774,66 @@ Key screens:
 
 ## 39. Phase 2: Technical foundation
 
-- [ ] Create GitHub repository
-- [ ] Configure Next.js and TypeScript
-- [ ] Configure Tailwind CSS
-- [ ] Configure Convex
-- [ ] Select authentication provider
-- [ ] Define schema
-- [ ] Implement permissions
-- [ ] Create app shell
-- [ ] Add reusable UI components
+- [x] Create GitHub repository
+- [x] Configure Next.js and TypeScript
+- [x] Configure Tailwind CSS
+- [x] Configure Convex
+- [x] Select authentication provider — Better Auth + Neon
+- [x] Define schema — core Convex tables live
+- [ ] Implement permissions — Convex still trusts client `userId`
+- [x] Create app shell
+- [x] Add reusable UI components
 
 ---
 
 ## 40. Phase 3: Core MVP
 
-- [ ] Authentication
-- [ ] User profile
-- [ ] Personal tasks
-- [ ] Pact creation
-- [ ] Invitation links
-- [ ] Pact acceptance
-- [ ] Commitments
-- [ ] Check-ins
-- [ ] Partner responses
-- [ ] Real-time updates
+- [x] Authentication
+- [x] User profile — basic
+- [ ] Personal tasks — deferred / use solo commitments
+- [x] Pact creation
+- [x] Invitation links
+- [x] Pact acceptance
+- [x] Commitments
+- [x] Check-ins
+- [x] Partner responses
+- [x] Real-time updates — Convex
 
 Exit criteria:
 
-Two users can create, accept, and use a Pact from separate devices.
+Two users can create, accept, and use a Pact from separate devices. — **Ready to validate in private beta once Convex auth is secured.**
 
 ---
 
 ## 41. Phase 4: Retention system
 
-- [ ] Rescue Mode
-- [ ] Pact Health
-- [ ] Weekly reviews
-- [ ] Notification centre
+- [x] Rescue Mode
+- [x] Pact Health
+- [x] Weekly reviews — Insights
+- [x] Notification centre — in-app
 - [ ] Web Push
 - [ ] Quiet hours
 - [ ] Evidence uploads
 
 Exit criteria:
 
-A Pact can survive a missed commitment and return to active progress.
+A Pact can survive a missed commitment and return to active progress. — **In-app loop exists; push/evidence still open.**
 
 ---
 
 ## 42. Phase 5: PWA and beta
 
-- [ ] Web App Manifest
-- [ ] Icons
-- [ ] Service worker
-- [ ] Offline fallback
-- [ ] Install guide
-- [ ] Mobile safe-area support
+- [x] Web App Manifest
+- [x] Icons — branded
+- [x] Service worker — basic
+- [x] Offline fallback
+- [x] Install guide
+- [x] Mobile safe-area support
 - [ ] Privacy policy
 - [ ] Terms
 - [ ] Account deletion
 - [ ] Beta feedback form
-- [ ] Private beta deployment
+- [x] Private beta deployment — Vercel production URL live
 
 ---
 
@@ -2184,13 +2210,14 @@ A feature is complete only when:
 
 ## 56. Open technical questions
 
-- Which authentication provider will be used for the MVP?
-- Will the Next.js deployment use Vercel or another compatible host?
-- Which service-worker implementation will be used?
-- What file-size limits will apply to evidence?
-- What is the offline conflict-resolution policy?
-- How will scheduled notifications be deduplicated?
-- How will expired push subscriptions be cleaned up?
+- [x] Which authentication provider will be used for the MVP? → **Better Auth + Neon Postgres**
+- [x] Will the Next.js deployment use Vercel or another compatible host? → **Vercel**
+- [ ] Which service-worker implementation will be used? → custom `/public/sw.js` today; revisit if push complexity grows
+- [ ] What file-size limits will apply to evidence?
+- [ ] What is the offline conflict-resolution policy?
+- [ ] How will scheduled notifications be deduplicated?
+- [ ] How will expired push subscriptions be cleaned up?
+- [ ] How will Better Auth sessions be verified inside Convex (JWT / HTTP actions / custom provider)?
 
 ---
 
@@ -2202,12 +2229,16 @@ A feature is complete only when:
 |---|---|---|
 | Build a PWA first | Approved | Avoid Apple Developer fee and validate product first |
 | Use Next.js and TypeScript | Approved | Suitable for web app, landing page, and future growth |
-| Use Convex backend | Approved | Real-time collaboration and integrated backend functions |
+| Use Convex for product data | Approved | Real-time collaboration and integrated backend functions |
+| Use Better Auth for authentication | Approved | Standard Next.js auth; Infrastructure dash + sentinel |
+| Use Neon Postgres for auth data only | Approved | Better Auth needs SQL; SQLite fails on Vercel serverless |
+| Keep Convex separate from auth DB | Approved | Clear ownership: identity vs product collaboration |
 | Avoid React Native for MVP | Approved | Native distribution still creates platform costs |
 | Avoid full chat in Version 1 | Approved | Reduce scope, moderation, and infrastructure needs |
 | Avoid stranger matching | Approved | Start with trusted existing relationships |
 | Prioritise Rescue Mode | Approved | Core differentiation and retention mechanism |
 | Use bold editorial card design | Approved | Matches selected visual direction |
+| Brand PWA icon (handshake P) | Approved | Distinct install identity |
 
 ---
 
@@ -2249,18 +2280,33 @@ Name
 
 # PART N — IMMEDIATE NEXT ACTIONS
 
-## 59. Next ten actions
+## 59. Build status snapshot (2026-07-21)
 
-1. [ ] Confirm the working name.
-2. [ ] Interview at least five potential users before coding.
-3. [ ] Create low-fidelity mobile wireframes.
-4. [ ] Design the Home, Pact, Check-in, and Rescue screens.
-5. [ ] Set up the GitHub repository.
-6. [ ] Initialise Next.js, TypeScript, and Tailwind CSS.
-7. [ ] Create the Convex project and schema draft.
-8. [ ] Select and test authentication.
-9. [ ] Build a two-user Pact prototype.
-10. [ ] Recruit the first five beta pairs.
+**Shipped:** Auth (Better Auth + Neon), Convex product core (pacts, invites, commitments, check-ins, partner responses, rescue, health, weekly insights, in-app notifications), PWA shell + branded icons, Vercel production deploy.
+
+**Not secure yet:** Convex trusts client-supplied `userId` — must fix before real beta pairs.
+
+## 59.1 Next ten actions (build order)
+
+1. [ ] **Secure Convex bridge** — verify Better Auth identity in Convex; remove trust of client `userId`.
+2. [ ] **Route middleware** — protect app routes; keep `/sign-in`, `/invite`, `/install` public.
+3. [ ] **Two-device beta smoke test** — create pact, invite, accept, check-in, rescue on separate accounts.
+4. [ ] **Partner assignment** — assign commitments to pact members (not only creator).
+5. [ ] **Web Push** — `pushSubscriptions` table, SW push handler, permission UX.
+6. [ ] **Reminders** — schedule/store `reminderAt` and deliver via push or in-app.
+7. [ ] **Evidence uploads** — Convex file storage attached to check-ins when required.
+8. [ ] **Account deletion + privacy/terms pages** — required for serious beta.
+9. [ ] **Personal tasks decision** — wire `tasks` CRUD **or** formally treat solo commitments as tasks.
+10. [ ] **Recruit first five beta pairs** after 1–3 are done.
+
+## 59.2 Suggested “this week” focus
+
+```text
+Secure auth → Convex
+  → Middleware
+  → Two-user smoke test on production
+  → Then Web Push OR partner assignment (pick based on beta feedback)
+```
 
 ---
 
@@ -2274,6 +2320,7 @@ The first beta is successful when:
 - At least one missed commitment is successfully recovered through Rescue Mode.
 - Testers understand the product without a live explanation.
 - Users report that Pact provides value beyond a shared to-do list.
+- Authorization cannot be bypassed by spoofing another user’s Convex id.
 
 These thresholds are initial hypotheses and should be revised after real testing.
 
@@ -2286,4 +2333,5 @@ These thresholds are initial hypotheses and should be revised after real testing
 | Version | Date | Change | Owner |
 |---|---|---|---|
 | 0.1 | 2026-07-21 | Initial product and build blueprint | Daniel |
+| 0.2 | 2026-07-21 | Stack update: Better Auth + Neon + Vercel; MVP/phase progress; next build priorities | Daniel |
 
