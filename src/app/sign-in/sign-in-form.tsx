@@ -9,11 +9,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
 
+function initialMode(searchParams: URLSearchParams): "sign-in" | "sign-up" {
+  return searchParams.get("mode") === "sign-up" ? "sign-up" : "sign-in";
+}
+
 export default function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextPath = searchParams.get("next") || "/";
-  const [mode, setMode] = useState<"sign-in" | "sign-up">("sign-in");
+  const [mode, setMode] = useState<"sign-in" | "sign-up">(() =>
+    initialMode(searchParams)
+  );
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

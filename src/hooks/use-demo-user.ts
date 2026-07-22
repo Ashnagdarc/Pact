@@ -6,6 +6,11 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import { authClient } from "@/lib/auth-client";
+import {
+  clearOnboardingDraft,
+  clearOnboardingPending,
+  readOnboardingPending,
+} from "@/lib/onboarding";
 
 export function useCurrentUser() {
   const { data: session, isPending: sessionPending } = authClient.useSession();
@@ -13,6 +18,7 @@ export function useCurrentUser() {
   const [error, setError] = useState<string | null>(null);
 
   const ensureAppUser = useMutation(api.users.ensureAppUser);
+  const completeOnboarding = useMutation(api.users.completeOnboarding);
   const authUserId = session?.user?.id ?? null;
 
   const appUser = useQuery(
@@ -37,7 +43,7 @@ export function useCurrentUser() {
       }
 
       try {
-        await ensureAppUser({
+        const userId = await ensureAppUser({
           authUserId: session.user.id,
           email: session.user.email,
           displayName:
@@ -46,6 +52,20 @@ export function useCurrentUser() {
             "Pact user",
           avatarUrl: session.user.image ?? undefined,
         });
+
+        const pending = readOnboardingPending();
+        if (pending) {
+          await completeOnboarding({
+            userId,
+            displayName: pending.displayName.trim() || undefined,
+            goalFocus: pending.goalFocus,
+            defaultAccountabilityStyle: pending.accountabilityStyle,
+            defaultCheckInFrequency: pending.checkInFrequency,
+          });
+          clearOnboardingPending();
+          clearOnboardingDraft();
+        }
+
         if (!cancelled) {
           setReady(true);
           setError(null);
@@ -64,7 +84,7 @@ export function useCurrentUser() {
     return () => {
       cancelled = true;
     };
-  }, [ensureAppUser, session, sessionPending]);
+  }, [completeOnboarding, ensureAppUser, session, sessionPending]);
 
   const signOut = useCallback(async () => {
     await authClient.signOut();

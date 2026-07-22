@@ -1,5 +1,9 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import {
+  accountabilityStyle,
+  checkInFrequency,
+} from "./lib/validators";
 
 const DEMO_EMAIL = "demo@pact.local";
 
@@ -83,9 +87,39 @@ export const ensureAppUser = mutation({
       email: args.email,
       avatarUrl: args.avatarUrl,
       timezone: "Africa/Lagos",
-      onboardingCompleted: true,
+      onboardingCompleted: false,
       isDemo: false,
     });
+  },
+});
+
+export const completeOnboarding = mutation({
+  args: {
+    userId: v.id("users"),
+    displayName: v.optional(v.string()),
+    goalFocus: v.optional(v.string()),
+    defaultAccountabilityStyle: v.optional(accountabilityStyle),
+    defaultCheckInFrequency: v.optional(checkInFrequency),
+  },
+  handler: async (ctx, args) => {
+    const user = await ctx.db.get(args.userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    await ctx.db.patch(args.userId, {
+      onboardingCompleted: true,
+      ...(args.displayName ? { displayName: args.displayName } : {}),
+      ...(args.goalFocus ? { goalFocus: args.goalFocus } : {}),
+      ...(args.defaultAccountabilityStyle
+        ? { defaultAccountabilityStyle: args.defaultAccountabilityStyle }
+        : {}),
+      ...(args.defaultCheckInFrequency
+        ? { defaultCheckInFrequency: args.defaultCheckInFrequency }
+        : {}),
+    });
+
+    return args.userId;
   },
 });
 

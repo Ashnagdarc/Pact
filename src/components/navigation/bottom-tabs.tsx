@@ -6,7 +6,7 @@ import {
   LayoutGrid,
   LineChart,
   Plus,
-  Sparkles,
+  Sun,
   UserRound,
 } from "lucide-react";
 
@@ -15,12 +15,12 @@ import { cn } from "@/lib/utils";
 type Tab = {
   href: string;
   label: string;
-  icon: typeof Sparkles;
+  icon: typeof Sun;
   primary?: boolean;
 };
 
 const tabs: Tab[] = [
-  { href: "/", label: "Today", icon: Sparkles },
+  { href: "/", label: "Today", icon: Sun },
   { href: "/pacts", label: "Pacts", icon: LayoutGrid },
   { href: "/new", label: "New", icon: Plus, primary: true },
   { href: "/insights", label: "Insights", icon: LineChart },

@@ -23,6 +23,9 @@ export default defineSchema({
     avatarUrl: v.optional(v.string()),
     timezone: v.string(),
     onboardingCompleted: v.boolean(),
+    goalFocus: v.optional(v.string()),
+    defaultAccountabilityStyle: v.optional(accountabilityStyle),
+    defaultCheckInFrequency: v.optional(checkInFrequency),
     isDemo: v.optional(v.boolean()),
   })
     .index("by_authUserId", ["authUserId"])

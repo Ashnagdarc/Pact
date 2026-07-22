@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useQuery } from "convex/react";
 import { LayoutGrid, Loader2 } from "lucide-react";
 import { motion } from "motion/react";
@@ -16,6 +17,7 @@ import { AppShell } from "@/components/navigation/app-shell";
 import { FilterChips } from "@/components/navigation/filter-chips";
 import { NotificationBell } from "@/components/navigation/notification-bell";
 import { InstallPrompt } from "@/components/pwa/install-prompt";
+import { WelcomeScreen } from "@/components/screens/welcome-screen";
 import { Button } from "@/components/ui/button";
 import { useCurrentUser } from "@/hooks/use-demo-user";
 import type { CommitmentStatus } from "@/lib/status";
@@ -46,6 +48,7 @@ function toUiStatus(status: string): CommitmentStatus | undefined {
 }
 
 export function TodayScreen() {
+  const router = useRouter();
   const [filter, setFilter] = useState("all");
   const {
     user,
@@ -64,6 +67,13 @@ export function TodayScreen() {
     userId ? { userId } : "skip"
   );
   const boards = useQuery(api.pacts.listForUser, userId ? { userId } : "skip");
+
+  useEffect(() => {
+    if (!isAuthenticated || userLoading || !user) return;
+    if (!user.onboardingCompleted) {
+      router.replace("/onboarding");
+    }
+  }, [isAuthenticated, user, userLoading, router]);
 
   const filteredCommitments = (todayCommitments ?? []).filter((c) => {
     if (filter === "blocked") {
@@ -101,20 +111,7 @@ export function TodayScreen() {
   }
 
   if (!isAuthenticated) {
-    return (
-      <AppShell showTabs={false}>
-        <SurfaceCard tone="volt" className="mt-8">
-          <p className="font-heading text-3xl font-bold">Pact</p>
-          <p className="mt-2 text-sm opacity-80">
-            Sign in to see today&apos;s commitments and keep score with your
-            partners.
-          </p>
-          <Button asChild className="mt-5 rounded-full bg-ink-950 text-volt-500">
-            <Link href="/sign-in">Sign in</Link>
-          </Button>
-        </SurfaceCard>
-      </AppShell>
-    );
+    return <WelcomeScreen />;
   }
 
   if (userError || !userId) {

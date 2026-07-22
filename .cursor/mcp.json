@@ -2,6 +2,10 @@
   "mcpServers": {
     "better-auth": {
       "url": "https://mcp.better-auth.com/mcp"
+    },
+    "lottiefiles-creator": {
+      "command": "npx",
+      "args": ["-y", "@lottiefiles/creator-mcp@latest"]
     }
   }
 }
