@@ -2,8 +2,16 @@ import { dashClient, sentinelClient } from "@better-auth/infra/client";
 import { createAuthClient } from "better-auth/react";
 import { jwtClient } from "better-auth/client/plugins";
 
+/**
+ * Use same-origin in the browser so local `localhost:3000` talks to local
+ * `/api/auth/*` (not the production Vercel host). JWT iss/aud are set
+ * server-side and must match Convex auth.config.ts.
+ */
 export const authClient = createAuthClient({
-  baseURL: process.env.NEXT_PUBLIC_SITE_URL,
+  baseURL:
+    typeof window !== "undefined"
+      ? window.location.origin
+      : process.env.NEXT_PUBLIC_SITE_URL,
   plugins: [
     dashClient(),
     sentinelClient({

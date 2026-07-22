@@ -37,6 +37,9 @@ export const authJwtIssuer =
   process.env.NEXT_PUBLIC_SITE_URL ??
   "https://pact-flowtag-projects.vercel.app";
 
+/** Convex customJwt `applicationID` — must match JWT `aud`. */
+export const authJwtAudience = "convex";
+
 function infraConnectionOptions() {
   return {
     ...(process.env.BETTER_AUTH_API_URL
@@ -103,13 +106,19 @@ export const auth = betterAuth({
       },
       jwt: {
         issuer: authJwtIssuer,
-        audience: "convex",
+        audience: authJwtAudience,
         expirationTime: "1h",
-        definePayload: ({ user }) => ({
-          name: user.name,
-          email: user.email,
-          picture: user.image,
-        }),
+        // Put iss/aud on the payload too — SignJWT prefers payload values.
+        definePayload: (session) => {
+          const user = "user" in session ? session.user : session;
+          return {
+            name: user.name,
+            email: user.email,
+            picture: user.image,
+            iss: authJwtIssuer,
+            aud: authJwtAudience,
+          };
+        },
       },
     }),
     nextCookies(),
