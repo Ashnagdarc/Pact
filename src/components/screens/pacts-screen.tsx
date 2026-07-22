@@ -96,6 +96,7 @@ function PactsScreenConnected() {
                 tone={board.pact.tone ?? "signal"}
                 href={`/pacts/${board.pact._id}`}
                 addHref={`/new?pactId=${board.pact._id}`}
+                inviteHref={`/pacts/${board.pact._id}#invite`}
               />
             ) : null
           )

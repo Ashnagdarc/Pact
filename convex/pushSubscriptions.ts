@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 
-import { internalQuery, mutation, query } from "./_generated/server";
+import { internalMutation, internalQuery, mutation, query } from "./_generated/server";
 import { requireAppUser } from "./lib/auth";
 
 export const listForUser = internalQuery({
@@ -66,6 +66,18 @@ export const remove = mutation({
     if (existing.userId !== user._id) {
       throw new Error("Not allowed");
     }
+    await ctx.db.delete(existing._id);
+  },
+});
+
+export const removeByEndpoint = internalMutation({
+  args: { endpoint: v.string() },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("pushSubscriptions")
+      .withIndex("by_endpoint", (q) => q.eq("endpoint", args.endpoint))
+      .unique();
+    if (!existing) return;
     await ctx.db.delete(existing._id);
   },
 });

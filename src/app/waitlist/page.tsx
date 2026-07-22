@@ -56,9 +56,16 @@ export default function WaitlistPage() {
           Join the private beta
         </h1>
         <p className="mt-2 text-sm text-white/55">
-          Test structured accountability with someone you trust. Launch is about
-          three months out — we&apos;ll invite you as slots open.
+          Closed beta is open for accountability pairs. Request a slot here, or
+          start now if you already have a partner ready.
         </p>
+        <Button
+          asChild
+          variant="outline"
+          className="mt-4 h-11 rounded-full border-white/15 bg-white/5 text-white hover:bg-white/10"
+        >
+          <Link href="/sign-in?mode=sign-up">Start with a partner now</Link>
+        </Button>
 
         {!hydrated ? (
           <div className="mt-10 flex justify-center">

@@ -8,6 +8,12 @@ import {
 } from "./lib/validators";
 import { requireAppUser, requirePactMember } from "./lib/auth";
 
+const privacyLevel = v.union(
+  v.literal("private"),
+  v.literal("partners"),
+  v.literal("invite_only")
+);
+
 function createInviteToken() {
   const bytes = new Uint8Array(18);
   crypto.getRandomValues(bytes);
@@ -65,6 +71,7 @@ export const listForUser = query({
           activeTasks,
           inviteToken: pendingInvite?.token ?? null,
           members: memberUsers.map((user) => ({
+            _id: user!._id,
             name: user!.displayName,
             src: user!.avatarUrl,
           })),
@@ -152,6 +159,8 @@ export const create = mutation({
     goalType: v.optional(v.string()),
     accountabilityStyle: v.optional(accountabilityStyle),
     checkInFrequency: v.optional(checkInFrequency),
+    privacyLevel: v.optional(privacyLevel),
+    evidencePolicy: v.optional(v.string()),
     tone: v.optional(cardTone),
     createInvite: v.optional(v.boolean()),
     inviteRole: v.optional(memberRole),
@@ -166,7 +175,8 @@ export const create = mutation({
       goalType: args.goalType,
       accountabilityStyle: args.accountabilityStyle ?? "supportive",
       checkInFrequency: args.checkInFrequency ?? "daily",
-      privacyLevel: "invite_only",
+      privacyLevel: args.privacyLevel ?? "invite_only",
+      evidencePolicy: args.evidencePolicy,
       healthStatus: "healthy",
       status: "active",
       startAt: Date.now(),
@@ -213,6 +223,43 @@ export const create = mutation({
     }
 
     return { pactId, inviteToken };
+  },
+});
+
+export const updateSettings = mutation({
+  args: {
+    pactId: v.id("pacts"),
+    privacyLevel: v.optional(privacyLevel),
+    evidencePolicy: v.optional(v.string()),
+    accountabilityStyle: v.optional(accountabilityStyle),
+    checkInFrequency: v.optional(checkInFrequency),
+  },
+  handler: async (ctx, args) => {
+    const user = await requireAppUser(ctx);
+    const pact = await ctx.db.get(args.pactId);
+    if (!pact) {
+      throw new Error("Pact not found");
+    }
+
+    const membership = await requirePactMember(ctx, args.pactId, user._id);
+    if (membership.role !== "owner" && pact.ownerId !== user._id) {
+      throw new Error("Only the owner can update Pact settings");
+    }
+
+    await ctx.db.patch(args.pactId, {
+      ...(args.privacyLevel !== undefined
+        ? { privacyLevel: args.privacyLevel }
+        : {}),
+      ...(args.evidencePolicy !== undefined
+        ? { evidencePolicy: args.evidencePolicy }
+        : {}),
+      ...(args.accountabilityStyle !== undefined
+        ? { accountabilityStyle: args.accountabilityStyle }
+        : {}),
+      ...(args.checkInFrequency !== undefined
+        ? { checkInFrequency: args.checkInFrequency }
+        : {}),
+    });
   },
 });
 
@@ -263,5 +310,110 @@ export const createInvite = mutation({
     });
 
     return token;
+  },
+});
+
+/** Return existing pending invite or create one (owner only). */
+export const ensureInvite = mutation({
+  args: {
+    pactId: v.id("pacts"),
+    role: v.optional(memberRole),
+  },
+  handler: async (ctx, args) => {
+    const user = await requireAppUser(ctx);
+    const membership = await requirePactMember(ctx, args.pactId, user._id);
+    if (membership.role !== "owner") {
+      throw new Error("Only the owner can manage invites");
+    }
+
+    const pending = await ctx.db
+      .query("invitations")
+      .withIndex("by_pact", (q) => q.eq("pactId", args.pactId))
+      .filter((q) => q.eq(q.field("status"), "pending"))
+      .first();
+
+    if (pending && pending.expiresAt > Date.now()) {
+      return pending.token;
+    }
+
+    if (pending) {
+      await ctx.db.patch(pending._id, { status: "expired" });
+    }
+
+    const token = createInviteToken();
+    await ctx.db.insert("invitations", {
+      token,
+      pactId: args.pactId,
+      createdBy: user._id,
+      role: args.role ?? "partner",
+      status: "pending",
+      expiresAt: Date.now() + 1000 * 60 * 60 * 24 * 14,
+    });
+
+    return token;
+  },
+});
+
+/** Unique accepted partners across the current user's pacts. */
+export const listPartners = query({
+  args: {},
+  handler: async (ctx) => {
+    const user = await requireAppUser(ctx);
+    const memberships = await ctx.db
+      .query("pactMembers")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .collect();
+
+    const acceptedMine = memberships.filter(
+      (m) => m.invitationStatus === "accepted"
+    );
+
+    const byUser = new Map<
+      string,
+      {
+        userId: typeof user._id;
+        displayName: string;
+        avatarUrl?: string;
+        pactTitles: string[];
+        role: string;
+      }
+    >();
+
+    for (const mine of acceptedMine) {
+      const pact = await ctx.db.get(mine.pactId);
+      if (!pact || pact.status === "ended") continue;
+
+      const members = await ctx.db
+        .query("pactMembers")
+        .withIndex("by_pact", (q) => q.eq("pactId", mine.pactId))
+        .collect();
+
+      for (const member of members) {
+        if (member.userId === user._id) continue;
+        if (member.invitationStatus !== "accepted") continue;
+        const partner = await ctx.db.get(member.userId);
+        if (!partner) continue;
+
+        const key = partner._id;
+        const existing = byUser.get(key);
+        if (existing) {
+          if (!existing.pactTitles.includes(pact.title)) {
+            existing.pactTitles.push(pact.title);
+          }
+        } else {
+          byUser.set(key, {
+            userId: partner._id,
+            displayName: partner.displayName,
+            avatarUrl: partner.avatarUrl,
+            pactTitles: [pact.title],
+            role: member.role,
+          });
+        }
+      }
+    }
+
+    return Array.from(byUser.values()).sort((a, b) =>
+      a.displayName.localeCompare(b.displayName)
+    );
   },
 });

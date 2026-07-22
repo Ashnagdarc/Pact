@@ -4,14 +4,14 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useMutation, useQuery } from "convex/react";
 import { format } from "date-fns";
-import { ArrowLeft, Loader2, Plus, RefreshCw } from "lucide-react";
-import { useState, useTransition } from "react";
+import { ArrowLeft, Loader2, Plus, RefreshCw, UserPlus } from "lucide-react";
+import { useEffect, useState, useTransition } from "react";
 
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import { CommitmentCard } from "@/components/cards/commitment-card";
 import { SurfaceCard } from "@/components/cards/surface-card";
-import { AvatarStack } from "@/components/feedback/avatar-stack";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { StatusChip } from "@/components/feedback/status-chip";
 import { AppShell } from "@/components/navigation/app-shell";
 import { ConvexSetupScreen } from "@/components/screens/convex-setup-screen";
@@ -21,8 +21,11 @@ import { useCurrentUser } from "@/hooks/use-demo-user";
 import type { CommitmentStatus } from "@/lib/status";
 import {
   frequencyLabel,
+  privacyHint,
+  privacyLabel,
   styleLabel,
 } from "@/lib/validation/pact";
+import { cn } from "@/lib/utils";
 
 type PactDetailScreenProps = {
   pactId: string;
@@ -43,6 +46,19 @@ function toUiStatus(status: string): CommitmentStatus | undefined {
       return "slipping";
     default:
       return undefined;
+  }
+}
+
+function roleLabel(role: string) {
+  switch (role) {
+    case "owner":
+      return "Owner";
+    case "partner":
+      return "Partner";
+    case "observer":
+      return "Observer";
+    default:
+      return role;
   }
 }
 
@@ -67,13 +83,49 @@ function PactDetailConnected({ pactId }: PactDetailScreenProps) {
     userId ? { pactId: pactId as Id<"pacts"> } : "skip"
   );
   const createInvite = useMutation(api.pacts.createInvite);
+  const ensureInvite = useMutation(api.pacts.ensureInvite);
+  const updateSettings = useMutation(api.pacts.updateSettings);
   const refreshHealth = useMutation(api.health.refresh);
   const [inviteToken, setInviteToken] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [ensured, setEnsured] = useState(false);
+
+  const isOwner =
+    detail && !detail.forbidden && detail.membership
+      ? detail.membership.role === "owner"
+      : false;
+
+  useEffect(() => {
+    if (!userId || !detail || detail.forbidden || !detail.pact || !isOwner) {
+      return;
+    }
+    if (ensured) return;
+    if (inviteToken || detail.inviteToken) {
+      setEnsured(true);
+      return;
+    }
+    let cancelled = false;
+    void ensureInvite({ pactId: detail.pact._id }).then((token) => {
+      if (!cancelled) {
+        setInviteToken(token);
+        setEnsured(true);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    detail,
+    ensureInvite,
+    ensured,
+    inviteToken,
+    isOwner,
+    userId,
+  ]);
 
   if (userLoading || detail === undefined || health === undefined) {
     return (
-      <AppShell showTabs={false}>
+      <AppShell>
         <div className="flex min-h-[60dvh] items-center justify-center">
           <Loader2 className="size-6 animate-spin text-volt-500" />
         </div>
@@ -83,7 +135,7 @@ function PactDetailConnected({ pactId }: PactDetailScreenProps) {
 
   if (!detail || detail.forbidden || !detail.pact) {
     return (
-      <AppShell showTabs={false}>
+      <AppShell>
         <SurfaceCard tone="coral" className="mt-8">
           <p className="font-heading text-2xl font-bold">Pact unavailable</p>
           <p className="mt-2 text-sm opacity-80">
@@ -99,8 +151,10 @@ function PactDetailConnected({ pactId }: PactDetailScreenProps) {
 
   const { pact, membership, members, commitments } = detail;
   const activeToken = inviteToken ?? detail.inviteToken;
-  const isOwner = membership.role === "owner";
   const healthStatus = health?.status ?? pact.healthStatus;
+  const acceptedMembers = members.filter(
+    (m) => m?.membership.invitationStatus === "accepted"
+  );
 
   function refreshInvite() {
     if (!userId) return;
@@ -114,7 +168,7 @@ function PactDetailConnected({ pactId }: PactDetailScreenProps) {
   }
 
   return (
-    <AppShell showTabs={false} className="pb-10">
+    <AppShell className="pb-10">
       <header className="mb-4 flex items-center justify-between pt-2">
         <Button
           asChild
@@ -178,44 +232,110 @@ function PactDetailConnected({ pactId }: PactDetailScreenProps) {
           </ul>
         ) : null}
 
-        <div className="mt-5 flex items-center justify-between gap-3">
-          <AvatarStack
-            people={members.map((m) => ({
-              name: m!.user.displayName,
-              src: m!.user.avatarUrl,
-            }))}
-          />
-          <div className="text-right text-xs font-semibold opacity-70">
-            <p>
-              {pact.accountabilityStyle
-                ? styleLabel[
-                    pact.accountabilityStyle as keyof typeof styleLabel
-                  ]
-                : "Supportive"}
-            </p>
-            <p>
-              {pact.checkInFrequency
-                ? frequencyLabel[
-                    pact.checkInFrequency as keyof typeof frequencyLabel
-                  ]
-                : "Daily"}{" "}
-              check-ins
-            </p>
-          </div>
+        <div className="mt-5 text-right text-xs font-semibold opacity-70">
+          <p>
+            {pact.accountabilityStyle
+              ? styleLabel[
+                  pact.accountabilityStyle as keyof typeof styleLabel
+                ]
+              : "Supportive"}
+          </p>
+          <p>
+            {pact.checkInFrequency
+              ? frequencyLabel[
+                  pact.checkInFrequency as keyof typeof frequencyLabel
+                ]
+              : "Daily"}{" "}
+            check-ins
+          </p>
         </div>
       </SurfaceCard>
 
+      <section className="mt-5">
+        <div className="mb-3 flex items-end justify-between">
+          <h2 className="font-heading text-2xl font-bold tracking-tight">
+            Partners
+          </h2>
+          <span className="text-xs font-semibold text-white/45">
+            {acceptedMembers.length}
+          </span>
+        </div>
+
+        <SurfaceCard tone="ink" className="border border-white/10">
+          <ul className="space-y-3">
+            {acceptedMembers.map((entry) => {
+              if (!entry) return null;
+              const name = entry.user.displayName;
+              const initials = name
+                .split(" ")
+                .map((part) => part[0])
+                .join("")
+                .slice(0, 2)
+                .toUpperCase();
+              return (
+                <li
+                  key={entry.user._id}
+                  className="flex items-center gap-3"
+                >
+                  <Avatar className="size-10 border-2 border-ink-950">
+                    {entry.user.avatarUrl ? (
+                      <AvatarImage src={entry.user.avatarUrl} alt={name} />
+                    ) : null}
+                    <AvatarFallback className="bg-signal text-xs font-semibold text-white">
+                      {initials}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold">
+                      {entry.user._id === userId ? `${name} (you)` : name}
+                    </p>
+                    <p className="text-xs text-white/45">
+                      {roleLabel(entry.membership.role)}
+                    </p>
+                  </div>
+                  <StatusChip
+                    label={roleLabel(entry.membership.role)}
+                    tone={
+                      entry.membership.role === "owner" ? "volt" : "muted"
+                    }
+                  />
+                </li>
+              );
+            })}
+          </ul>
+
+          {acceptedMembers.length <= 1 ? (
+            <p className="mt-4 rounded-2xl bg-white/5 px-3 py-2 text-sm text-white/60">
+              {isOwner
+                ? "You’re the only one here. Share the invite link below."
+                : "Waiting for more partners to join."}
+            </p>
+          ) : null}
+        </SurfaceCard>
+      </section>
+
       {isOwner ? (
-        <div className="mt-4 space-y-3">
+        <section id="invite" className="mt-5 scroll-mt-24 space-y-3">
+          <div className="mb-1 flex items-end justify-between">
+            <h2 className="font-heading text-2xl font-bold tracking-tight">
+              Invite
+            </h2>
+            <span className="inline-flex items-center gap-1 text-xs font-semibold text-signal">
+              <UserPlus className="size-3.5" />
+              Share link
+            </span>
+          </div>
+
           {activeToken ? (
             <InviteShareCard token={activeToken} autoFocus={justCreated} />
           ) : (
             <SurfaceCard tone="ink" className="border border-white/10">
               <p className="text-sm text-white/70">
-                No active invite link. Generate one to bring in a partner.
+                Generating your invite link…
               </p>
             </SurfaceCard>
           )}
+
           <Button
             type="button"
             disabled={isPending}
@@ -230,8 +350,53 @@ function PactDetailConnected({ pactId }: PactDetailScreenProps) {
             )}
             {activeToken ? "Refresh invite link" : "Create invite link"}
           </Button>
-        </div>
-      ) : null}
+
+          <SurfaceCard tone="ink" className="border border-white/10">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-white/45">
+              Privacy
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {(
+                Object.keys(privacyLabel) as Array<
+                  keyof typeof privacyLabel
+                >
+              ).map((level) => (
+                <button
+                  key={level}
+                  type="button"
+                  disabled={isPending}
+                  onClick={() =>
+                    startTransition(async () => {
+                      await updateSettings({
+                        pactId: pact._id,
+                        privacyLevel: level,
+                      });
+                    })
+                  }
+                  className={cn(
+                    "min-h-10 rounded-full border px-4 text-sm font-semibold transition-colors",
+                    pact.privacyLevel === level
+                      ? "border-volt-500 bg-volt-500 text-ink-950"
+                      : "border-white/15 text-white/70"
+                  )}
+                >
+                  {privacyLabel[level]}
+                </button>
+              ))}
+            </div>
+            <p className="mt-3 text-xs text-white/45">
+              {privacyHint[pact.privacyLevel as keyof typeof privacyHint]}
+            </p>
+          </SurfaceCard>
+        </section>
+      ) : (
+        <SurfaceCard tone="ink" className="mt-5 border border-white/10">
+          <p className="text-sm text-white/65">
+            Only the owner can invite more partners. Ask them to share the
+            invite link.
+          </p>
+        </SurfaceCard>
+      )}
 
       <section className="mt-8">
         <div className="mb-3 flex items-end justify-between">

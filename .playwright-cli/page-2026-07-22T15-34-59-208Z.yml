@@ -1,0 +1,35 @@
+- generic [active] [ref=e1]:
+  - alert [ref=e7]
+  - generic [ref=e168]:
+    - banner [ref=e169]:
+      - link "Back" [ref=e170] [cursor=pointer]:
+        - /url: /
+      - button "More" [ref=e171]
+    - article [ref=e172]:
+      - generic [ref=e173]: QA Invite Flow 2026-07-22
+      - heading "QA blocked commitment" [level=1] [ref=e174]
+      - generic [ref=e175]:
+        - generic [ref=e176]:
+          - paragraph [ref=e177]: Status
+          - generic [ref=e178]: On track
+        - generic [ref=e180]:
+          - paragraph [ref=e181]: Due
+          - paragraph [ref=e182]: Jul 22, 2026
+      - generic [ref=e183]:
+        - paragraph [ref=e184]: Notes
+        - paragraph [ref=e185]: "Smoke test: check-in then Rescue"
+    - generic [ref=e186]:
+      - heading "Check in" [level=2] [ref=e187]
+      - paragraph [ref=e188]: Five-second progress signal for your partner.
+      - textbox "Optional note" [ref=e189]
+      - generic [ref=e190]:
+        - button "Done" [ref=e191]
+        - button "On track" [ref=e192]
+        - button "Slipping" [ref=e193]
+        - button "Blocked" [ref=e194]
+        - button "Need help" [ref=e195]
+    - button [ref=e196]
+    - generic [ref=e198]:
+      - heading "Activity" [level=2] [ref=e199]
+      - article [ref=e201]:
+        - paragraph [ref=e202]: No check-ins yet. Send your first signal above.

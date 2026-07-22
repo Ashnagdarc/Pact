@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -56,11 +56,9 @@ export function NewCommitmentScreen({
 function NewCommitmentForm({ initialPactId }: { initialPactId?: string }) {
   const router = useRouter();
   const { userId, loading, error } = useCurrentUser();
-  const boards = useQuery(
-    api.pacts.listForUser,
-    userId ? {} : "skip"
-  );
+  const boards = useQuery(api.pacts.listForUser, userId ? {} : "skip");
   const createCommitment = useMutation(api.commitments.create);
+  const createTask = useMutation(api.tasks.create);
   const [submitting, setSubmitting] = useState(false);
 
   const form = useForm<CreateCommitmentValues>({
@@ -69,7 +67,10 @@ function NewCommitmentForm({ initialPactId }: { initialPactId?: string }) {
       title: "",
       description: "",
       pactId: initialPactId ?? "",
+      assigneeId: "",
       duePreset: "today",
+      evidenceRequired: false,
+      asPersonalTask: !initialPactId,
       tone: "volt",
     },
   });
@@ -77,14 +78,61 @@ function NewCommitmentForm({ initialPactId }: { initialPactId?: string }) {
   const selectedTone = form.watch("tone");
   const selectedDue = form.watch("duePreset");
   const selectedPact = form.watch("pactId");
+  const selectedAssignee = form.watch("assigneeId");
+  const evidenceRequired = form.watch("evidenceRequired");
+  const asPersonalTask = form.watch("asPersonalTask");
+
+  const pactDetail = useQuery(
+    api.pacts.getById,
+    userId && selectedPact
+      ? { pactId: selectedPact as Id<"pacts"> }
+      : "skip"
+  );
+
+  const assignees = useMemo(() => {
+    if (!pactDetail || pactDetail.forbidden || !pactDetail.members) return [];
+    return pactDetail.members
+      .filter((m) => m?.membership.invitationStatus === "accepted" && m.user)
+      .map((m) => m!.user);
+  }, [pactDetail]);
+
+  useEffect(() => {
+    if (!userId) return;
+    if (!selectedPact) {
+      form.setValue("assigneeId", userId);
+      form.setValue("asPersonalTask", true);
+      return;
+    }
+    form.setValue("asPersonalTask", false);
+    if (!selectedAssignee || !assignees.some((a) => a._id === selectedAssignee)) {
+      form.setValue("assigneeId", userId);
+    }
+  }, [assignees, form, selectedAssignee, selectedPact, userId]);
 
   async function onSubmit(values: CreateCommitmentValues) {
     if (!userId) return;
 
     setSubmitting(true);
     try {
+      if (!values.pactId && values.asPersonalTask) {
+        const taskId = await createTask({
+          title: values.title,
+          description: values.description || undefined,
+          dueAt: dueAtFromPreset(values.duePreset),
+          reminderAt: dueAtFromPreset(values.duePreset)
+            ? Math.max(
+                Date.now() + 60_000,
+                (dueAtFromPreset(values.duePreset) as number) - 60 * 60 * 1000
+              )
+            : undefined,
+          tone: values.tone,
+        });
+        router.push(`/tasks/${taskId}`);
+        return;
+      }
+
       const commitmentId = await createCommitment({
-        assigneeId: userId,
+        assigneeId: (values.assigneeId || userId) as Id<"users">,
         title: values.title,
         description: values.description || undefined,
         pactId: values.pactId
@@ -93,13 +141,14 @@ function NewCommitmentForm({ initialPactId }: { initialPactId?: string }) {
         dueAt: dueAtFromPreset(values.duePreset),
         tone: values.tone,
         favorited: false,
-        evidenceRequired: false,
+        evidenceRequired: values.evidenceRequired,
       });
 
       router.push(`/commitments/${commitmentId}`);
     } catch (err) {
       form.setError("title", {
-        message: err instanceof Error ? err.message : "Could not create commitment",
+        message:
+          err instanceof Error ? err.message : "Could not create commitment",
       });
       setSubmitting(false);
     }
@@ -119,7 +168,7 @@ function NewCommitmentForm({ initialPactId }: { initialPactId?: string }) {
     return (
       <AppShell>
         <SurfaceCard tone="coral" className="mt-6">
-          <p className="font-heading text-xl font-bold">Couldn’t load demo user</p>
+          <p className="font-heading text-xl font-bold">Couldn’t load user</p>
           <p className="mt-2 text-sm opacity-80">{error}</p>
         </SurfaceCard>
       </AppShell>
@@ -132,8 +181,11 @@ function NewCommitmentForm({ initialPactId }: { initialPactId?: string }) {
         New
       </h1>
       <p className="mt-2 text-sm text-white/55">
-        Capture a commitment in under 10 seconds.{" "}
-        <Link href="/pacts/new" className="text-signal underline-offset-2 hover:underline">
+        Capture a task or commitment in under 10 seconds.{" "}
+        <Link
+          href="/pacts/new"
+          className="text-signal underline-offset-2 hover:underline"
+        >
           Create a Pact instead
         </Link>
       </p>
@@ -159,7 +211,7 @@ function NewCommitmentForm({ initialPactId }: { initialPactId?: string }) {
           </label>
           <Textarea
             {...form.register("description")}
-            placeholder="Optional detail or evidence note"
+            placeholder="Optional detail"
             rows={3}
             className="rounded-2xl border-black/10 bg-white/40 text-sm text-ink-950 placeholder:text-ink-950/40"
           />
@@ -190,12 +242,15 @@ function NewCommitmentForm({ initialPactId }: { initialPactId?: string }) {
 
         <SurfaceCard tone="ink" className="border border-white/10">
           <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-white/45">
-            Pact
+            Where
           </p>
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
-              onClick={() => form.setValue("pactId", "")}
+              onClick={() => {
+                form.setValue("pactId", "");
+                form.setValue("asPersonalTask", true);
+              }}
               className={cn(
                 "min-h-10 rounded-full border px-4 text-sm font-semibold transition-colors",
                 !selectedPact
@@ -203,14 +258,17 @@ function NewCommitmentForm({ initialPactId }: { initialPactId?: string }) {
                   : "border-white/15 text-white/70"
               )}
             >
-              Personal
+              Personal task
             </button>
             {(boards ?? []).map((board) =>
               board ? (
                 <button
                   key={board.pact._id}
                   type="button"
-                  onClick={() => form.setValue("pactId", board.pact._id)}
+                  onClick={() => {
+                    form.setValue("pactId", board.pact._id);
+                    form.setValue("asPersonalTask", false);
+                  }}
                   className={cn(
                     "min-h-10 rounded-full border px-4 text-sm font-semibold transition-colors",
                     selectedPact === board.pact._id
@@ -223,7 +281,71 @@ function NewCommitmentForm({ initialPactId }: { initialPactId?: string }) {
               ) : null
             )}
           </div>
+          {!selectedPact ? (
+            <p className="mt-3 text-xs text-white/45">
+              Personal tasks stay private. Switch to a Pact to assign a partner.
+            </p>
+          ) : null}
         </SurfaceCard>
+
+        {selectedPact ? (
+          <SurfaceCard tone="ink" className="border border-white/10">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-white/45">
+              Assign to
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {assignees.map((member) => (
+                <button
+                  key={member._id}
+                  type="button"
+                  onClick={() => form.setValue("assigneeId", member._id)}
+                  className={cn(
+                    "min-h-10 rounded-full border px-4 text-sm font-semibold transition-colors",
+                    selectedAssignee === member._id
+                      ? "border-volt-500 bg-volt-500 text-ink-950"
+                      : "border-white/15 text-white/70"
+                  )}
+                >
+                  {member._id === userId ? "You" : member.displayName}
+                </button>
+              ))}
+            </div>
+          </SurfaceCard>
+        ) : null}
+
+        {selectedPact ? (
+          <SurfaceCard tone="ink" className="border border-white/10">
+            <button
+              type="button"
+              onClick={() =>
+                form.setValue("evidenceRequired", !evidenceRequired)
+              }
+              className="flex w-full items-center justify-between gap-3 text-left"
+            >
+              <div>
+                <p className="text-sm font-semibold">Require evidence</p>
+                <p className="mt-1 text-xs text-white/45">
+                  Ask for a photo or file before marking done
+                </p>
+              </div>
+              <span
+                className={cn(
+                  "inline-flex h-7 w-12 items-center rounded-full border px-1 transition-colors",
+                  evidenceRequired
+                    ? "border-volt-500 bg-volt-500"
+                    : "border-white/20 bg-white/5"
+                )}
+              >
+                <span
+                  className={cn(
+                    "size-5 rounded-full bg-white transition-transform",
+                    evidenceRequired ? "translate-x-5" : "translate-x-0"
+                  )}
+                />
+              </span>
+            </button>
+          </SurfaceCard>
+        ) : null}
 
         <SurfaceCard tone="ink" className="border border-white/10">
           <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-white/45">
@@ -263,6 +385,8 @@ function NewCommitmentForm({ initialPactId }: { initialPactId?: string }) {
               <Loader2 className="size-4 animate-spin" />
               Creating…
             </>
+          ) : asPersonalTask && !selectedPact ? (
+            "Create personal task"
           ) : (
             "Create commitment"
           )}

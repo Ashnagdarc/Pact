@@ -83,8 +83,8 @@ export function WelcomeScreen() {
             asChild
             className="h-12 rounded-full bg-volt-500 text-base font-semibold text-ink-950 hover:bg-volt-500/90"
           >
-            <Link href="/waitlist">
-              Join the private beta waitlist
+            <Link href="/sign-in?mode=sign-up">
+              Start with a partner
               <ArrowRight className="size-4" />
             </Link>
           </Button>
@@ -93,7 +93,14 @@ export function WelcomeScreen() {
             variant="ghost"
             className="h-11 rounded-full text-white/45 hover:text-white/75"
           >
-            <Link href="/sign-in">Have an invite? Sign in</Link>
+            <Link href="/sign-in">Already have an account? Sign in</Link>
+          </Button>
+          <Button
+            asChild
+            variant="ghost"
+            className="h-10 rounded-full text-white/35 hover:text-white/60"
+          >
+            <Link href="/waitlist">Prefer the waitlist?</Link>
           </Button>
         </motion.div>
       </div>

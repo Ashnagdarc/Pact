@@ -13,7 +13,10 @@ export const createCommitmentSchema = z.object({
     .optional()
     .or(z.literal("")),
   pactId: z.string().optional().or(z.literal("")),
+  assigneeId: z.string().optional().or(z.literal("")),
   duePreset: z.enum(["today", "tomorrow", "week", "none"]),
+  evidenceRequired: z.boolean(),
+  asPersonalTask: z.boolean(),
   tone: z.enum(["coral", "volt", "cream", "mint", "paper", "signal"]),
 });
 

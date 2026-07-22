@@ -81,6 +81,18 @@ export const submit = mutation({
       throw new Error("Only the assignee can submit a check-in");
     }
 
+    if (args.signal === "done" && commitment.evidenceRequired) {
+      const evidence = await ctx.db
+        .query("evidence")
+        .withIndex("by_commitment", (q) =>
+          q.eq("commitmentId", args.commitmentId)
+        )
+        .first();
+      if (!evidence) {
+        throw new Error("Upload evidence before marking this done");
+      }
+    }
+
     const checkInId = await ctx.db.insert("checkIns", {
       commitmentId: args.commitmentId,
       userId: user._id,

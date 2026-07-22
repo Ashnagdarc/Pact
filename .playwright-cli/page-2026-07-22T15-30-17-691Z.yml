@@ -1,0 +1,16 @@
+- generic [active] [ref=e1]:
+  - alert [ref=e8]
+  - main [ref=e55]:
+    - generic [ref=e56]:
+      - paragraph [ref=e57]: Pact
+      - heading "Welcome back" [level=1] [ref=e58]
+      - paragraph [ref=e59]: Sign in to keep commitments with people who keep you honest.
+      - generic [ref=e60]:
+        - textbox "Email" [ref=e61]
+        - textbox "Password (min 8 chars)" [ref=e62]
+        - link "Forgot password?" [ref=e64] [cursor=pointer]:
+          - /url: /forgot-password
+        - button "Sign in" [ref=e65]
+      - button "Need an account? Sign up" [ref=e66]
+      - link "Back to home" [ref=e67] [cursor=pointer]:
+        - /url: /

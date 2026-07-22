@@ -25,6 +25,7 @@ export const config = {
   matcher: [
     "/pacts/:path*",
     "/commitments/:path*",
+    "/tasks/:path*",
     "/insights",
     "/notifications",
     "/profile",

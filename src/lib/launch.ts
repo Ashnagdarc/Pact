@@ -23,7 +23,7 @@ export function getLaunchTimeline(now = new Date()): LaunchTimelineItem[] {
       id: "closed-beta",
       title: "Closed beta",
       description: "First accountability pairs start testing live pacts.",
-      at: new Date("2026-08-22T12:00:00.000Z"),
+      at: new Date("2026-07-22T12:00:00.000Z"),
     },
     {
       id: "polish",

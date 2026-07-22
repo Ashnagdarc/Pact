@@ -1,0 +1,77 @@
+- generic [active] [ref=e1]:
+  - alert [ref=e2]
+  - generic [ref=e123]:
+    - generic [ref=e124]:
+      - banner [ref=e125]:
+        - generic [ref=e126]:
+          - paragraph [ref=e127]: Hello, Pact QA Owner
+          - heading "Pact" [level=1] [ref=e128]
+        - generic [ref=e129]:
+          - link "Notifications" [ref=e130] [cursor=pointer]:
+            - /url: /notifications
+            - generic [ref=e131]: "3"
+          - button "Layout" [ref=e132]
+      - article [ref=e133]:
+        - generic [ref=e134]: PQ
+        - generic [ref=e137]:
+          - paragraph [ref=e138]: What are you doing today?
+          - paragraph [ref=e139]: 0 open · 0 need attention
+      - article [ref=e141]:
+        - generic [ref=e142]:
+          - paragraph [ref=e143]: "0"
+          - paragraph [ref=e149]: Commitments kept this week. Keep the streak kind.
+      - article [ref=e150]:
+        - generic [ref=e156]:
+          - paragraph [ref=e157]: Install Pact
+          - paragraph [ref=e158]: Keep check-ins one tap away. No app store required.
+          - generic [ref=e159]:
+            - link "How to install" [ref=e160] [cursor=pointer]:
+              - /url: /install
+            - button "Not now" [ref=e161]
+      - generic [ref=e162]:
+        - button "All 0" [ref=e163]:
+          - generic [ref=e164]:
+            - text: All
+            - generic [ref=e165]: "0"
+        - button "Pacts 1" [ref=e166]:
+          - generic [ref=e167]:
+            - text: Pacts
+            - generic [ref=e168]: "1"
+        - button "Due today 0" [ref=e169]:
+          - generic [ref=e170]:
+            - text: Due today
+            - generic [ref=e171]: "0"
+        - button "Blocked 0" [ref=e172]:
+          - generic [ref=e173]:
+            - text: Blocked
+            - generic [ref=e174]: "0"
+      - generic [ref=e176]:
+        - heading "Today's focus" [level=2] [ref=e177]
+        - generic [ref=e178]: 0 due
+      - generic [ref=e179]:
+        - generic [ref=e180]:
+          - heading "Your pacts" [level=2] [ref=e181]
+          - generic [ref=e182]: Boards
+        - article [ref=e184]:
+          - link "Add commitment to QA Invite Flow 2026-07-22" [ref=e186] [cursor=pointer]:
+            - /url: /new?pactId=jx78c9mxxkq5rde1y4g22aghps8b0zd5
+          - link "PQ PQ 1 Active Tasks QA Invite Flow 2026-07-22" [ref=e192] [cursor=pointer]:
+            - /url: /pacts/jx78c9mxxkq5rde1y4g22aghps8b0zd5
+            - generic [ref=e194]:
+              - generic [ref=e195]:
+                - generic [ref=e196]: PQ
+                - generic [ref=e198]: PQ
+              - paragraph [ref=e200]: 1 Active Tasks
+              - heading "QA Invite Flow 2026-07-22" [level=3] [ref=e201]
+    - navigation "Primary":
+      - generic [ref=e202]:
+        - link "Today" [ref=e203] [cursor=pointer]:
+          - /url: /
+        - link "Pacts" [ref=e211] [cursor=pointer]:
+          - /url: /pacts
+        - link "New" [ref=e218] [cursor=pointer]:
+          - /url: /new
+        - link "Insights" [ref=e220] [cursor=pointer]:
+          - /url: /insights
+        - link "You" [ref=e225] [cursor=pointer]:
+          - /url: /profile

@@ -98,12 +98,7 @@ export const accept = mutation({
       .unique();
 
     if (existingMembership?.invitationStatus === "accepted") {
-      await ctx.db.patch(invitation._id, {
-        status: "accepted",
-        inviteeName: name,
-        inviteeUserId: userId,
-        acceptedAt: Date.now(),
-      });
+      // Already a member — keep invite link reusable for others.
       return { userId, pactId: invitation.pactId };
     }
 
@@ -125,8 +120,8 @@ export const accept = mutation({
       });
     }
 
+    // Keep the invite link pending so multiple partners can use the same URL.
     await ctx.db.patch(invitation._id, {
-      status: "accepted",
       inviteeName: name,
       inviteeUserId: userId,
       acceptedAt: Date.now(),
@@ -159,7 +154,7 @@ export const decline = mutation({
     displayName: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    // Token is the capability secret; auth optional for decline.
+    // Declining is personal — do not revoke the shared invite link.
     const invitation = await ctx.db
       .query("invitations")
       .withIndex("by_token", (q) => q.eq("token", args.token))
@@ -173,16 +168,13 @@ export const decline = mutation({
       throw new Error(`Invitation is ${invitation.status}`);
     }
 
-    await ctx.db.patch(invitation._id, {
-      status: "declined",
-      inviteeName: args.displayName?.trim() || undefined,
-      declinedAt: Date.now(),
-    });
-
     await ctx.db.insert("activityEvents", {
-      pactId: invitation.pactId,
       eventName: "invitation_declined",
-      metadata: { token: args.token },
+      pactId: invitation.pactId,
+      metadata: {
+        token: args.token,
+        inviteeName: args.displayName?.trim() || undefined,
+      },
     });
 
     return { ok: true as const };

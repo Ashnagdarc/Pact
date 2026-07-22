@@ -1,0 +1,17 @@
+- generic [active] [ref=e1]:
+  - alert [ref=e7]
+  - generic [ref=e232]:
+    - banner [ref=e233]:
+      - link "Back" [ref=e234] [cursor=pointer]:
+        - /url: /commitments/jd79a6fc945am9v367dyrwx2dx8b0zh0
+      - generic [ref=e235]: Rescue Mode
+    - article [ref=e243]:
+      - paragraph [ref=e244]: QA Invite Flow 2026-07-22
+      - heading "QA blocked commitment" [level=1] [ref=e245]
+      - paragraph [ref=e246]: Missed plans happen. Let's recover without quitting.
+    - article [ref=e283]:
+      - paragraph [ref=e284]: You're back on track
+      - paragraph [ref=e285]: Recovery applied · Ask partner for help. Your partner can acknowledge the plan from activity.
+      - generic [ref=e286]:
+        - button "View commitment" [ref=e287]
+        - button "Back to Today" [ref=e288]

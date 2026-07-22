@@ -394,28 +394,28 @@ A generated summary of progress and participation.
 
 - [x] Account creation and login — Better Auth (email/password; Google optional)
 - [x] Profile setup — basic display name / email via Convex user bridge
-- [ ] Create personal task — `tasks` table exists; UI/API not wired (solo commitments used today)
-- [ ] Edit and delete personal task
+- [x] Create personal task — `tasks` CRUD + Today + `/tasks/[id]`
+- [x] Edit and delete personal task
 - [x] Create a Pact
 - [x] Invite partner using a secure link
 - [x] Accept or reject invitation
 - [x] Select participant role
 - [x] Select accountability style
 - [x] Create shared commitment
-- [ ] Assign commitment — currently always assigns to creator
-- [x] Add due date and reminder — due dates wired; reminder scheduling / push not wired
+- [x] Assign commitment — pact member assignee picker + notify assignee
+- [x] Add due date and reminder — due dates + `reminderAt` + cron/push delivery
 - [x] Submit five-second progress signal
-- [ ] Add optional evidence — schema/policy fields only; no uploads
+- [x] Add optional evidence — Convex storage uploads on commitment detail
 - [x] Send structured partner response
 - [x] View Pact progress
 - [x] Trigger Rescue Mode
 - [x] Create recovery plan
 - [x] Generate weekly review — Insights screen + Convex weekly review data
 - [x] View notifications inside the app
-- [ ] Enable Web Push notifications
+- [x] Enable Web Push notifications — notify → push bridge + opt-in/out
 - [x] Install the app as a PWA — manifest, icons, service worker, `/install`, `/offline`
-- [ ] Configure privacy permissions — create hardcodes invite-only; no settings UI
-- [ ] Delete account
+- [x] Configure privacy permissions — create + owner settings UI
+- [x] Delete account — Convex cascade + Better Auth `deleteUser`
 
 ### 10.2 Should-have features
 
@@ -433,7 +433,7 @@ A generated summary of progress and participation.
 - [ ] Focus timer
 - [ ] Audio notes
 - [ ] Calendar integration
-- [ ] Public beta waitlist
+- [x] Public beta waitlist
 - [ ] Multiple accountability partners
 - [ ] Accountability circles
 - [ ] Premium plan
@@ -1345,10 +1345,10 @@ activityEvents
 - [x] Secure login
 - [x] Session persistence
 - [x] Logout
-- [ ] Account deletion
+- [x] Account deletion
 - [x] Invite-link continuation after login (`/sign-in?next=/invite/...`)
-- [ ] Convex authorization from verified Better Auth session (not client-trusted `userId`)
-- [ ] Next.js middleware route protection
+- [x] Convex authorization from verified Better Auth session (JWT → `requireAppUser`)
+- [x] Next.js middleware route protection — `src/proxy.ts` cookie gate (Convex JWT is source of truth)
 
 ### 28.3 Authentication decision checklist
 
@@ -1356,16 +1356,17 @@ activityEvents
 - [x] Works alongside Convex for product data (bridge pattern).
 - [x] Usable free tier (Better Auth self-hosted + Neon + Vercel).
 - [x] Supports production deployment.
-- [ ] Account deletion end-to-end (auth DB + Convex data).
+- [x] Account deletion end-to-end (auth DB + Convex data).
 - [x] Does not require paid SMS for MVP.
 - [ ] Email delivery (verification / reset) — deferred; verification currently off.
 
 ### 28.4 Recommended next auth work
 
-1. Stop trusting client-passed `userId` in Convex mutations.
-2. Add route middleware for authenticated app pages.
-3. Account deletion (Better Auth + Convex cleanup).
-4. Optional: enable email verification / password reset once transactional email is configured.
+1. ~~Stop trusting client-passed `userId` in Convex mutations.~~ Done — `requireAppUser` from JWT.
+2. ~~Add route middleware for authenticated app pages.~~ Done — `src/proxy.ts`.
+3. ~~Account deletion (Better Auth + Convex cleanup).~~ Done.
+4. Optional: enable email verification once transactional email is fully trusted in prod.
+5. Harden: make `push.sendToUser` internal-only (currently public action). — **Done:** public `sendToUser` removed; only `internal.push.deliverToUser`.
 
 ---
 
@@ -1391,8 +1392,8 @@ Current support:
 
 - [x] App-shell caching (basic)
 - [x] Offline fallback page (`/offline`)
-- [ ] Push notification handling
-- [ ] Notification click handling
+- [x] Push notification handling
+- [x] Notification click handling
 - [x] Controlled update behaviour (basic register)
 
 ### 29.3 Offline behaviour
@@ -1811,13 +1812,13 @@ Two users can create, accept, and use a Pact from separate devices. — **Ready 
 - [x] Pact Health
 - [x] Weekly reviews — Insights
 - [x] Notification centre — in-app
-- [ ] Web Push
+- [x] Web Push
 - [ ] Quiet hours
-- [ ] Evidence uploads
+- [x] Evidence uploads
 
 Exit criteria:
 
-A Pact can survive a missed commitment and return to active progress. — **In-app loop exists; push/evidence still open.**
+A Pact can survive a missed commitment and return to active progress. — **In-app loop + push/evidence wired.**
 
 ---
 
@@ -1829,9 +1830,9 @@ A Pact can survive a missed commitment and return to active progress. — **In-a
 - [x] Offline fallback
 - [x] Install guide
 - [x] Mobile safe-area support
-- [ ] Privacy policy
-- [ ] Terms
-- [ ] Account deletion
+- [x] Privacy policy
+- [x] Terms
+- [x] Account deletion
 - [ ] Beta feedback form
 - [x] Private beta deployment — Vercel production URL live
 
@@ -2282,30 +2283,31 @@ Name
 
 ## 59. Build status snapshot (2026-07-21)
 
-**Shipped:** Auth (Better Auth + Neon), Convex product core (pacts, invites, commitments, check-ins, partner responses, rescue, health, weekly insights, in-app notifications), PWA shell + branded icons, Vercel production deploy.
+**Shipped:** Auth (Better Auth + Neon + Convex JWT bridge), Convex product core (pacts, invites, commitments, check-ins, partner responses, rescue, health, weekly insights, notifications, tasks, evidence, push/reminders), PWA shell + branded icons, Vercel production deploy, privacy/terms, account deletion.
 
-**Not secure yet:** Convex trusts client-supplied `userId` — must fix before real beta pairs.
+**Auth status:** Convex identity comes from verified JWT (`ctx.auth.getUserIdentity` → `users.authUserId`). Client `userId` is not trusted for “who am I.” Route proxy cookie-gates app pages.
 
 ## 59.1 Next ten actions (build order)
 
-1. [ ] **Secure Convex bridge** — verify Better Auth identity in Convex; remove trust of client `userId`.
-2. [ ] **Route middleware** — protect app routes; keep `/sign-in`, `/invite`, `/install` public.
+1. [x] **Secure Convex bridge** — JWT → `requireAppUser`; no client-trusted “current user.”
+2. [x] **Route middleware** — `src/proxy.ts` protects app routes; invite/sign-in/install stay public.
 3. [ ] **Two-device beta smoke test** — create pact, invite, accept, check-in, rescue on separate accounts.
-4. [ ] **Partner assignment** — assign commitments to pact members (not only creator).
-5. [ ] **Web Push** — `pushSubscriptions` table, SW push handler, permission UX.
-6. [ ] **Reminders** — schedule/store `reminderAt` and deliver via push or in-app.
-7. [ ] **Evidence uploads** — Convex file storage attached to check-ins when required.
-8. [ ] **Account deletion + privacy/terms pages** — required for serious beta.
-9. [ ] **Personal tasks decision** — wire `tasks` CRUD **or** formally treat solo commitments as tasks.
-10. [ ] **Recruit first five beta pairs** after 1–3 are done.
+4. [x] **Partner assignment** — assign commitments to pact members (not only creator).
+5. [x] **Web Push** — `pushSubscriptions` table, SW push handler, permission UX.
+6. [x] **Reminders** — schedule/store `reminderAt` and deliver via push or in-app.
+7. [x] **Evidence uploads** — Convex file storage on commitment detail.
+8. [x] **Account deletion + privacy/terms pages** — required for serious beta.
+9. [x] **Personal tasks** — `tasks` CRUD + Today + `/tasks/[id]`.
+10. [ ] **Recruit first five beta pairs** — kit ready in `BETA_RECRUITMENT.md`; welcome CTA opens signup. Fill tracker as pairs accept.
+11. [x] **Configure VAPID keys** in Vercel + Convex so push actually delivers.
+12. [x] **Harden `push.sendToUser`** — removed public action; `deliverToUser` is internal-only.
 
 ## 59.2 Suggested “this week” focus
 
 ```text
-Secure auth → Convex
-  → Middleware
-  → Two-user smoke test on production
-  → Then Web Push OR partner assignment (pick based on beta feedback)
+Send first five pair invites (see BETA_RECRUITMENT.md)
+  → Two-user smoke test on production (if not done)
+  → Collect day-7 feedback → build should-haves
 ```
 
 ---

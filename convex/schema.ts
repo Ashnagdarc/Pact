@@ -126,6 +126,7 @@ export default defineSchema({
     evidenceRequired: v.boolean(),
     favorited: v.boolean(),
     completedAt: v.optional(v.number()),
+    reminderSentAt: v.optional(v.number()),
     checklist: v.optional(
       v.array(
         v.object({
@@ -149,6 +150,18 @@ export default defineSchema({
   })
     .index("by_commitment", ["commitmentId"])
     .index("by_user", ["userId"]),
+
+  evidence: defineTable({
+    commitmentId: v.id("commitments"),
+    checkInId: v.optional(v.id("checkIns")),
+    uploadedBy: v.id("users"),
+    storageId: v.id("_storage"),
+    fileType: v.string(),
+    caption: v.optional(v.string()),
+  })
+    .index("by_commitment", ["commitmentId"])
+    .index("by_checkIn", ["checkInId"])
+    .index("by_uploadedBy", ["uploadedBy"]),
 
   partnerResponses: defineTable({
     checkInId: v.id("checkIns"),

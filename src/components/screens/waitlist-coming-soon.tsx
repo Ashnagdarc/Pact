@@ -83,8 +83,9 @@ export function WaitlistComingSoon({ email }: { email: string }) {
       <div className="rounded-3xl border border-volt-500/25 bg-volt-500/10 p-5">
         <p className="font-semibold text-volt-500">You&apos;re on the list</p>
         <p className="mt-2 text-sm text-white/65">
-          We&apos;ll email <span className="text-white/85">{email}</span> when
-          your invite is ready. Until then, here&apos;s the path to launch.
+          We&apos;ll email <span className="text-white/85">{email}</span> as
+          more slots open. Closed beta is live now — start with a partner if
+          you&apos;re ready.
         </p>
       </div>
 
@@ -176,10 +177,17 @@ export function WaitlistComingSoon({ email }: { email: string }) {
         asChild
         className="mt-6 h-11 w-full rounded-full bg-volt-500 text-ink-950 hover:bg-volt-500/90"
       >
-        <Link href="/sign-in">
-          Already invited? Sign in
+        <Link href="/sign-in?mode=sign-up">
+          Start with a partner now
           <ArrowRight className="size-4" />
         </Link>
+      </Button>
+      <Button
+        asChild
+        variant="ghost"
+        className="mt-2 h-10 w-full rounded-full text-white/45 hover:text-white/75"
+      >
+        <Link href="/sign-in">Already have an account? Sign in</Link>
       </Button>
     </div>
   );

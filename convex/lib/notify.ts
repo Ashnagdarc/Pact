@@ -1,5 +1,6 @@
 import type { Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
+import { internal } from "../_generated/api";
 
 type NotifyArgs = {
   userId: Id<"users">;
@@ -18,7 +19,7 @@ export async function notify(ctx: MutationCtx, args: NotifyArgs) {
     return null;
   }
 
-  return await ctx.db.insert("notifications", {
+  const notificationId = await ctx.db.insert("notifications", {
     userId: args.userId,
     type: args.type,
     title: args.title,
@@ -29,6 +30,15 @@ export async function notify(ctx: MutationCtx, args: NotifyArgs) {
     actorId: args.actorId,
     metadata: args.metadata,
   });
+
+  await ctx.scheduler.runAfter(0, internal.push.deliverToUser, {
+    userId: args.userId,
+    title: args.title,
+    body: args.body,
+    href: args.href,
+  });
+
+  return notificationId;
 }
 
 export async function notifyPactPartners(

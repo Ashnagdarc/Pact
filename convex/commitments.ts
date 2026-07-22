@@ -1,12 +1,14 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
+import { internal } from "./_generated/api";
 import { cardTone, commitmentStatus } from "./lib/validators";
 import {
   requireAppUser,
   requireCommitmentAccess,
   requirePactMember,
 } from "./lib/auth";
+import { notify } from "./lib/notify";
 
 function startOfLocalDay(ms = Date.now()) {
   const d = new Date(ms);
@@ -27,6 +29,11 @@ function startOfWeek(ms = Date.now()) {
   d.setDate(d.getDate() + diff);
   d.setHours(0, 0, 0, 0);
   return d.getTime();
+}
+
+function defaultReminderAt(dueAt?: number) {
+  if (!dueAt) return undefined;
+  return Math.max(Date.now() + 60_000, dueAt - 60 * 60 * 1000);
 }
 
 export const listForToday = query({
@@ -127,6 +134,7 @@ export const create = mutation({
     description: v.optional(v.string()),
     pactId: v.optional(v.id("pacts")),
     dueAt: v.optional(v.number()),
+    reminderAt: v.optional(v.number()),
     evidenceRequired: v.optional(v.boolean()),
     favorited: v.optional(v.boolean()),
     tone: v.optional(cardTone),
@@ -149,6 +157,8 @@ export const create = mutation({
       throw new Error("Cannot assign solo commitments to others");
     }
 
+    const reminderAt = args.reminderAt ?? defaultReminderAt(args.dueAt);
+
     const commitmentId = await ctx.db.insert("commitments", {
       pactId: args.pactId,
       creatorId: creator._id,
@@ -157,6 +167,7 @@ export const create = mutation({
       description: args.description,
       status: "open",
       dueAt: args.dueAt,
+      reminderAt,
       evidenceRequired: args.evidenceRequired ?? false,
       favorited: args.favorited ?? false,
       checklist: args.checklist,
@@ -170,7 +181,151 @@ export const create = mutation({
       metadata: { commitmentId, title: args.title },
     });
 
+    if (args.assigneeId !== creator._id) {
+      await notify(ctx, {
+        userId: args.assigneeId,
+        actorId: creator._id,
+        type: "partner_update",
+        title: "New commitment assigned",
+        body: `${creator.displayName} assigned you “${args.title}”.`,
+        href: `/commitments/${commitmentId}`,
+        pactId: args.pactId,
+        commitmentId,
+      });
+    }
+
+    if (reminderAt) {
+      await ctx.scheduler.runAfter(
+        0,
+        internal.reminders.scheduleCommitmentReminder,
+        { commitmentId, reminderAt }
+      );
+    }
+
     return commitmentId;
+  },
+});
+
+export const update = mutation({
+  args: {
+    commitmentId: v.id("commitments"),
+    title: v.optional(v.string()),
+    description: v.optional(v.string()),
+    dueAt: v.optional(v.union(v.number(), v.null())),
+    assigneeId: v.optional(v.id("users")),
+    evidenceRequired: v.optional(v.boolean()),
+    tone: v.optional(cardTone),
+  },
+  handler: async (ctx, args) => {
+    const user = await requireAppUser(ctx);
+    const existing = await requireCommitmentAccess(
+      ctx,
+      args.commitmentId,
+      user._id
+    );
+
+    if (existing.creatorId !== user._id && existing.assigneeId !== user._id) {
+      throw new Error("Forbidden");
+    }
+
+    if (args.assigneeId && args.assigneeId !== existing.assigneeId) {
+      if (!existing.pactId) {
+        throw new Error("Cannot reassign personal commitments");
+      }
+      await requirePactMember(ctx, existing.pactId, args.assigneeId);
+    }
+
+    const dueAt =
+      args.dueAt === undefined
+        ? existing.dueAt
+        : args.dueAt === null
+          ? undefined
+          : args.dueAt;
+    const reminderAt =
+      args.dueAt !== undefined ? defaultReminderAt(dueAt) : existing.reminderAt;
+
+    await ctx.db.patch(args.commitmentId, {
+      ...(args.title !== undefined ? { title: args.title } : {}),
+      ...(args.description !== undefined
+        ? { description: args.description }
+        : {}),
+      ...(args.dueAt !== undefined ? { dueAt } : {}),
+      ...(args.assigneeId !== undefined
+        ? { assigneeId: args.assigneeId }
+        : {}),
+      ...(args.evidenceRequired !== undefined
+        ? { evidenceRequired: args.evidenceRequired }
+        : {}),
+      ...(args.tone !== undefined ? { tone: args.tone } : {}),
+      ...(args.dueAt !== undefined
+        ? { reminderAt, reminderSentAt: undefined }
+        : {}),
+    });
+
+    if (args.dueAt !== undefined && reminderAt) {
+      await ctx.scheduler.runAfter(
+        0,
+        internal.reminders.scheduleCommitmentReminder,
+        { commitmentId: args.commitmentId, reminderAt }
+      );
+    }
+  },
+});
+
+export const remove = mutation({
+  args: { commitmentId: v.id("commitments") },
+  handler: async (ctx, args) => {
+    const user = await requireAppUser(ctx);
+    const existing = await requireCommitmentAccess(
+      ctx,
+      args.commitmentId,
+      user._id
+    );
+
+    if (existing.creatorId !== user._id && existing.assigneeId !== user._id) {
+      throw new Error("Forbidden");
+    }
+
+    const checkIns = await ctx.db
+      .query("checkIns")
+      .withIndex("by_commitment", (q) =>
+        q.eq("commitmentId", args.commitmentId)
+      )
+      .collect();
+
+    for (const checkIn of checkIns) {
+      const responses = await ctx.db
+        .query("partnerResponses")
+        .withIndex("by_checkIn", (q) => q.eq("checkInId", checkIn._id))
+        .collect();
+      for (const response of responses) {
+        await ctx.db.delete(response._id);
+      }
+      await ctx.db.delete(checkIn._id);
+    }
+
+    const evidenceRows = await ctx.db
+      .query("evidence")
+      .withIndex("by_commitment", (q) =>
+        q.eq("commitmentId", args.commitmentId)
+      )
+      .collect();
+    for (const row of evidenceRows) {
+      await ctx.storage.delete(row.storageId);
+      await ctx.db.delete(row._id);
+    }
+
+    const plans = await ctx.db
+      .query("recoveryPlans")
+      .withIndex("by_commitment", (q) =>
+        q.eq("commitmentId", args.commitmentId)
+      )
+      .collect();
+    for (const plan of plans) {
+      await ctx.db.delete(plan._id);
+    }
+
+    await ctx.db.delete(args.commitmentId);
   },
 });
 
@@ -189,6 +344,18 @@ export const updateStatus = mutation({
 
     if (existing.assigneeId !== user._id && existing.creatorId !== user._id) {
       throw new Error("Forbidden");
+    }
+
+    if (args.status === "done" && existing.evidenceRequired) {
+      const evidence = await ctx.db
+        .query("evidence")
+        .withIndex("by_commitment", (q) =>
+          q.eq("commitmentId", args.commitmentId)
+        )
+        .first();
+      if (!evidence) {
+        throw new Error("Evidence is required before marking this done");
+      }
     }
 
     await ctx.db.patch(args.commitmentId, {
@@ -232,6 +399,18 @@ export const toggleChecklistItem = mutation({
     );
 
     const allDone = checklist.every((item) => item.done);
+
+    if (allDone && existing.evidenceRequired) {
+      const evidence = await ctx.db
+        .query("evidence")
+        .withIndex("by_commitment", (q) =>
+          q.eq("commitmentId", args.commitmentId)
+        )
+        .first();
+      if (!evidence) {
+        throw new Error("Evidence is required before completing the checklist");
+      }
+    }
 
     await ctx.db.patch(args.commitmentId, {
       checklist,

@@ -20,6 +20,8 @@ import {
   createPactSchema,
   frequencyLabel,
   goalTypeLabel,
+  privacyHint,
+  privacyLabel,
   styleLabel,
   type CreatePactValues,
 } from "@/lib/validation/pact";
@@ -55,6 +57,7 @@ function CreatePactForm() {
       goalType: "career",
       accountabilityStyle: "supportive",
       checkInFrequency: "daily",
+      privacyLevel: "invite_only",
       tone: "signal",
     },
   });
@@ -63,6 +66,7 @@ function CreatePactForm() {
   const selectedGoal = form.watch("goalType");
   const selectedStyle = form.watch("accountabilityStyle");
   const selectedFrequency = form.watch("checkInFrequency");
+  const selectedPrivacy = form.watch("privacyLevel");
 
   async function onSubmit(values: CreatePactValues) {
     if (!userId) return;
@@ -74,8 +78,9 @@ function CreatePactForm() {
         goalType: values.goalType,
         accountabilityStyle: values.accountabilityStyle,
         checkInFrequency: values.checkInFrequency,
+        privacyLevel: values.privacyLevel,
         tone: values.tone,
-        createInvite: true,
+        createInvite: values.privacyLevel !== "private",
       });
 
       router.push(`/pacts/${result.pactId}?created=1`);
@@ -173,6 +178,34 @@ function CreatePactForm() {
           value={selectedFrequency}
           onChange={(id) => form.setValue("checkInFrequency", id)}
         />
+
+        <SurfaceCard tone="ink" className="border border-white/10">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-white/45">
+            Privacy
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {(
+              Object.keys(privacyLabel) as CreatePactValues["privacyLevel"][]
+            ).map((id) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => form.setValue("privacyLevel", id)}
+                className={cn(
+                  "min-h-10 rounded-full border px-4 text-sm font-semibold transition-colors",
+                  selectedPrivacy === id
+                    ? "border-volt-500 bg-volt-500 text-ink-950"
+                    : "border-white/15 text-white/70 hover:border-white/35"
+                )}
+              >
+                {privacyLabel[id]}
+              </button>
+            ))}
+          </div>
+          <p className="mt-3 text-xs text-white/45">
+            {privacyHint[selectedPrivacy]}
+          </p>
+        </SurfaceCard>
 
         <SurfaceCard tone="ink" className="border border-white/10">
           <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-white/45">

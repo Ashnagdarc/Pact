@@ -1,0 +1,49 @@
+- generic [active] [ref=e1]:
+  - alert [ref=e7]
+  - generic [ref=e106]:
+    - generic [ref=e107]:
+      - heading "New" [level=1] [ref=e108]
+      - paragraph [ref=e109]:
+        - text: Capture a commitment in under 10 seconds.
+        - link "Create a Pact instead" [ref=e110] [cursor=pointer]:
+          - /url: /pacts/new
+      - generic [ref=e111]:
+        - article [ref=e112]:
+          - generic [ref=e113]: Title
+          - textbox "Finish portfolio homepage" [ref=e114]
+          - generic [ref=e115]: Note
+          - textbox "Optional detail or evidence note" [ref=e116]
+        - article [ref=e117]:
+          - paragraph [ref=e118]: Due
+          - generic [ref=e119]:
+            - button "Today" [ref=e120]
+            - button "Tomorrow" [ref=e121]
+            - button "In a week" [ref=e122]
+            - button "No due date" [ref=e123]
+        - article [ref=e124]:
+          - paragraph [ref=e125]: Pact
+          - generic [ref=e126]:
+            - button "Personal" [ref=e127]
+            - button "QA Invite Flow 2026-07-22" [ref=e128]
+        - article [ref=e129]:
+          - paragraph [ref=e130]: Card color
+          - generic [ref=e131]:
+            - button "volt" [ref=e132]
+            - button "coral" [ref=e133]
+            - button "cream" [ref=e134]
+            - button "mint" [ref=e135]
+            - button "signal" [ref=e136]
+            - button "paper" [ref=e137]
+        - button "Create commitment" [ref=e138]
+    - navigation "Primary":
+      - generic [ref=e139]:
+        - link "Today" [ref=e140] [cursor=pointer]:
+          - /url: /
+        - link "Pacts" [ref=e148] [cursor=pointer]:
+          - /url: /pacts
+        - link "New" [ref=e155] [cursor=pointer]:
+          - /url: /new
+        - link "Insights" [ref=e157] [cursor=pointer]:
+          - /url: /insights
+        - link "You" [ref=e162] [cursor=pointer]:
+          - /url: /profile

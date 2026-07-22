@@ -12,7 +12,7 @@ import { CommitmentCard } from "@/components/cards/commitment-card";
 import { PactBoardCard } from "@/components/cards/pact-board-card";
 import { StatHero } from "@/components/cards/stat-hero";
 import { SurfaceCard } from "@/components/cards/surface-card";
-import { AvatarStack } from "@/components/feedback/avatar-stack";
+import { TodayPromptCard } from "@/components/cards/today-prompt-card";
 import { AppShell } from "@/components/navigation/app-shell";
 import { FilterChips } from "@/components/navigation/filter-chips";
 import { NotificationBell } from "@/components/navigation/notification-bell";
@@ -67,6 +67,7 @@ export function TodayScreen() {
     api.commitments.listForToday,
     userId ? {} : "skip"
   );
+  const todayTasks = useQuery(api.tasks.listForToday, userId ? {} : "skip");
   const boards = useQuery(api.pacts.listForUser, userId ? {} : "skip");
 
   useEffect(() => {
@@ -101,7 +102,7 @@ export function TodayScreen() {
             : boards?.length,
   }));
 
-  if (userLoading || (userId && (!stats || !todayCommitments || !boards))) {
+  if (userLoading || (userId && (!stats || !todayCommitments || !todayTasks || !boards))) {
     return (
       <AppShell showTabs={false}>
         <div className="flex min-h-[70dvh] flex-col items-center justify-center gap-3 text-white/70">
@@ -156,18 +157,17 @@ export function TodayScreen() {
         </div>
       </header>
 
-      <SurfaceCard tone="glass" className="mb-4 flex items-center gap-3 py-3">
-        <AvatarStack
-          people={boards?.[0]?.members?.slice(0, 1) ?? [{ name: "Partner" }]}
-          size="md"
-        />
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold">What are you doing today?</p>
-          <p className="truncate text-xs text-white/55">
-            {stats?.openCount ?? 0} open · {stats?.blockedCount ?? 0} need attention
-          </p>
-        </div>
-      </SurfaceCard>
+      <TodayPromptCard
+        className="mb-4"
+        people={
+          boards?.[0]?.members?.slice(0, 1).map((m) => ({
+            name: m.name,
+            src: m.src,
+          })) ?? [{ name: "Partner" }]
+        }
+        openCount={(stats?.openCount ?? 0) + (todayTasks?.filter((t) => t.status === "open").length ?? 0)}
+        blockedCount={stats?.blockedCount ?? 0}
+      />
 
       <StatHero
         value={stats?.completedThisWeek ?? 0}
@@ -183,6 +183,41 @@ export function TodayScreen() {
         onChange={setFilter}
         className="mb-5"
       />
+
+      {(todayTasks?.length ?? 0) > 0 ? (
+        <section className="mb-6">
+          <div className="mb-3 flex items-end justify-between">
+            <h2 className="font-heading text-2xl font-bold tracking-tight">
+              Personal tasks
+            </h2>
+            <span className="text-xs font-semibold text-white/45">
+              {todayTasks?.length ?? 0}
+            </span>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {(todayTasks ?? []).map((task, index) => (
+              <motion.div
+                key={task._id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.04 * index }}
+                className={
+                  (todayTasks?.length ?? 0) === 1 ? "col-span-2" : "col-span-1"
+                }
+              >
+                <CommitmentCard
+                  title={task.title}
+                  tone={task.tone ?? "cream"}
+                  favorited={task.favorited}
+                  status={task.status === "done" ? "done" : "on_track"}
+                  meta={task.description}
+                  href={`/tasks/${task._id}`}
+                />
+              </motion.div>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <section className="mb-6">
         <div className="mb-3 flex items-end justify-between">
@@ -252,6 +287,7 @@ export function TodayScreen() {
                 tone={board.pact.tone ?? "signal"}
                 href={`/pacts/${board.pact._id}`}
                 addHref={`/new?pactId=${board.pact._id}`}
+                inviteHref={`/pacts/${board.pact._id}#invite`}
               />
             ) : null
           )}

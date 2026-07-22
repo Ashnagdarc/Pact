@@ -22,6 +22,7 @@ export const createPactSchema = z.object({
     "competitive",
   ]),
   checkInFrequency: z.enum(["daily", "weekdays", "weekly"]),
+  privacyLevel: z.enum(["private", "partners", "invite_only"]),
   tone: z.enum(["signal", "volt", "cream", "mint", "paper", "coral"]),
 });
 
@@ -53,4 +54,16 @@ export const frequencyLabel: Record<
   daily: "Daily",
   weekdays: "Weekdays",
   weekly: "Weekly",
+};
+
+export const privacyLabel: Record<CreatePactValues["privacyLevel"], string> = {
+  private: "Private",
+  partners: "Partners only",
+  invite_only: "Invite link",
+};
+
+export const privacyHint: Record<CreatePactValues["privacyLevel"], string> = {
+  private: "Only you can see notes and evidence",
+  partners: "Accepted partners can see progress",
+  invite_only: "Anyone with the invite link can join",
 };

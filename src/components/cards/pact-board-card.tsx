@@ -16,6 +16,7 @@ type PactBoardCardProps = {
   className?: string;
   href?: string;
   addHref?: string;
+  inviteHref?: string;
 };
 
 export function PactBoardCard({
@@ -26,6 +27,7 @@ export function PactBoardCard({
   className,
   href,
   addHref,
+  inviteHref,
 }: PactBoardCardProps) {
   return (
     <SurfaceCard
@@ -34,22 +36,32 @@ export function PactBoardCard({
       className={cn("min-h-[10.5rem] rounded-[2rem]", className)}
     >
       <div className="mb-8 flex items-start justify-between">
-        {addHref ? (
-          <Button
-            asChild
-            size="icon"
-            variant="ghost"
-            className="size-11 rounded-full border border-current/20 bg-black/5 hover:bg-black/10"
-          >
-            <Link href={addHref} aria-label={`Add commitment to ${title}`}>
+        <div className="flex items-center gap-2">
+          {addHref ? (
+            <Button
+              asChild
+              size="icon"
+              variant="ghost"
+              className="size-11 rounded-full border border-current/20 bg-black/5 hover:bg-black/10"
+            >
+              <Link href={addHref} aria-label={`Add commitment to ${title}`}>
+                <Plus className="size-5" />
+              </Link>
+            </Button>
+          ) : (
+            <span className="inline-flex size-11 items-center justify-center rounded-full border border-current/20 bg-black/5">
               <Plus className="size-5" />
-            </Link>
-          </Button>
-        ) : (
-          <span className="inline-flex size-11 items-center justify-center rounded-full border border-current/20 bg-black/5">
-            <Plus className="size-5" />
-          </span>
-        )}
+            </span>
+          )}
+          {inviteHref ? (
+            <Button
+              asChild
+              className="h-11 rounded-full border border-current/20 bg-black/5 px-4 text-sm font-bold hover:bg-black/10"
+            >
+              <Link href={inviteHref}>Invite</Link>
+            </Button>
+          ) : null}
+        </div>
         <span className="inline-flex size-10 items-center justify-center rounded-full">
           <MoreHorizontal className="size-5" />
         </span>

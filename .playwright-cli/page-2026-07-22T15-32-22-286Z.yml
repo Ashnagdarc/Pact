@@ -1,0 +1,47 @@
+- generic [active] [ref=e1]:
+  - alert [ref=e8]
+  - generic [ref=e850]:
+    - generic [ref=e851]:
+      - heading "New" [level=1] [ref=e852]
+      - paragraph [ref=e853]:
+        - text: Capture a commitment in under 10 seconds.
+        - link "Create a Pact instead" [ref=e854] [cursor=pointer]:
+          - /url: /pacts/new
+      - generic [ref=e855]:
+        - article [ref=e856]:
+          - generic [ref=e857]: Title
+          - textbox "Finish portfolio homepage" [ref=e858]
+          - generic [ref=e859]: Note
+          - textbox "Optional detail or evidence note" [ref=e860]
+        - article [ref=e861]:
+          - paragraph [ref=e862]: Due
+          - generic [ref=e863]:
+            - button "Today" [ref=e864]
+            - button "Tomorrow" [ref=e865]
+            - button "In a week" [ref=e866]
+            - button "No due date" [ref=e867]
+        - article [ref=e868]:
+          - paragraph [ref=e869]: Pact
+          - button "Personal" [ref=e871]
+        - article [ref=e872]:
+          - paragraph [ref=e873]: Card color
+          - generic [ref=e874]:
+            - button "volt" [ref=e875]
+            - button "coral" [ref=e876]
+            - button "cream" [ref=e877]
+            - button "mint" [ref=e878]
+            - button "signal" [ref=e879]
+            - button "paper" [ref=e880]
+        - button "Create commitment" [ref=e881]
+    - navigation "Primary":
+      - generic [ref=e882]:
+        - link "Today" [ref=e883] [cursor=pointer]:
+          - /url: /
+        - link "Pacts" [ref=e891] [cursor=pointer]:
+          - /url: /pacts
+        - link "New" [ref=e898] [cursor=pointer]:
+          - /url: /new
+        - link "Insights" [ref=e900] [cursor=pointer]:
+          - /url: /insights
+        - link "You" [ref=e905] [cursor=pointer]:
+          - /url: /profile

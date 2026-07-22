@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useMutation, useQuery } from "convex/react";
 import { format } from "date-fns";
@@ -10,6 +10,7 @@ import {
   LifeBuoy,
   Loader2,
   MoreHorizontal,
+  Upload,
 } from "lucide-react";
 
 import { api } from "@convex/_generated/api";
@@ -104,6 +105,14 @@ function CommitmentDetailConnected({
   const toggleChecklist = useMutation(api.commitments.toggleChecklistItem);
   const updateStatus = useMutation(api.commitments.updateStatus);
   const reviewPlan = useMutation(api.rescue.reviewPlan);
+  const generateUploadUrl = useMutation(api.evidence.generateUploadUrl);
+  const attachEvidence = useMutation(api.evidence.attach);
+  const evidence = useQuery(
+    api.evidence.listForCommitment,
+    userId
+      ? { commitmentId: commitmentId as Id<"commitments"> }
+      : "skip"
+  );
 
   const [note, setNote] = useState("");
   const [pendingSignal, setPendingSignal] = useState<CheckInSignal | null>(
@@ -111,6 +120,8 @@ function CommitmentDetailConnected({
   );
   const [isPending, startTransition] = useTransition();
   const [draftHint, setDraftHint] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -143,7 +154,8 @@ function CommitmentDetailConnected({
     userLoading ||
     detail === undefined ||
     checkIns === undefined ||
-    recoveryPlans === undefined
+    recoveryPlans === undefined ||
+    evidence === undefined
   ) {
     return (
       <AppShell showTabs={false}>
@@ -196,10 +208,51 @@ function CommitmentDetailConnected({
 
   function markDone() {
     startTransition(async () => {
-      await updateStatus({
-        commitmentId: commitment._id,
-        status: "done",
-      });
+      try {
+        await updateStatus({
+          commitmentId: commitment._id,
+          status: "done",
+        });
+        setUploadError(null);
+      } catch (err) {
+        setUploadError(
+          err instanceof Error ? err.message : "Could not mark done"
+        );
+      }
+    });
+  }
+
+  function onPickEvidence(fileList: FileList | null) {
+    const file = fileList?.[0];
+    if (!file || !userId) return;
+    startTransition(async () => {
+      try {
+        setUploadError(null);
+        const postUrl = await generateUploadUrl({});
+        const result = await fetch(postUrl, {
+          method: "POST",
+          headers: { "Content-Type": file.type || "application/octet-stream" },
+          body: file,
+        });
+        if (!result.ok) {
+          throw new Error("Upload failed");
+        }
+        const { storageId } = (await result.json()) as {
+          storageId: Id<"_storage">;
+        };
+        await attachEvidence({
+          commitmentId: commitment._id,
+          storageId,
+          fileType: file.type || "application/octet-stream",
+          caption: file.name,
+        });
+      } catch (err) {
+        setUploadError(
+          err instanceof Error ? err.message : "Could not upload evidence"
+        );
+      } finally {
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      }
     });
   }
 
@@ -342,6 +395,80 @@ function CommitmentDetailConnected({
           </div>
         </SurfaceCard>
       ) : null}
+
+      <section className="mt-5">
+        <div className="mb-2 flex items-end justify-between gap-3">
+          <div>
+            <h2 className="font-heading text-2xl font-bold tracking-tight">
+              Evidence
+            </h2>
+            <p className="mt-1 text-sm text-white/55">
+              {commitment.evidenceRequired
+                ? "Required before marking done"
+                : "Optional proof for your partner"}
+            </p>
+          </div>
+          <Button
+            type="button"
+            disabled={isPending}
+            onClick={() => fileInputRef.current?.click()}
+            className="h-10 rounded-full bg-white/10 text-white hover:bg-white/15"
+          >
+            <Upload className="size-4" />
+            Upload
+          </Button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,application/pdf"
+            className="hidden"
+            onChange={(e) => onPickEvidence(e.target.files)}
+          />
+        </div>
+        {uploadError ? (
+          <p className="mb-2 text-sm text-coral-400">{uploadError}</p>
+        ) : null}
+        <div className="space-y-2">
+          {evidence.length === 0 ? (
+            <SurfaceCard tone="ink" className="border border-white/10">
+              <p className="text-sm text-white/60">No evidence yet.</p>
+            </SurfaceCard>
+          ) : (
+            evidence.map((item) => (
+              <SurfaceCard
+                key={item._id}
+                tone="ink"
+                className="border border-white/10"
+              >
+                {item.url && item.fileType.startsWith("image/") ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={item.url}
+                    alt={item.caption ?? "Evidence"}
+                    className="mb-2 max-h-48 w-full rounded-xl object-cover"
+                  />
+                ) : null}
+                <p className="text-sm font-semibold">
+                  {item.caption ?? item.fileType}
+                </p>
+                <p className="mt-1 text-xs text-white/45">
+                  {format(item._creationTime, "MMM d · h:mm a")}
+                </p>
+                {item.url && !item.fileType.startsWith("image/") ? (
+                  <a
+                    href={item.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-2 inline-block text-sm text-signal underline-offset-2 hover:underline"
+                  >
+                    Open file
+                  </a>
+                ) : null}
+              </SurfaceCard>
+            ))
+          )}
+        </div>
+      </section>
 
       <section className="mt-5">
         <h2 className="font-heading text-2xl font-bold tracking-tight">

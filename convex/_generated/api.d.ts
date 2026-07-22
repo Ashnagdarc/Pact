@@ -10,6 +10,8 @@
 
 import type * as checkIns from "../checkIns.js";
 import type * as commitments from "../commitments.js";
+import type * as crons from "../crons.js";
+import type * as evidence from "../evidence.js";
 import type * as health from "../health.js";
 import type * as insights from "../insights.js";
 import type * as invitations from "../invitations.js";
@@ -23,8 +25,10 @@ import type * as notifications from "../notifications.js";
 import type * as pacts from "../pacts.js";
 import type * as push from "../push.js";
 import type * as pushSubscriptions from "../pushSubscriptions.js";
+import type * as reminders from "../reminders.js";
 import type * as rescue from "../rescue.js";
 import type * as seed from "../seed.js";
+import type * as tasks from "../tasks.js";
 import type * as users from "../users.js";
 import type * as waitlist from "../waitlist.js";
 
@@ -37,6 +41,8 @@ import type {
 declare const fullApi: ApiFromModules<{
   checkIns: typeof checkIns;
   commitments: typeof commitments;
+  crons: typeof crons;
+  evidence: typeof evidence;
   health: typeof health;
   insights: typeof insights;
   invitations: typeof invitations;
@@ -50,8 +56,10 @@ declare const fullApi: ApiFromModules<{
   pacts: typeof pacts;
   push: typeof push;
   pushSubscriptions: typeof pushSubscriptions;
+  reminders: typeof reminders;
   rescue: typeof rescue;
   seed: typeof seed;
+  tasks: typeof tasks;
   users: typeof users;
   waitlist: typeof waitlist;
 }>;

@@ -280,7 +280,7 @@ export function InviteShareCard({
     >
       <p className="font-heading text-xl font-bold">Invite link ready</p>
       <p className="mt-1 text-sm font-medium text-ink-950/70">
-        Share this with someone you trust. They can accept without an account for now.
+        Share this with someone you trust. They sign in, then join your Pact.
       </p>
       <p className="mt-3 truncate rounded-2xl bg-black/10 px-3 py-2 text-xs font-semibold">
         {url}

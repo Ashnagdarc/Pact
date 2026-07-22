@@ -1,0 +1,15 @@
+- generic [ref=e1]:
+  - alert [ref=e7]
+  - main [ref=e30]:
+    - generic [ref=e31]:
+      - paragraph [ref=e32]: Pact
+      - heading "Create your account" [level=1] [ref=e43]
+      - paragraph [ref=e34]: Sign in to keep commitments with people who keep you honest.
+      - generic [ref=e35]:
+        - textbox "Display name" [ref=e44]
+        - textbox "Email" [ref=e36]
+        - textbox "Password (min 8 chars)" [ref=e37]
+        - button "Create account" [ref=e45]
+      - button "Already have an account? Sign in" [active] [ref=e46]
+      - link "Back to home" [ref=e42] [cursor=pointer]:
+        - /url: /

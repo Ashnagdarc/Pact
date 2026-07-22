@@ -82,6 +82,21 @@ export const auth = betterAuth({
   ],
   secret: process.env.BETTER_AUTH_SECRET,
   database: createDatabase(),
+  user: {
+    deleteUser: {
+      enabled: true,
+      sendDeleteAccountVerification: async ({ user, url }) => {
+        void sendEmail({
+          to: user.email,
+          subject: "Confirm deleting your Pact account",
+          text: `Confirm account deletion:\n\n${url}\n\nIf you did not request this, you can ignore this email.`,
+          html: `<p>Confirm deleting your Pact account:</p><p><a href="${url}">${url}</a></p><p>If you did not request this, you can ignore this email.</p>`,
+        }).catch((error) => {
+          console.error("[pact-email] delete verification failed", error);
+        });
+      },
+    },
+  },
   advanced: {
     ipAddress: {
       // Vercel sets x-vercel-forwarded-for; prefer it over client-spoofable XFF.
