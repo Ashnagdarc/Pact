@@ -9,14 +9,29 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
 
+const POST_ONBOARDING_PATH_KEY = "pact.postOnboardingPath";
+
 function initialMode(searchParams: URLSearchParams): "sign-in" | "sign-up" {
   return searchParams.get("mode") === "sign-up" ? "sign-up" : "sign-in";
+}
+
+function safeInternalPath(value: string | null) {
+  return value?.startsWith("/") && !value.startsWith("//") ? value : "/";
+}
+
+function savePostOnboardingPath(path: string) {
+  if (typeof window === "undefined" || path === "/") return;
+  try {
+    window.sessionStorage.setItem(POST_ONBOARDING_PATH_KEY, path);
+  } catch {
+    // Navigation still works without storage; the user will land on the dashboard.
+  }
 }
 
 export default function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const nextPath = searchParams.get("next") || "/";
+  const nextPath = safeInternalPath(searchParams.get("next"));
   const [mode, setMode] = useState<"sign-in" | "sign-up">(() =>
     initialMode(searchParams)
   );
@@ -41,6 +56,11 @@ export default function SignInForm() {
         if (result.error) {
           throw new Error(result.error.message || "Sign up failed");
         }
+
+        // New users must complete onboarding before entering the app. Preserve
+        // an invite destination so it can resume immediately afterwards.
+        savePostOnboardingPath(nextPath);
+        router.replace("/onboarding");
       } else {
         const result = await authClient.signIn.email({
           email,
@@ -49,8 +69,9 @@ export default function SignInForm() {
         if (result.error) {
           throw new Error(result.error.message || "Sign in failed");
         }
+
+        router.replace(nextPath);
       }
-      router.push(nextPath.startsWith("/") ? nextPath : "/");
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
