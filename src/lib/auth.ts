@@ -32,11 +32,25 @@ function createDatabase() {
 
 const infraApiKey = process.env.BETTER_AUTH_API_KEY;
 
-/** Public origin used as JWT `iss` — must match Convex `BETTER_AUTH_ISSUER`. */
+/** Public origin used as JWT `iss` — must match a Convex customJwt issuer. */
+function normalizeIssuer(raw: string | undefined): string | undefined {
+  if (!raw) return undefined;
+  try {
+    const url = new URL(raw);
+    // Keep localhost as-is; force production apex → www canonical.
+    if (url.hostname === "joinpact.tech") {
+      url.hostname = "www.joinpact.tech";
+    }
+    return url.origin;
+  } catch {
+    return raw.replace(/\/$/, "") || undefined;
+  }
+}
+
 export const authJwtIssuer =
-  process.env.BETTER_AUTH_JWT_ISSUER ??
-  process.env.BETTER_AUTH_URL ??
-  process.env.NEXT_PUBLIC_SITE_URL ??
+  normalizeIssuer(process.env.BETTER_AUTH_JWT_ISSUER) ??
+  normalizeIssuer(process.env.BETTER_AUTH_URL) ??
+  normalizeIssuer(process.env.NEXT_PUBLIC_SITE_URL) ??
   "https://www.joinpact.tech";
 
 /** Convex customJwt `applicationID` — must match JWT `aud`. */
