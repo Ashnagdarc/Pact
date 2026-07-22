@@ -188,7 +188,7 @@ export const create = mutation({
         type: "partner_update",
         title: "New commitment assigned",
         body: `${creator.displayName} assigned you “${args.title}”.`,
-        href: `/commitments/${commitmentId}`,
+        href: `/app/commitments/${commitmentId}`,
         pactId: args.pactId,
         commitmentId,
       });

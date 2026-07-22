@@ -140,7 +140,7 @@ export const accept = mutation({
       type: "invitation_accepted",
       title: "Partner joined",
       body: `${name} accepted your invite to “${pact.title}”.`,
-      href: `/pacts/${pact._id}`,
+      href: `/app/pacts/${pact._id}`,
       pactId: pact._id,
     });
 

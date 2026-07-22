@@ -8,7 +8,7 @@ import type { AuthConfig } from "convex/server";
  * audiences so local/prod env drift does not break auth.
  */
 const productionIssuer =
-  process.env.BETTER_AUTH_ISSUER ?? "https://pact-flowtag-projects.vercel.app";
+  process.env.BETTER_AUTH_ISSUER ?? "https://www.joinpact.tech";
 const localIssuer = "http://localhost:3000";
 
 /**

@@ -16,11 +16,17 @@ function initialMode(searchParams: URLSearchParams): "sign-in" | "sign-up" {
 }
 
 function safeInternalPath(value: string | null) {
-  return value?.startsWith("/") && !value.startsWith("//") ? value : "/";
+  return value?.startsWith("/") && !value.startsWith("//") ? value : "/app";
 }
 
 function savePostOnboardingPath(path: string) {
-  if (typeof window === "undefined" || path === "/") return;
+  if (
+    typeof window === "undefined" ||
+    path === "/" ||
+    path === "/app"
+  ) {
+    return;
+  }
   try {
     window.sessionStorage.setItem(POST_ONBOARDING_PATH_KEY, path);
   } catch {
@@ -60,7 +66,7 @@ export default function SignInForm() {
         // New users must complete onboarding before entering the app. Preserve
         // an invite destination so it can resume immediately afterwards.
         savePostOnboardingPath(nextPath);
-        router.replace("/onboarding");
+        router.replace("/app/onboarding");
       } else {
         const result = await authClient.signIn.email({
           email,

@@ -18,7 +18,7 @@ async function deliver(
 ): Promise<{ sent: number; total: number }> {
   const publicKey = process.env.VAPID_PUBLIC_KEY;
   const privateKey = process.env.VAPID_PRIVATE_KEY;
-  const subject = process.env.VAPID_SUBJECT ?? "mailto:hello@pact.app";
+  const subject = process.env.VAPID_SUBJECT ?? "mailto:hello@joinpact.tech";
   if (!publicKey || !privateKey) {
     console.warn("[push] VAPID keys are not configured on Convex");
     return { sent: 0, total: 0 };

@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Pact",
     short_name: "Pact",
     description: "Make commitments. Show your progress. Recover together.",
-    start_url: "/",
+    start_url: "/app",
     display: "standalone",
     background_color: "#050505",
     theme_color: "#050505",

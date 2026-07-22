@@ -175,7 +175,7 @@ function CommitmentDetailConnected({
             This commitment may have been removed.
           </p>
           <Button asChild className="mt-4 rounded-full">
-            <Link href="/">Back to Today</Link>
+            <Link href="/app">Back to Today</Link>
           </Button>
         </SurfaceCard>
       </AppShell>
@@ -278,7 +278,7 @@ function CommitmentDetailConnected({
           variant="ghost"
           className="size-11 rounded-full border border-white/10 bg-white/5"
         >
-          <Link href="/" aria-label="Back">
+          <Link href="/app" aria-label="Back">
             <ArrowLeft className="size-5" />
           </Link>
         </Button>
@@ -389,7 +389,7 @@ function CommitmentDetailConnected({
                 asChild
                 className="mt-3 h-11 rounded-full bg-ink-950 text-white hover:bg-ink-950/90"
               >
-                <Link href={`/rescue/${commitment._id}`}>Open Rescue Mode</Link>
+                <Link href={`/app/rescue/${commitment._id}`}>Open Rescue Mode</Link>
               </Button>
             </div>
           </div>

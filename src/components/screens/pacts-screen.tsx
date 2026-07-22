@@ -69,7 +69,7 @@ function PactsScreenConnected() {
           size="icon"
           className="size-11 rounded-full bg-signal text-white hover:bg-signal/90"
         >
-          <Link href="/pacts/new" aria-label="Create Pact">
+          <Link href="/app/pacts/new" aria-label="Create Pact">
             <Plus className="size-5" />
           </Link>
         </Button>
@@ -82,7 +82,7 @@ function PactsScreenConnected() {
               No pacts yet. Create one and share an invite link.
             </p>
             <Button asChild className="mt-3 rounded-full bg-signal text-white">
-              <Link href="/pacts/new">Create Pact</Link>
+              <Link href="/app/pacts/new">Create Pact</Link>
             </Button>
           </SurfaceCard>
         ) : (
@@ -94,9 +94,9 @@ function PactsScreenConnected() {
                 activeTasks={board.activeTasks}
                 members={board.members}
                 tone={board.pact.tone ?? "signal"}
-                href={`/pacts/${board.pact._id}`}
-                addHref={`/new?pactId=${board.pact._id}`}
-                inviteHref={`/pacts/${board.pact._id}#invite`}
+                href={`/app/pacts/${board.pact._id}`}
+                addHref={`/app/new?pactId=${board.pact._id}`}
+                inviteHref={`/app/pacts/${board.pact._id}#invite`}
               />
             ) : null
           )

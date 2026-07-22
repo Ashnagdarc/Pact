@@ -998,7 +998,7 @@ SQLite is **not** used in production (incompatible with Vercel serverless). Loca
 | Repository | GitHub (`Ashnagdarc/Pact`) |
 | Project tracking | GitHub Projects and Issues |
 | Design | Figma free plan |
-| App hosting | **Vercel** (`pact-two-ashy.vercel.app`) |
+| App hosting | **Vercel** (`www.joinpact.tech`) |
 | Convex | Convex Cloud (`grateful-crow-558`) |
 | Auth DB hosting | Neon via Vercel Marketplace |
 | Error tracking | Console logging first; add a free monitoring tier later if needed |

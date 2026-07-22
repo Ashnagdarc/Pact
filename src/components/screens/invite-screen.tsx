@@ -65,7 +65,7 @@ function InviteScreenConnected({ token }: InviteScreenProps) {
             This link may be invalid or revoked.
           </p>
           <Button asChild className="mt-4 rounded-full">
-            <Link href="/">Go home</Link>
+            <Link href="/sign-in">Go to sign in</Link>
           </Button>
         </SurfaceCard>
       </AppShell>
@@ -88,7 +88,7 @@ function InviteScreenConnected({ token }: InviteScreenProps) {
           token,
           displayName: name.trim() || user?.displayName || "Partner",
         });
-        router.push(`/pacts/${result.pactId}`);
+        router.push(`/app/pacts/${result.pactId}`);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Could not accept invite");
       }
@@ -100,7 +100,7 @@ function InviteScreenConnected({ token }: InviteScreenProps) {
     startTransition(async () => {
       try {
         await decline({ token, displayName: name || undefined });
-        router.push("/");
+        router.push("/app");
       } catch (err) {
         setError(err instanceof Error ? err.message : "Could not decline invite");
       }

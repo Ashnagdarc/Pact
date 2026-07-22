@@ -4,7 +4,7 @@ import { getCapturedResetLink } from "@/lib/email";
 
 /**
  * Dev/test helper: returns the last password-reset link captured by
- * `sendResetPassword` when RESEND is not configured.
+ * `sendResetPassword` when Brevo is not configured.
  * Disabled in production unless PACT_CAPTURE_RESET_LINKS=1.
  */
 export async function GET() {

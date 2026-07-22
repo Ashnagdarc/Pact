@@ -129,7 +129,7 @@ export default function ProfilePage() {
                   asChild
                   className="mt-3 rounded-full bg-signal text-white"
                 >
-                  <Link href="/pacts/new">Create Pact</Link>
+                  <Link href="/app/pacts/new">Create Pact</Link>
                 </Button>
               </div>
             ) : (
@@ -182,7 +182,7 @@ export default function ProfilePage() {
           asChild
           className="h-12 justify-start rounded-2xl border border-white/10 bg-white/5 text-white hover:bg-white/10"
         >
-          <Link href="/notifications">
+          <Link href="/app/notifications">
             <Bell className="size-4" />
             Notification centre
           </Link>
@@ -191,7 +191,7 @@ export default function ProfilePage() {
           asChild
           className="h-12 justify-start rounded-2xl border border-white/10 bg-white/5 text-white hover:bg-white/10"
         >
-          <Link href="/install">
+          <Link href="/app/install">
             <Download className="size-4" />
             Install guide
           </Link>

@@ -28,7 +28,7 @@ export const deliverDue = internalMutation({
         type: "commitment_due",
         title: "Reminder",
         body: `“${commitment.title}” is due soon.`,
-        href: `/commitments/${commitment._id}`,
+        href: `/app/commitments/${commitment._id}`,
         pactId: commitment.pactId,
         commitmentId: commitment._id,
       });
@@ -48,7 +48,7 @@ export const deliverDue = internalMutation({
         type: "commitment_due",
         title: "Task reminder",
         body: `“${task.title}” is due soon.`,
-        href: `/tasks/${task._id}`,
+        href: `/app/tasks/${task._id}`,
       });
 
       await ctx.db.patch(task._id, { reminderAt: undefined });
@@ -98,7 +98,7 @@ export const deliverOneCommitment = internalMutation({
       type: "commitment_due",
       title: "Reminder",
       body: `“${commitment.title}” is due soon.`,
-      href: `/commitments/${commitment._id}`,
+      href: `/app/commitments/${commitment._id}`,
       pactId: commitment.pactId,
       commitmentId: commitment._id,
     });

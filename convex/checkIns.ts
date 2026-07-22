@@ -119,7 +119,7 @@ export const submit = mutation({
     });
 
     const actorName = user.displayName;
-    const href = `/commitments/${args.commitmentId}`;
+    const href = `/app/commitments/${args.commitmentId}`;
 
     if (commitment.pactId) {
       const isHelp =
@@ -194,7 +194,7 @@ export const respond = mutation({
       type: "partner_response",
       title: "Partner responded",
       body: `${responder.displayName} replied on “${commitment.title}”.`,
-      href: `/commitments/${commitment._id}`,
+      href: `/app/commitments/${commitment._id}`,
       pactId: commitment.pactId,
       commitmentId: checkIn.commitmentId,
     });

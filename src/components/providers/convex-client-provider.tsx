@@ -8,6 +8,23 @@ import { authClient } from "@/lib/auth-client";
 const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
 const convex = convexUrl ? new ConvexReactClient(convexUrl) : null;
 
+type CachedJwt = { token: string; expMs: number };
+let cachedJwt: CachedJwt | null = null;
+let inflightJwt: Promise<string | null> | null = null;
+
+function jwtExpiryMs(token: string): number | null {
+  try {
+    const payloadB64 = token.split(".")[1];
+    if (!payloadB64) return null;
+    const payload = JSON.parse(
+      atob(payloadB64.replace(/-/g, "+").replace(/_/g, "/"))
+    ) as { exp?: number };
+    return typeof payload.exp === "number" ? payload.exp * 1000 : null;
+  } catch {
+    return null;
+  }
+}
+
 function decodeJwtClaims(token: string): {
   iss?: unknown;
   aud?: unknown;
@@ -35,31 +52,56 @@ function decodeJwtClaims(token: string): {
   }
 }
 
-async function fetchConvexJwt(): Promise<string | null> {
-  // Same-origin issuer with typ/iss/aud Convex expects (not Better Auth /token).
-  const response = await fetch("/api/convex-token", {
-    method: "GET",
-    credentials: "include",
-    headers: { Accept: "application/json" },
-  });
+async function fetchConvexJwt(forceRefresh = false): Promise<string | null> {
+  const now = Date.now();
+  // Reuse a valid token for ~50 minutes (tokens expire in 1h).
+  if (
+    !forceRefresh &&
+    cachedJwt &&
+    cachedJwt.expMs - now > 10 * 60 * 1000
+  ) {
+    return cachedJwt.token;
+  }
 
-  if (!response.ok) {
-    if (process.env.NODE_ENV !== "production") {
-      console.warn("[pact-auth] /api/convex-token failed", response.status);
+  if (!forceRefresh && inflightJwt) {
+    return inflightJwt;
+  }
+
+  inflightJwt = (async () => {
+    const response = await fetch("/api/convex-token", {
+      method: "GET",
+      credentials: "include",
+      headers: { Accept: "application/json" },
+    });
+
+    if (!response.ok) {
+      if (process.env.NODE_ENV !== "production") {
+        console.warn("[pact-auth] /api/convex-token failed", response.status);
+      }
+      cachedJwt = null;
+      return null;
     }
-    return null;
-  }
 
-  const data = (await response.json()) as { token?: string };
-  if (!data.token) {
-    return null;
-  }
+    const data = (await response.json()) as { token?: string };
+    if (!data.token) {
+      cachedJwt = null;
+      return null;
+    }
 
-  if (process.env.NODE_ENV !== "production") {
-    console.info("[pact-auth] jwt claims", decodeJwtClaims(data.token));
-  }
+    if (process.env.NODE_ENV !== "production") {
+      console.info("[pact-auth] jwt claims", decodeJwtClaims(data.token));
+    }
 
-  return data.token;
+    const expMs = jwtExpiryMs(data.token) ?? now + 55 * 60 * 1000;
+    cachedJwt = { token: data.token, expMs };
+    return data.token;
+  })();
+
+  try {
+    return await inflightJwt;
+  } finally {
+    inflightJwt = null;
+  }
 }
 
 function useAuthFromBetterAuth() {
@@ -69,12 +111,12 @@ function useAuthFromBetterAuth() {
   const fetchAccessToken = useCallback(
     async ({ forceRefreshToken }: { forceRefreshToken: boolean }) => {
       if (!session?.user) {
+        cachedJwt = null;
         return null;
       }
 
-      void forceRefreshToken;
       try {
-        return await fetchConvexJwt();
+        return await fetchConvexJwt(forceRefreshToken);
       } catch (error) {
         if (process.env.NODE_ENV !== "production") {
           console.warn("[pact-auth] token fetch error", error);

@@ -18,7 +18,7 @@ export function FabCluster({ className }: FabClusterProps) {
       )}
     >
       <Link
-        href="/new"
+        href="/app/new"
         aria-label="Create commitment"
         className="pointer-events-auto inline-flex size-16 items-center justify-center rounded-full bg-ink-950 text-white shadow-[0_12px_40px_rgba(0,0,0,0.55)] ring-2 ring-white/10 transition-transform active:scale-95"
       >

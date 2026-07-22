@@ -2,7 +2,7 @@
 
 Recruit **five pairs** (10 people) who already trust each other and will test Pact together for at least one week.
 
-Production: https://pact-flowtag-projects.vercel.app
+Production: https://www.joinpact.tech
 
 ## Who to ask
 
@@ -24,7 +24,7 @@ Hey — I'm running a private beta of **Pact**, an accountability app for two pe
 Would you and [partner] try it together for a week? You create one real commitment, check in, and see if Rescue Mode helps when plans slip.
 
 Sign up here (bring your partner):  
-https://pact-flowtag-projects.vercel.app/sign-in?mode=sign-up
+https://www.joinpact.tech/sign-in?mode=sign-up
 
 Takes ~10 minutes to start. I'd love honest feedback after day 7.
 
@@ -43,7 +43,7 @@ What I need from you and a partner:
 3. Use the app for 7 days (including at least one check-in response)
 4. Tell me what felt useful vs. confusing
 
-Start here: https://pact-flowtag-projects.vercel.app/sign-in?mode=sign-up
+Start here: https://www.joinpact.tech/sign-in?mode=sign-up
 
 Thanks — [Your name]
 

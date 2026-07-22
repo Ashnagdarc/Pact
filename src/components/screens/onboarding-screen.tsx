@@ -85,7 +85,7 @@ export function OnboardingScreen() {
 
   useEffect(() => {
     if (loading || !user?.onboardingCompleted) return;
-    router.replace("/");
+    router.replace("/app");
   }, [loading, user?.onboardingCompleted, router]);
 
   // If sign-in landed us back here with pending local answers, finish once.
@@ -109,7 +109,7 @@ export function OnboardingScreen() {
     })
       .then(() => {
         clearOnboardingDraft();
-        router.replace("/");
+        router.replace("/app");
       })
       .catch((err) => {
         pendingApplyStarted.current = false;
@@ -175,7 +175,7 @@ export function OnboardingScreen() {
         });
         clearOnboardingDraft();
         // Pending stays until useCurrentUser sees onboardingCompleted.
-        router.push("/");
+        router.push("/app");
         router.refresh();
         return;
       }
@@ -188,7 +188,9 @@ export function OnboardingScreen() {
         notificationsEnabled: draft.notificationsEnabled,
       });
       clearOnboardingDraft();
-      router.push(`/sign-in?mode=sign-up&next=${encodeURIComponent("/")}`);
+      router.push(
+        `/sign-in?mode=sign-up&next=${encodeURIComponent("/app")}`
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not finish onboarding");
     } finally {

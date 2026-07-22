@@ -112,7 +112,7 @@ export const syncRescuePrompts = mutation({
         type: "rescue_prompt",
         title: "Rescue available",
         body: `“${commitment.title}” is overdue. Open Rescue Mode when you’re ready.`,
-        href: `/rescue/${commitment._id}`,
+        href: `/app/rescue/${commitment._id}`,
         pactId: commitment.pactId,
         commitmentId: commitment._id,
         metadata: { dayKey },

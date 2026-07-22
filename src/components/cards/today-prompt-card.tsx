@@ -76,7 +76,7 @@ export function TodayPromptCard({
 
   return (
     <div className={cn("prompt-float", className)}>
-      <Link href="/new" className="group block outline-none">
+      <Link href="/app/new" className="group block outline-none">
         <SurfaceCard
           tone="glass"
           className={cn(

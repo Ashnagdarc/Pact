@@ -20,11 +20,11 @@ type Tab = {
 };
 
 const tabs: Tab[] = [
-  { href: "/", label: "Today", icon: Sun },
-  { href: "/pacts", label: "Pacts", icon: LayoutGrid },
-  { href: "/new", label: "New", icon: Plus, primary: true },
-  { href: "/insights", label: "Insights", icon: LineChart },
-  { href: "/profile", label: "You", icon: UserRound },
+  { href: "/app", label: "Today", icon: Sun },
+  { href: "/app/pacts", label: "Pacts", icon: LayoutGrid },
+  { href: "/app/new", label: "New", icon: Plus, primary: true },
+  { href: "/app/insights", label: "Insights", icon: LineChart },
+  { href: "/app/profile", label: "You", icon: UserRound },
 ];
 
 export function BottomTabs() {
@@ -38,8 +38,8 @@ export function BottomTabs() {
       <div className="pointer-events-auto mb-2 flex items-center justify-between gap-1 rounded-[1.75rem] border border-white/10 bg-ink-900/90 px-2 py-2 shadow-[0_-8px_40px_rgba(0,0,0,0.45)] backdrop-blur-xl">
         {tabs.map((tab) => {
           const active =
-            tab.href === "/"
-              ? pathname === "/"
+            tab.href === "/app"
+              ? pathname === "/app"
               : pathname.startsWith(tab.href);
           const Icon = tab.icon;
 

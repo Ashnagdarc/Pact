@@ -17,7 +17,6 @@ import { AppShell } from "@/components/navigation/app-shell";
 import { FilterChips } from "@/components/navigation/filter-chips";
 import { NotificationBell } from "@/components/navigation/notification-bell";
 import { InstallPrompt } from "@/components/pwa/install-prompt";
-import { WelcomeScreen } from "@/components/screens/welcome-screen";
 import { Button } from "@/components/ui/button";
 import { useCurrentUser } from "@/hooks/use-demo-user";
 import { readOnboardingPending } from "@/lib/onboarding";
@@ -71,11 +70,16 @@ export function TodayScreen() {
   const boards = useQuery(api.pacts.listForUser, userId ? {} : "skip");
 
   useEffect(() => {
-    if (!isAuthenticated || userLoading || !user) return;
+    if (userLoading) return;
+    if (!isAuthenticated) {
+      router.replace("/sign-in");
+      return;
+    }
+    if (!user) return;
     // Pending local onboarding is applied during useCurrentUser bootstrap.
-    // Don't bounce to /onboarding while that write is in flight / about to run.
+    // Don't bounce to /app/onboarding while that write is in flight / about to run.
     if (user.onboardingCompleted || readOnboardingPending()) return;
-    router.replace("/onboarding");
+    router.replace("/app/onboarding");
   }, [isAuthenticated, user, userLoading, router]);
 
   const filteredCommitments = (todayCommitments ?? []).filter((c) => {
@@ -102,7 +106,7 @@ export function TodayScreen() {
             : boards?.length,
   }));
 
-  if (userLoading || (userId && (!stats || !todayCommitments || !todayTasks || !boards))) {
+  if (userLoading) {
     return (
       <AppShell showTabs={false}>
         <div className="flex min-h-[70dvh] flex-col items-center justify-center gap-3 text-white/70">
@@ -114,7 +118,14 @@ export function TodayScreen() {
   }
 
   if (!isAuthenticated) {
-    return <WelcomeScreen />;
+    return (
+      <AppShell showTabs={false}>
+        <div className="flex min-h-[70dvh] flex-col items-center justify-center gap-3 text-white/70">
+          <Loader2 className="size-6 animate-spin text-volt-500" />
+          <p className="text-sm font-medium">Taking you home…</p>
+        </div>
+      </AppShell>
+    );
   }
 
   if (userError || !userId) {
@@ -132,6 +143,12 @@ export function TodayScreen() {
       </AppShell>
     );
   }
+
+  const dataPending =
+    stats === undefined ||
+    todayCommitments === undefined ||
+    todayTasks === undefined ||
+    boards === undefined;
 
   return (
     <AppShell>
@@ -157,142 +174,164 @@ export function TodayScreen() {
         </div>
       </header>
 
-      <TodayPromptCard
-        className="mb-4"
-        people={
-          boards?.[0]?.members?.slice(0, 1).map((m) => ({
-            name: m.name,
-            src: m.src,
-          })) ?? [{ name: "Partner" }]
-        }
-        openCount={(stats?.openCount ?? 0) + (todayTasks?.filter((t) => t.status === "open").length ?? 0)}
-        blockedCount={stats?.blockedCount ?? 0}
-      />
-
-      <StatHero
-        value={stats?.completedThisWeek ?? 0}
-        label="Commitments kept this week. Keep the streak kind."
-        className="mb-5"
-      />
-
-      <InstallPrompt className="mb-5" />
-
-      <FilterChips
-        options={filterOptions}
-        value={filter}
-        onChange={setFilter}
-        className="mb-5"
-      />
-
-      {(todayTasks?.length ?? 0) > 0 ? (
-        <section className="mb-6">
-          <div className="mb-3 flex items-end justify-between">
-            <h2 className="font-heading text-2xl font-bold tracking-tight">
-              Personal tasks
-            </h2>
-            <span className="text-xs font-semibold text-white/45">
-              {todayTasks?.length ?? 0}
-            </span>
-          </div>
+      {dataPending ? (
+        <div className="mb-5 space-y-4" aria-busy aria-live="polite">
+          <div className="h-24 animate-pulse rounded-[1.5rem] bg-white/6" />
+          <div className="h-28 animate-pulse rounded-[1.5rem] bg-white/6" />
           <div className="grid grid-cols-2 gap-3">
-            {(todayTasks ?? []).map((task, index) => (
-              <motion.div
-                key={task._id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.04 * index }}
-                className={
-                  (todayTasks?.length ?? 0) === 1 ? "col-span-2" : "col-span-1"
-                }
-              >
-                <CommitmentCard
-                  title={task.title}
-                  tone={task.tone ?? "cream"}
-                  favorited={task.favorited}
-                  status={task.status === "done" ? "done" : "on_track"}
-                  meta={task.description}
-                  href={`/tasks/${task._id}`}
-                />
-              </motion.div>
-            ))}
+            <div className="h-28 animate-pulse rounded-[1.35rem] bg-white/6" />
+            <div className="h-28 animate-pulse rounded-[1.35rem] bg-white/6" />
           </div>
-        </section>
-      ) : null}
-
-      <section className="mb-6">
-        <div className="mb-3 flex items-end justify-between">
-          <h2 className="font-heading text-2xl font-bold tracking-tight">
-            Today&apos;s focus
-          </h2>
-          <span className="text-xs font-semibold text-white/45">
-            {filteredCommitments.length} due
-          </span>
+          <p className="text-center text-xs font-medium text-white/40">
+            Syncing your commitments…
+          </p>
         </div>
+      ) : (
+        <>
+          <TodayPromptCard
+            className="mb-4"
+            people={
+              boards?.[0]?.members?.slice(0, 1).map((m) => ({
+                name: m.name,
+                src: m.src,
+              })) ?? [{ name: "Partner" }]
+            }
+            openCount={
+              (stats?.openCount ?? 0) +
+              (todayTasks?.filter((t) => t.status === "open").length ?? 0)
+            }
+            blockedCount={stats?.blockedCount ?? 0}
+          />
 
-        <div className="grid grid-cols-2 gap-3">
-          {filteredCommitments.map((commitment, index) => {
-            const span =
-              commitment.checklist?.length || index === filteredCommitments.length - 1
-                ? index === 0 && commitment.checklist
-                  ? "col-span-1"
-                  : commitment.checklist
-                    ? "col-span-1"
-                    : "col-span-2"
-                : "col-span-1";
+          <StatHero
+            value={stats?.completedThisWeek ?? 0}
+            label="Commitments kept this week. Keep the streak kind."
+            className="mb-5"
+          />
 
-            return (
-              <motion.div
-                key={commitment._id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.05 * index }}
-                className={
-                  filteredCommitments.length === 1
-                    ? "col-span-2"
-                    : index === 2
-                      ? "col-span-2"
-                      : span
-                }
-              >
-                <CommitmentCard
-                  title={commitment.title}
-                  tone={commitment.tone ?? "cream"}
-                  favorited={commitment.favorited}
-                  status={toUiStatus(commitment.status)}
-                  meta={commitment.description}
-                  items={commitment.checklist}
-                  href={`/commitments/${commitment._id}`}
-                />
-              </motion.div>
-            );
-          })}
-        </div>
-      </section>
+          <InstallPrompt className="mb-5" />
 
-      <section className="mb-4">
-        <div className="mb-3 flex items-end justify-between">
-          <h2 className="font-heading text-2xl font-bold tracking-tight">
-            Your pacts
-          </h2>
-          <span className="text-xs font-semibold text-signal">Boards</span>
-        </div>
-        <div className="space-y-3">
-          {(boards ?? []).map((board) =>
-            board ? (
-              <PactBoardCard
-                key={board.pact._id}
-                title={board.pact.title}
-                activeTasks={board.activeTasks}
-                members={board.members}
-                tone={board.pact.tone ?? "signal"}
-                href={`/pacts/${board.pact._id}`}
-                addHref={`/new?pactId=${board.pact._id}`}
-                inviteHref={`/pacts/${board.pact._id}#invite`}
-              />
-            ) : null
-          )}
-        </div>
-      </section>
+          <FilterChips
+            options={filterOptions}
+            value={filter}
+            onChange={setFilter}
+            className="mb-5"
+          />
+
+          {(todayTasks?.length ?? 0) > 0 ? (
+            <section className="mb-6">
+              <div className="mb-3 flex items-end justify-between">
+                <h2 className="font-heading text-2xl font-bold tracking-tight">
+                  Personal tasks
+                </h2>
+                <span className="text-xs font-semibold text-white/45">
+                  {todayTasks?.length ?? 0}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {(todayTasks ?? []).map((task, index) => (
+                  <motion.div
+                    key={task._id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.04 * index }}
+                    className={
+                      (todayTasks?.length ?? 0) === 1
+                        ? "col-span-2"
+                        : "col-span-1"
+                    }
+                  >
+                    <CommitmentCard
+                      title={task.title}
+                      tone={task.tone ?? "cream"}
+                      favorited={task.favorited}
+                      status={task.status === "done" ? "done" : "on_track"}
+                      meta={task.description}
+                      href={`/app/tasks/${task._id}`}
+                    />
+                  </motion.div>
+                ))}
+              </div>
+            </section>
+          ) : null}
+
+          <section className="mb-6">
+            <div className="mb-3 flex items-end justify-between">
+              <h2 className="font-heading text-2xl font-bold tracking-tight">
+                Today&apos;s focus
+              </h2>
+              <span className="text-xs font-semibold text-white/45">
+                {filteredCommitments.length} due
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              {filteredCommitments.map((commitment, index) => {
+                const span =
+                  commitment.checklist?.length ||
+                  index === filteredCommitments.length - 1
+                    ? index === 0 && commitment.checklist
+                      ? "col-span-1"
+                      : commitment.checklist
+                        ? "col-span-1"
+                        : "col-span-2"
+                    : "col-span-1";
+
+                return (
+                  <motion.div
+                    key={commitment._id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.05 * index }}
+                    className={
+                      filteredCommitments.length === 1
+                        ? "col-span-2"
+                        : index === 2
+                          ? "col-span-2"
+                          : span
+                    }
+                  >
+                    <CommitmentCard
+                      title={commitment.title}
+                      tone={commitment.tone ?? "cream"}
+                      favorited={commitment.favorited}
+                      status={toUiStatus(commitment.status)}
+                      meta={commitment.description}
+                      items={commitment.checklist}
+                      href={`/app/commitments/${commitment._id}`}
+                    />
+                  </motion.div>
+                );
+              })}
+            </div>
+          </section>
+
+          <section className="mb-4">
+            <div className="mb-3 flex items-end justify-between">
+              <h2 className="font-heading text-2xl font-bold tracking-tight">
+                Your pacts
+              </h2>
+              <span className="text-xs font-semibold text-signal">Boards</span>
+            </div>
+            <div className="space-y-3">
+              {(boards ?? []).map((board) =>
+                board ? (
+                  <PactBoardCard
+                    key={board.pact._id}
+                    title={board.pact.title}
+                    activeTasks={board.activeTasks}
+                    members={board.members}
+                    tone={board.pact.tone ?? "signal"}
+                    href={`/app/pacts/${board.pact._id}`}
+                    addHref={`/app/new?pactId=${board.pact._id}`}
+                    inviteHref={`/app/pacts/${board.pact._id}#invite`}
+                  />
+                ) : null
+              )}
+            </div>
+          </section>
+        </>
+      )}
     </AppShell>
   );
 }

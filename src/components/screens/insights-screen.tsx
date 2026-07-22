@@ -158,13 +158,13 @@ function InsightsScreenConnected() {
                 Create a Pact to see shared health signals.
               </p>
               <Button asChild className="mt-3 rounded-full bg-signal text-white">
-                <Link href="/pacts/new">Create Pact</Link>
+                <Link href="/app/pacts/new">Create Pact</Link>
               </Button>
             </SurfaceCard>
           ) : (
             pactHealth.map((row) =>
               row ? (
-                <Link key={row.pact._id} href={`/pacts/${row.pact._id}`} className="block">
+                <Link key={row.pact._id} href={`/app/pacts/${row.pact._id}`} className="block">
                   <SurfaceCard
                     tone={row.pact.tone ?? "ink"}
                     className={cn(

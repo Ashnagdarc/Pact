@@ -83,7 +83,7 @@ function CreatePactForm() {
         createInvite: values.privacyLevel !== "private",
       });
 
-      router.push(`/pacts/${result.pactId}?created=1`);
+      router.push(`/app/pacts/${result.pactId}?created=1`);
     } catch (err) {
       form.setError("title", {
         message: err instanceof Error ? err.message : "Could not create Pact",

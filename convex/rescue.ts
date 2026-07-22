@@ -185,7 +185,7 @@ export const createPlan = mutation({
         type: "recovery_plan",
         title: "Recovery plan shared",
         body: `${user.displayName} chose to ${recoveryActionLabel[args.recoveryAction]} on “${commitment.title}”.`,
-        href: `/commitments/${args.commitmentId}`,
+        href: `/app/commitments/${args.commitmentId}`,
       });
     }
 
@@ -242,7 +242,7 @@ export const reviewPlan = mutation({
       type: "partner_response",
       title: "Recovery acknowledged",
       body: `${reviewer.displayName} acknowledged your recovery plan for “${commitment.title}”.`,
-      href: `/commitments/${commitment._id}`,
+      href: `/app/commitments/${commitment._id}`,
       pactId: commitment.pactId,
       commitmentId: plan.commitmentId,
     });

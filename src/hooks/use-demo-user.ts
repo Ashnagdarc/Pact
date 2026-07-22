@@ -130,7 +130,7 @@ export function useCurrentUser() {
           });
           // Keep pending in localStorage until appUser.onboardingCompleted
           // flips true (see effect above). Prevents Today from redirecting
-          // to /onboarding on a stale query snapshot.
+          // to /app/onboarding on a stale query snapshot.
         }
 
         if (!cancelled && gen === bootGen.current) {

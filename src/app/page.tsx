@@ -1,10 +1,13 @@
-import { ConvexSetupScreen } from "@/components/screens/convex-setup-screen";
-import { TodayScreen } from "@/components/screens/today-screen";
+import type { Metadata } from "next";
+
+import { LandingPage } from "@/components/landing/landing-page";
+
+export const metadata: Metadata = {
+  title: "Pact — Finish what you promise",
+  description:
+    "Make commitments with people you trust, show progress, and recover together when plans change.",
+};
 
 export default function HomePage() {
-  if (!process.env.NEXT_PUBLIC_CONVEX_URL) {
-    return <ConvexSetupScreen />;
-  }
-
-  return <TodayScreen />;
+  return <LandingPage />;
 }

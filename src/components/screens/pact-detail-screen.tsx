@@ -142,7 +142,7 @@ function PactDetailConnected({ pactId }: PactDetailScreenProps) {
             Accept an invite first, or ask the owner to share a new link.
           </p>
           <Button asChild className="mt-4 rounded-full">
-            <Link href="/pacts">Back to Pacts</Link>
+            <Link href="/app/pacts">Back to Pacts</Link>
           </Button>
         </SurfaceCard>
       </AppShell>
@@ -176,7 +176,7 @@ function PactDetailConnected({ pactId }: PactDetailScreenProps) {
           variant="ghost"
           className="size-11 rounded-full border border-white/10 bg-white/5"
         >
-          <Link href="/pacts" aria-label="Back">
+          <Link href="/app/pacts" aria-label="Back">
             <ArrowLeft className="size-5" />
           </Link>
         </Button>
@@ -187,7 +187,7 @@ function PactDetailConnected({ pactId }: PactDetailScreenProps) {
           className="size-11 rounded-full border border-white/10 bg-white/5"
         >
           <Link
-            href={`/new?pactId=${pact._id}`}
+            href={`/app/new?pactId=${pact._id}`}
             aria-label="Add commitment"
           >
             <Plus className="size-5" />
@@ -414,7 +414,7 @@ function PactDetailConnected({ pactId }: PactDetailScreenProps) {
               No commitments yet. Add the first one for this Pact.
             </p>
             <Button asChild className="mt-3 rounded-full bg-signal text-white">
-              <Link href={`/new?pactId=${pact._id}`}>Add commitment</Link>
+              <Link href={`/app/new?pactId=${pact._id}`}>Add commitment</Link>
             </Button>
           </SurfaceCard>
         ) : (
@@ -431,7 +431,7 @@ function PactDetailConnected({ pactId }: PactDetailScreenProps) {
                     : undefined
                 }
                 favorited={commitment.favorited}
-                href={`/commitments/${commitment._id}`}
+                href={`/app/commitments/${commitment._id}`}
               />
             ))}
           </div>

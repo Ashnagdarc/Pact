@@ -20,16 +20,18 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // `/` stays public so marketing/welcome can render for signed-out users.
-  // Authenticated Today is gated client-side (and by Convex JWT).
+  // `/` stays public for the marketing landing page.
+  // `/app/onboarding` and `/app/install` stay public (pre-auth / PWA help).
+  // Other `/app` surfaces are cookie-gated; Convex JWT still enforces auth.
   matcher: [
-    "/pacts/:path*",
-    "/commitments/:path*",
-    "/tasks/:path*",
-    "/insights",
-    "/notifications",
-    "/profile",
-    "/new",
-    "/rescue/:path*",
+    "/app",
+    "/app/pacts/:path*",
+    "/app/commitments/:path*",
+    "/app/tasks/:path*",
+    "/app/insights",
+    "/app/notifications",
+    "/app/profile",
+    "/app/new",
+    "/app/rescue/:path*",
   ],
 };

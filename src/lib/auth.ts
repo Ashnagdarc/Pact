@@ -37,7 +37,7 @@ export const authJwtIssuer =
   process.env.BETTER_AUTH_JWT_ISSUER ??
   process.env.BETTER_AUTH_URL ??
   process.env.NEXT_PUBLIC_SITE_URL ??
-  "https://pact-flowtag-projects.vercel.app";
+  "https://www.joinpact.tech";
 
 /** Convex customJwt `applicationID` — must match JWT `aud`. */
 export const authJwtAudience = "convex";
@@ -53,8 +53,10 @@ function infraConnectionOptions() {
   };
 }
 
-const productionHost = "pact-flowtag-projects.vercel.app";
+const productionHost = "www.joinpact.tech";
 const productionOrigin = `https://${productionHost}`;
+const apexHost = "joinpact.tech";
+const apexOrigin = `https://${apexHost}`;
 
 export const auth = betterAuth({
   appName: "Pact",
@@ -62,6 +64,8 @@ export const auth = betterAuth({
   baseURL: {
     allowedHosts: [
       productionHost,
+      apexHost,
+      "pact-flowtag-projects.vercel.app",
       "pact-two-ashy.vercel.app",
       "localhost:3000",
       "127.0.0.1:3000",
@@ -75,6 +79,8 @@ export const auth = betterAuth({
   },
   trustedOrigins: [
     productionOrigin,
+    apexOrigin,
+    "https://pact-flowtag-projects.vercel.app",
     "https://pact-two-ashy.vercel.app",
     "http://localhost:3000",
     "http://127.0.0.1:3000",

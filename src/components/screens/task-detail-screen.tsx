@@ -62,7 +62,7 @@ function TaskDetailConnected({ taskId }: { taskId: string }) {
         <SurfaceCard tone="coral" className="mt-8">
           <p className="font-heading text-2xl font-bold">Task not found</p>
           <Button asChild className="mt-4 rounded-full">
-            <Link href="/">Back to Today</Link>
+            <Link href="/app">Back to Today</Link>
           </Button>
         </SurfaceCard>
       </AppShell>
@@ -78,7 +78,7 @@ function TaskDetailConnected({ taskId }: { taskId: string }) {
           variant="ghost"
           className="size-11 rounded-full border border-white/10 bg-white/5"
         >
-          <Link href="/" aria-label="Back">
+          <Link href="/app" aria-label="Back">
             <ArrowLeft className="size-5" />
           </Link>
         </Button>
@@ -92,7 +92,7 @@ function TaskDetailConnected({ taskId }: { taskId: string }) {
           onClick={() =>
             startTransition(async () => {
               await removeTask({ taskId: task._id });
-              router.replace("/");
+              router.replace("/app");
             })
           }
         >

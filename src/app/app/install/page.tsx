@@ -50,7 +50,7 @@ export default function InstallPage() {
       </SurfaceCard>
 
       <Button asChild className="mt-6 h-12 w-full rounded-full bg-signal text-white">
-        <Link href="/">Back to Today</Link>
+        <Link href="/app">Back to Today</Link>
       </Button>
     </AppShell>
   );

@@ -127,7 +127,7 @@ function NewCommitmentForm({ initialPactId }: { initialPactId?: string }) {
             : undefined,
           tone: values.tone,
         });
-        router.push(`/tasks/${taskId}`);
+        router.push(`/app/tasks/${taskId}`);
         return;
       }
 
@@ -144,7 +144,7 @@ function NewCommitmentForm({ initialPactId }: { initialPactId?: string }) {
         evidenceRequired: values.evidenceRequired,
       });
 
-      router.push(`/commitments/${commitmentId}`);
+      router.push(`/app/commitments/${commitmentId}`);
     } catch (err) {
       form.setError("title", {
         message:
@@ -183,7 +183,7 @@ function NewCommitmentForm({ initialPactId }: { initialPactId?: string }) {
       <p className="mt-2 text-sm text-white/55">
         Capture a task or commitment in under 10 seconds.{" "}
         <Link
-          href="/pacts/new"
+          href="/app/pacts/new"
           className="text-signal underline-offset-2 hover:underline"
         >
           Create a Pact instead

@@ -106,7 +106,7 @@ export function InstallPrompt({ className, force = false }: InstallPromptProps) 
               </Button>
             ) : (
               <Button asChild className="h-10 rounded-full bg-ink-950 text-white">
-                <Link href="/install">How to install</Link>
+                <Link href="/app/install">How to install</Link>
               </Button>
             )}
             {!force ? (

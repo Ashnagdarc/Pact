@@ -34,7 +34,7 @@ export default function TermsPage() {
       </SurfaceCard>
 
       <Button asChild className="mt-4 rounded-full">
-        <Link href="/profile">Back to profile</Link>
+        <Link href="/app/profile">Back to profile</Link>
       </Button>
     </AppShell>
   );

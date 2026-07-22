@@ -32,10 +32,16 @@ export function PostOnboardingRedirect() {
 
   useEffect(() => {
     if (loading || !isAuthenticated || !user?.onboardingCompleted) return;
-    if (pathname !== "/") return;
+    if (pathname !== "/app") return;
 
     const destination = readPendingPath();
-    if (!destination || destination === "/") return;
+    if (
+      !destination ||
+      destination === "/" ||
+      destination === "/app"
+    ) {
+      return;
+    }
 
     clearPendingPath();
     router.replace(destination);

@@ -85,7 +85,7 @@ function RescueScreenConnected({ commitmentId }: RescueScreenProps) {
         <SurfaceCard tone="coral" className="mt-8">
           <p className="font-heading text-2xl font-bold">Not found</p>
           <Button asChild className="mt-4 rounded-full">
-            <Link href="/">Back</Link>
+            <Link href="/app">Back</Link>
           </Button>
         </SurfaceCard>
       </AppShell>
@@ -154,7 +154,7 @@ function RescueScreenConnected({ commitmentId }: RescueScreenProps) {
           variant="ghost"
           className="size-11 rounded-full border border-white/10 bg-white/5"
         >
-          <Link href={`/commitments/${commitment._id}`} aria-label="Back">
+          <Link href={`/app/commitments/${commitment._id}`} aria-label="Back">
             <ArrowLeft className="size-5" />
           </Link>
         </Button>
@@ -371,7 +371,7 @@ function RescueScreenConnected({ commitmentId }: RescueScreenProps) {
           <div className="mt-4 grid gap-2">
             <Button
               type="button"
-              onClick={() => router.push(`/commitments/${commitment._id}`)}
+              onClick={() => router.push(`/app/commitments/${commitment._id}`)}
               className="h-12 rounded-full bg-ink-950 text-white"
             >
               View commitment
@@ -379,7 +379,7 @@ function RescueScreenConnected({ commitmentId }: RescueScreenProps) {
             <Button
               type="button"
               variant="ghost"
-              onClick={() => router.push("/")}
+              onClick={() => router.push("/app")}
               className="h-11 rounded-full border border-ink-950/15 text-ink-950"
             >
               Back to Today

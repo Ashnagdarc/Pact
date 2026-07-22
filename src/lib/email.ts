@@ -41,13 +41,22 @@ export function getCapturedResetLink() {
   return globalThis.__pactLastResetLink ?? null;
 }
 
+function parseFromAddress(from: string): { name: string; email: string } {
+  const match = from.match(/^(.*?)\s*<([^>]+)>$/);
+  if (match) {
+    return { name: match[1].trim() || "Pact", email: match[2].trim() };
+  }
+  return { name: "Pact", email: from.trim() };
+}
+
 export async function sendEmail(input: SendEmailInput) {
-  const apiKey = process.env.RESEND_API_KEY;
-  const from =
-    process.env.EMAIL_FROM ?? "Pact <onboarding@resend.dev>";
+  const apiKey = process.env.BREVO_API_KEY;
+  const from = parseFromAddress(
+    process.env.EMAIL_FROM ?? "Pact <noreply@joinpact.tech>",
+  );
 
   if (!apiKey) {
-    console.info("[pact-email] RESEND_API_KEY missing; email not sent", {
+    console.info("[pact-email] BREVO_API_KEY missing; email not sent", {
       to: input.to,
       subject: input.subject,
       text: input.text,
@@ -55,24 +64,25 @@ export async function sendEmail(input: SendEmailInput) {
     return { sent: false as const };
   }
 
-  const response = await fetch("https://api.resend.com/emails", {
+  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${apiKey}`,
+      "api-key": apiKey,
       "Content-Type": "application/json",
+      Accept: "application/json",
     },
     body: JSON.stringify({
-      from,
-      to: [input.to],
+      sender: from,
+      to: [{ email: input.to }],
       subject: input.subject,
-      text: input.text,
-      html: input.html ?? `<p>${input.text}</p>`,
+      textContent: input.text,
+      htmlContent: input.html ?? `<p>${input.text}</p>`,
     }),
   });
 
   if (!response.ok) {
     const body = await response.text();
-    throw new Error(`Resend failed (${response.status}): ${body}`);
+    throw new Error(`Brevo failed (${response.status}): ${body}`);
   }
 
   return { sent: true as const };
