@@ -38,6 +38,13 @@ export async function notify(ctx: MutationCtx, args: NotifyArgs) {
     href: args.href,
   });
 
+  await ctx.scheduler.runAfter(0, internal.email.deliverToUser, {
+    userId: args.userId,
+    title: args.title,
+    body: args.body,
+    href: args.href,
+  });
+
   return notificationId;
 }
 

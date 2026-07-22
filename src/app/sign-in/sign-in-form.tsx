@@ -38,14 +38,36 @@ export default function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextPath = safeInternalPath(searchParams.get("next"));
+  const fromBetaLink = searchParams.get("beta") === "1";
   const [mode, setMode] = useState<"sign-in" | "sign-up">(() =>
     initialMode(searchParams)
   );
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [inviteCode, setInviteCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  async function ensureBetaAccess() {
+    // Link redeem already set the httpOnly cookie.
+    if (fromBetaLink) return;
+    const code = inviteCode.trim();
+    if (!/^\d{6}$/.test(code)) {
+      throw new Error("Enter the 6-digit code from your welcome email");
+    }
+    const response = await fetch("/api/beta/redeem", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code }),
+    });
+    const payload = (await response.json().catch(() => null)) as {
+      error?: string;
+    } | null;
+    if (!response.ok) {
+      throw new Error(payload?.error || "Invalid or used invite code");
+    }
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -54,6 +76,8 @@ export default function SignInForm() {
 
     try {
       if (mode === "sign-up") {
+        await ensureBetaAccess();
+
         const result = await authClient.signUp.email({
           name: name.trim() || email.split("@")[0] || "Pact user",
           email,
@@ -63,8 +87,9 @@ export default function SignInForm() {
           throw new Error(result.error.message || "Sign up failed");
         }
 
-        // New users must complete onboarding before entering the app. Preserve
-        // an invite destination so it can resume immediately afterwards.
+        // Best-effort cookie clear after Better Auth consumed the invite.
+        void fetch("/api/beta/consume", { method: "POST" }).catch(() => null);
+
         savePostOnboardingPath(nextPath);
         router.replace("/app/onboarding");
       } else {
@@ -100,7 +125,11 @@ export default function SignInForm() {
           {mode === "sign-in" ? "Welcome back" : "Create your account"}
         </h1>
         <p className="mt-2 text-sm text-white/55">
-          Sign in to keep commitments with people who keep you honest.
+          {mode === "sign-up"
+            ? fromBetaLink
+              ? "Your invite link is unlocked. Create your account to open the early beta."
+              : "Early beta is invite-only. Use the 6-digit code from your welcome email."
+            : "Sign in to keep commitments with people who keep you honest."}
         </p>
 
         <form onSubmit={onSubmit} className="mt-8 grid gap-3">
@@ -111,6 +140,21 @@ export default function SignInForm() {
               placeholder="Display name"
               autoComplete="name"
               className="h-12 rounded-2xl border-white/10 bg-white/5"
+            />
+          ) : null}
+          {mode === "sign-up" && !fromBetaLink ? (
+            <Input
+              inputMode="numeric"
+              pattern="\d{6}"
+              maxLength={6}
+              required
+              value={inviteCode}
+              onChange={(e) =>
+                setInviteCode(e.target.value.replace(/\D/g, "").slice(0, 6))
+              }
+              placeholder="6-digit invite code"
+              autoComplete="one-time-code"
+              className="h-12 rounded-2xl border-white/10 bg-white/5 tracking-[0.35em]"
             />
           ) : null}
           <Input
@@ -179,6 +223,15 @@ export default function SignInForm() {
             ? "Need an account? Sign up"
             : "Already have an account? Sign in"}
         </button>
+
+        {mode === "sign-up" ? (
+          <Link
+            href="/#waitlist"
+            className="mt-4 text-center text-xs text-white/40 underline-offset-2 hover:underline"
+          >
+            Don&apos;t have a code? Join the waitlist
+          </Link>
+        ) : null}
 
         <Link
           href="/"

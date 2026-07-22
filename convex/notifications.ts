@@ -1,6 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { requireAppUser } from "./lib/auth";
+import { notify } from "./lib/notify";
 
 export const listForUser = query({
   args: {
@@ -107,7 +108,7 @@ export const syncRescuePrompts = mutation({
       );
       if (already) continue;
 
-      await ctx.db.insert("notifications", {
+      await notify(ctx, {
         userId: user._id,
         type: "rescue_prompt",
         title: "Rescue available",

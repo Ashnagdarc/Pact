@@ -327,7 +327,11 @@ function PactDetailConnected({ pactId }: PactDetailScreenProps) {
           </div>
 
           {activeToken ? (
-            <InviteShareCard token={activeToken} autoFocus={justCreated} />
+            <InviteShareCard
+              token={activeToken}
+              autoFocus={justCreated}
+              pactTitle={detail.pact.title}
+            />
           ) : (
             <SurfaceCard tone="ink" className="border border-white/10">
               <p className="text-sm text-white/70">

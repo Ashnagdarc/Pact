@@ -32,7 +32,6 @@ export default function ProfilePage() {
   const [password, setPassword] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
-  const [deleteMessage, setDeleteMessage] = useState<string | null>(null);
 
   if (loading) {
     return (
@@ -47,24 +46,26 @@ export default function ProfilePage() {
   async function onDeleteAccount() {
     setDeleting(true);
     setDeleteError(null);
-    setDeleteMessage(null);
     try {
+      const trimmed = password.trim();
+      if (!trimmed) {
+        throw new Error("Enter your password to delete this account.");
+      }
+
+      // Remove Convex data while the session is still valid.
       await deleteAccountData({});
-      const result = await authClient.deleteUser(
-        password.trim()
-          ? { password: password.trim(), callbackURL: "/sign-in" }
-          : { callbackURL: "/sign-in" }
-      );
+
+      const result = await authClient.deleteUser({
+        password: trimmed,
+        callbackURL: "/sign-in",
+      });
       if (result.error) {
         throw new Error(result.error.message ?? "Could not delete account");
       }
-      if (!password.trim()) {
-        setDeleteMessage(
-          "Check your email to confirm account deletion, then you’ll be signed out."
-        );
-      } else {
-        router.replace("/sign-in");
-      }
+
+      await signOut();
+      router.replace("/sign-in");
+      router.refresh();
     } catch (error) {
       setDeleteError(
         error instanceof Error ? error.message : "Could not delete account"
@@ -219,18 +220,20 @@ export default function ProfilePage() {
           </p>
           <p className="mt-2 text-sm text-white/55">
             Permanently removes your Pact data and auth account. Owned pacts and
-            commitments are deleted.
+            commitments are deleted. Enter your password to confirm.
           </p>
           <Input
             type="password"
+            required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password (email accounts)"
+            placeholder="Confirm with your password"
+            autoComplete="current-password"
             className="mt-4 h-11 rounded-2xl border-white/15 bg-white/5 text-white"
           />
           <Button
             type="button"
-            disabled={deleting}
+            disabled={deleting || !password.trim()}
             onClick={() => void onDeleteAccount()}
             className="mt-3 h-11 w-full rounded-full bg-coral-400 text-ink-950 hover:bg-coral-400/90"
           >
@@ -243,9 +246,6 @@ export default function ProfilePage() {
           </Button>
           {deleteError ? (
             <p className="mt-2 text-xs text-coral-400">{deleteError}</p>
-          ) : null}
-          {deleteMessage ? (
-            <p className="mt-2 text-xs text-white/55">{deleteMessage}</p>
           ) : null}
         </SurfaceCard>
       ) : null}

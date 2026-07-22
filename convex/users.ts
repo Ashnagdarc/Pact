@@ -1,4 +1,4 @@
-import { mutation, query, type MutationCtx } from "./_generated/server";
+import { mutation, query, internalQuery, type MutationCtx } from "./_generated/server";
 import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import {
@@ -20,6 +20,19 @@ export const getDemoUser = query({
       .query("users")
       .withIndex("by_email", (q) => q.eq("email", DEMO_EMAIL))
       .unique();
+  },
+});
+
+/** Email + name for notification delivery (internal only). */
+export const getEmailForNotify = internalQuery({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const user = await ctx.db.get(args.userId);
+    if (!user?.email) return null;
+    return {
+      email: user.email,
+      displayName: user.displayName,
+    };
   },
 });
 

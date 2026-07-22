@@ -11,6 +11,7 @@
 import type * as checkIns from "../checkIns.js";
 import type * as commitments from "../commitments.js";
 import type * as crons from "../crons.js";
+import type * as email from "../email.js";
 import type * as evidence from "../evidence.js";
 import type * as health from "../health.js";
 import type * as insights from "../insights.js";
@@ -42,6 +43,7 @@ declare const fullApi: ApiFromModules<{
   checkIns: typeof checkIns;
   commitments: typeof commitments;
   crons: typeof crons;
+  email: typeof email;
   evidence: typeof evidence;
   health: typeof health;
   insights: typeof insights;

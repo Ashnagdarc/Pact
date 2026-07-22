@@ -1,3 +1,5 @@
+import { waitUntil } from "@vercel/functions";
+
 type SendEmailInput = {
   to: string;
   subject: string;
@@ -49,18 +51,21 @@ function parseFromAddress(from: string): { name: string; email: string } {
   return { name: "Pact", email: from.trim() };
 }
 
+/**
+ * Send via Brevo. Throws when the API key is missing in production or Brevo fails.
+ */
 export async function sendEmail(input: SendEmailInput) {
   const apiKey = process.env.BREVO_API_KEY;
   const from = parseFromAddress(
-    process.env.EMAIL_FROM ?? "Pact <noreply@joinpact.tech>",
+    process.env.EMAIL_FROM ?? "Pact <noreply@joinpact.tech>"
   );
 
   if (!apiKey) {
-    console.info("[pact-email] BREVO_API_KEY missing; email not sent", {
-      to: input.to,
-      subject: input.subject,
-      text: input.text,
-    });
+    const message = `[pact-email] BREVO_API_KEY missing; cannot send "${input.subject}" to ${input.to}`;
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(message);
+    }
+    console.info(message, { text: input.text });
     return { sent: false as const };
   }
 
@@ -86,4 +91,16 @@ export async function sendEmail(input: SendEmailInput) {
   }
 
   return { sent: true as const };
+}
+
+/**
+ * Fire email without blocking the Better Auth response (timing-safe),
+ * but keep the serverless invocation alive until Brevo finishes.
+ */
+export function queueEmail(input: SendEmailInput) {
+  const task = sendEmail(input).catch((error) => {
+    console.error("[pact-email] queued send failed", error);
+  });
+  waitUntil(task);
+  return task;
 }

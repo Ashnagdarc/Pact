@@ -237,11 +237,17 @@ function InviteScreenConnected({ token }: InviteScreenProps) {
 export function InviteShareCard({
   token,
   autoFocus,
+  pactTitle,
 }: {
   token: string;
   autoFocus?: boolean;
+  pactTitle?: string;
 }) {
   const [copied, setCopied] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [emailBusy, setEmailBusy] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [emailSent, setEmailSent] = useState(false);
   const url = useMemo(() => {
     if (typeof window === "undefined") return `/invite/${token}`;
     return `${window.location.origin}/invite/${token}`;
@@ -271,6 +277,36 @@ export function InviteShareCard({
       }
     }
     await copyLink();
+  }
+
+  async function sendInviteEmail(e: React.FormEvent) {
+    e.preventDefault();
+    setEmailError(null);
+    setEmailSent(false);
+    setEmailBusy(true);
+    try {
+      const response = await fetch("/api/invite-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: inviteEmail.trim(),
+          token,
+          pactTitle,
+        }),
+      });
+      const data = (await response.json()) as { error?: string };
+      if (!response.ok) {
+        throw new Error(data.error || "Could not send invite email");
+      }
+      setEmailSent(true);
+      setInviteEmail("");
+    } catch (err) {
+      setEmailError(
+        err instanceof Error ? err.message : "Could not send invite email"
+      );
+    } finally {
+      setEmailBusy(false);
+    }
   }
 
   return (
@@ -303,6 +339,37 @@ export function InviteShareCard({
           Share
         </Button>
       </div>
+
+      <form onSubmit={sendInviteEmail} className="mt-4 grid gap-2">
+        <p className="text-xs font-semibold text-ink-950/55">Or email the invite</p>
+        <Input
+          type="email"
+          required
+          value={inviteEmail}
+          onChange={(e) => setInviteEmail(e.target.value)}
+          placeholder="partner@email.com"
+          className="h-11 rounded-2xl border-ink-950/15 bg-white/70 text-ink-950"
+        />
+        <Button
+          type="submit"
+          disabled={emailBusy || !inviteEmail.trim()}
+          className="h-11 rounded-full bg-ink-950 text-white hover:bg-ink-950/90"
+        >
+          {emailBusy ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            "Send invite email"
+          )}
+        </Button>
+        {emailError ? (
+          <p className="text-xs font-medium text-coral-400">{emailError}</p>
+        ) : null}
+        {emailSent ? (
+          <p className="text-xs font-medium text-ink-950/70">
+            Invite email sent.
+          </p>
+        ) : null}
+      </form>
     </SurfaceCard>
   );
 }

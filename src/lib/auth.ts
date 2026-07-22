@@ -1,10 +1,13 @@
 import { dash, sentinel } from "@better-auth/infra";
-import { betterAuth } from "better-auth";
+import { betterAuth, APIError } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
 import { jwt } from "better-auth/plugins";
+import { cookies } from "next/headers";
 import { Pool } from "pg";
 
-import { captureResetLink, sendEmail } from "@/lib/email";
+import { BETA_ACCESS_COOKIE, betaAccessOpen } from "@/lib/beta-access";
+import { consumeBetaInvite, validateBetaInvite } from "@/lib/convex-http";
+import { captureResetLink, queueEmail } from "@/lib/email";
 
 /**
  * Better Auth (Next.js) + Infrastructure dashboard via `dash()` + `sentinel()`.
@@ -102,17 +105,53 @@ export const auth = betterAuth({
   ],
   secret: process.env.BETTER_AUTH_SECRET,
   database: createDatabase(),
+  databaseHooks: {
+    user: {
+      create: {
+        before: async () => {
+          if (betaAccessOpen()) return;
+          const jar = await cookies();
+          const token = jar.get(BETA_ACCESS_COOKIE)?.value;
+          if (!token) {
+            throw new APIError("FORBIDDEN", {
+              message:
+                "Early beta requires a one-time invite code. Join the waitlist first.",
+            });
+          }
+          const invite = await validateBetaInvite({ token });
+          if (!invite.valid) {
+            throw new APIError("FORBIDDEN", {
+              message:
+                invite.reason === "used"
+                  ? "This invite code was already used."
+                  : "Invalid beta invite. Request a new code from the waitlist.",
+            });
+          }
+        },
+        after: async () => {
+          if (betaAccessOpen()) return;
+          const jar = await cookies();
+          const token = jar.get(BETA_ACCESS_COOKIE)?.value;
+          if (!token) return;
+          try {
+            await consumeBetaInvite({ token });
+          } catch (error) {
+            console.error("[pact-auth] failed to consume beta invite", error);
+          }
+        },
+      },
+    },
+  },
   user: {
     deleteUser: {
       enabled: true,
       sendDeleteAccountVerification: async ({ user, url }) => {
-        void sendEmail({
+        // Do not await — timing; waitUntil keeps the Vercel function alive.
+        queueEmail({
           to: user.email,
           subject: "Confirm deleting your Pact account",
           text: `Confirm account deletion:\n\n${url}\n\nIf you did not request this, you can ignore this email.`,
           html: `<p>Confirm deleting your Pact account:</p><p><a href="${url}">${url}</a></p><p>If you did not request this, you can ignore this email.</p>`,
-        }).catch((error) => {
-          console.error("[pact-email] delete verification failed", error);
         });
       },
     },
@@ -137,13 +176,12 @@ export const auth = betterAuth({
     resetPasswordTokenExpiresIn: 60 * 60,
     sendResetPassword: async ({ user, url, token }) => {
       captureResetLink({ email: user.email, url, token });
-      void sendEmail({
+      // Do not await — timing; waitUntil keeps the Vercel function alive.
+      queueEmail({
         to: user.email,
         subject: "Reset your Pact password",
         text: `Reset your Pact password:\n\n${url}\n\nThis link expires in 1 hour. If you did not request a reset, you can ignore this email.`,
         html: `<p>Reset your Pact password:</p><p><a href="${url}">${url}</a></p><p>This link expires in 1 hour. If you did not request a reset, you can ignore this email.</p>`,
-      }).catch((error) => {
-        console.error("[pact-email] reset email failed", error);
       });
     },
     onPasswordReset: async ({ user }) => {

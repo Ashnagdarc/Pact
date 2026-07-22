@@ -71,13 +71,6 @@ export function LandingPage() {
           </Link>
           <Button
             asChild
-            variant="ghost"
-            className="h-10 rounded-full px-3 text-white/60 hover:bg-white/5 hover:text-white"
-          >
-            <Link href="/sign-in">Sign in</Link>
-          </Button>
-          <Button
-            asChild
             className="h-10 rounded-full bg-volt-500 px-4 font-semibold text-ink-950 hover:bg-volt-500/90"
           >
             <Link href="#waitlist">Join beta</Link>
@@ -213,8 +206,8 @@ export function LandingPage() {
               Join the private beta waitlist
             </h2>
             <p className="mx-auto mt-5 max-w-xl text-base text-white/55 sm:text-lg">
-              Leave your email and we&apos;ll invite you when a slot opens for
-              you and someone you trust.
+              Leave your email — we&apos;ll send a welcome note with a one-time
+              6-digit code and personal link to open the early beta.
             </p>
             <div className="mt-8">
               <LandingBetaForm />

@@ -253,8 +253,17 @@ export default defineSchema({
     email: v.string(),
     name: v.optional(v.string()),
     source: v.optional(v.string()),
+    /** Unique 6-digit early-access code (one use). */
+    code: v.optional(v.string()),
+    /** Unique URL token for /beta/[token]. */
+    token: v.optional(v.string()),
     createdAt: v.number(),
-  }).index("by_email", ["email"]),
+    usedAt: v.optional(v.number()),
+    usedByUserId: v.optional(v.id("users")),
+  })
+    .index("by_email", ["email"])
+    .index("by_code", ["code"])
+    .index("by_token", ["token"]),
 
   activityEvents: defineTable({
     userId: v.optional(v.id("users")),
