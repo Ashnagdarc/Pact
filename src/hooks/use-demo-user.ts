@@ -48,7 +48,14 @@ export function useCurrentUser() {
   const [error, setError] = useState<string | null>(null);
   const [applyingPending, setApplyingPending] = useState(false);
   const [sessionHint, setSessionHint] = useState(false);
+  // Keep SSR + first client paint on the same loading shell. Session state from
+  // Better Auth can resolve differently on the server vs the client's first render.
+  const [hydrated, setHydrated] = useState(false);
   const bootGen = useRef(0);
+
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
 
   const ensureAppUser = useMutation(api.users.ensureAppUser);
   const completeOnboarding = useMutation(api.users.completeOnboarding);
@@ -177,6 +184,7 @@ export function useCurrentUser() {
     (sessionHint && !session?.user);
 
   const loading =
+    !hydrated ||
     waitingForSessionSettlement ||
     waitingForConvex ||
     waitingForUserRow ||
