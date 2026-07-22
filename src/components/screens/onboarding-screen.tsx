@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation } from "convex/react";
 import { ArrowRight, ChevronLeft, Loader2 } from "lucide-react";
@@ -22,6 +22,7 @@ import {
   defaultOnboardingDraft,
   ONBOARDING_STEP_COUNT,
   readOnboardingDraft,
+  readOnboardingPending,
   saveOnboardingPending,
   writeOnboardingDraft,
   type OnboardingDraft,
@@ -40,6 +41,7 @@ export function OnboardingScreen() {
   const [error, setError] = useState<string | null>(null);
   const [soundReady, setSoundReady] = useState(false);
   const [confettiKey, setConfettiKey] = useState(0);
+  const pendingApplyStarted = useRef(false);
 
   const stepMeta = getOnboardingStepMeta(step);
 
@@ -85,6 +87,44 @@ export function OnboardingScreen() {
     if (loading || !user?.onboardingCompleted) return;
     router.replace("/");
   }, [loading, user?.onboardingCompleted, router]);
+
+  // If sign-in landed us back here with pending local answers, finish once.
+  useEffect(() => {
+    if (loading || !isAuthenticated || !userId) return;
+    if (user?.onboardingCompleted) return;
+    if (pendingApplyStarted.current) return;
+    const pending = readOnboardingPending();
+    if (!pending) return;
+
+    pendingApplyStarted.current = true;
+    setFinishing(true);
+
+    void completeOnboarding({
+      displayName: pending.displayName.trim() || undefined,
+      goalFocus: pending.goalFocus,
+      defaultAccountabilityStyle: pending.accountabilityStyle,
+      defaultCheckInFrequency: pending.checkInFrequency,
+    })
+      .then(() => {
+        clearOnboardingPending();
+        clearOnboardingDraft();
+        router.replace("/");
+      })
+      .catch((err) => {
+        pendingApplyStarted.current = false;
+        setError(
+          err instanceof Error ? err.message : "Could not finish onboarding"
+        );
+        setFinishing(false);
+      });
+  }, [
+    completeOnboarding,
+    isAuthenticated,
+    loading,
+    router,
+    user?.onboardingCompleted,
+    userId,
+  ]);
 
   function updateDraft(patch: Partial<OnboardingDraft>) {
     setDraft((prev) => {

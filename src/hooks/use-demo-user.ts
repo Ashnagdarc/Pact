@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useConvexAuth, useMutation, useQuery } from "convex/react";
 
 import { api } from "@convex/_generated/api";
@@ -18,6 +18,8 @@ export function useCurrentUser() {
     useConvexAuth();
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [applyingPending, setApplyingPending] = useState(false);
+  const bootGen = useRef(0);
 
   const ensureAppUser = useMutation(api.users.ensureAppUser);
   const completeOnboarding = useMutation(api.users.completeOnboarding);
@@ -27,19 +29,40 @@ export function useCurrentUser() {
     convexAuthenticated ? {} : "skip"
   );
 
+  // Clear local pending only after Convex reflects onboardingCompleted.
   useEffect(() => {
+    if (!appUser?.onboardingCompleted) return;
+    if (!readOnboardingPending()) {
+      setApplyingPending(false);
+      return;
+    }
+    clearOnboardingPending();
+    clearOnboardingDraft();
+    setApplyingPending(false);
+  }, [appUser?.onboardingCompleted]);
+
+  useEffect(() => {
+    const gen = ++bootGen.current;
     let cancelled = false;
 
     async function bootstrap() {
       if (sessionPending || convexAuthLoading) {
+        setReady(false);
         return;
       }
 
-      if (!session?.user || !convexAuthenticated) {
-        if (!cancelled) {
+      if (!session?.user) {
+        if (!cancelled && gen === bootGen.current) {
           setReady(true);
+          setApplyingPending(false);
           setError(null);
         }
+        return;
+      }
+
+      // Session exists but Convex JWT not ready — stay loading.
+      if (!convexAuthenticated) {
+        setReady(false);
         return;
       }
 
@@ -48,22 +71,27 @@ export function useCurrentUser() {
 
         const pending = readOnboardingPending();
         if (pending) {
+          if (!cancelled && gen === bootGen.current) {
+            setApplyingPending(true);
+          }
           await completeOnboarding({
             displayName: pending.displayName.trim() || undefined,
             goalFocus: pending.goalFocus,
             defaultAccountabilityStyle: pending.accountabilityStyle,
             defaultCheckInFrequency: pending.checkInFrequency,
           });
-          clearOnboardingPending();
-          clearOnboardingDraft();
+          // Keep pending in localStorage until appUser.onboardingCompleted
+          // flips true (see effect above). Prevents Today from redirecting
+          // to /onboarding on a stale query snapshot.
         }
 
-        if (!cancelled) {
+        if (!cancelled && gen === bootGen.current) {
           setReady(true);
           setError(null);
         }
       } catch (err) {
-        if (!cancelled) {
+        if (!cancelled && gen === bootGen.current) {
+          setApplyingPending(false);
           setError(
             err instanceof Error ? err.message : "Failed to load your account"
           );
@@ -90,12 +118,20 @@ export function useCurrentUser() {
   }, []);
 
   const isAuthenticated = Boolean(session?.user) && convexAuthenticated;
-  // Don't spin forever when the session exists but Convex JWT auth never connects
-  // (e.g. JWKS unreachable). Surface that as an error path instead.
+  const waitingForConvex =
+    Boolean(session?.user) && (convexAuthLoading || !convexAuthenticated);
+  const waitingForUserRow = isAuthenticated && (!ready || appUser == null);
+  const waitingForPendingOnboarding =
+    isAuthenticated &&
+    applyingPending &&
+    appUser != null &&
+    !appUser.onboardingCompleted;
+
   const loading =
     sessionPending ||
-    convexAuthLoading ||
-    (isAuthenticated && (!ready || appUser === undefined));
+    waitingForConvex ||
+    waitingForUserRow ||
+    waitingForPendingOnboarding;
 
   return {
     user: appUser ?? null,

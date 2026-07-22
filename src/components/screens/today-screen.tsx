@@ -20,6 +20,7 @@ import { InstallPrompt } from "@/components/pwa/install-prompt";
 import { WelcomeScreen } from "@/components/screens/welcome-screen";
 import { Button } from "@/components/ui/button";
 import { useCurrentUser } from "@/hooks/use-demo-user";
+import { readOnboardingPending } from "@/lib/onboarding";
 import type { CommitmentStatus } from "@/lib/status";
 
 const filters = [
@@ -70,7 +71,9 @@ export function TodayScreen() {
 
   useEffect(() => {
     if (!isAuthenticated || userLoading || !user) return;
-    if (!user.onboardingCompleted) {
+    // Pending local onboarding is applied during useCurrentUser bootstrap.
+    // Don't bounce to /onboarding while that write is in flight / about to run.
+    if (!user.onboardingCompleted && !readOnboardingPending()) {
       router.replace("/onboarding");
     }
   }, [isAuthenticated, user, userLoading, router]);
