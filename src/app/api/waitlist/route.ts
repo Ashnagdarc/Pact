@@ -130,14 +130,12 @@ export async function POST(request: Request) {
       source: "landing",
     });
 
+    if (!invite.code || !invite.token) {
+      throw new Error("Invite code was not issued");
+    }
+
     const origin = siteOriginFromRequest(request);
     const accessUrl = buildBetaAccessUrl(origin, invite.token);
-
-    await addToBrevoList({
-      email,
-      name: invite.name || name,
-      code: invite.code,
-    });
 
     const mail = welcomeEmail({
       name: invite.name || name,
@@ -146,12 +144,25 @@ export async function POST(request: Request) {
       accessUrl,
     });
 
+    // Email first — this is what unlocks early access.
     await sendEmail({
       to: email,
       subject: mail.subject,
       text: mail.text,
       html: mail.html,
     });
+
+    // Brevo list sync is best-effort. Vercel egress IPs change often and will
+    // 401 if Brevo "authorised IPs" is enabled.
+    try {
+      await addToBrevoList({
+        email,
+        name: invite.name || name,
+        code: invite.code,
+      });
+    } catch (brevoError) {
+      console.warn("[waitlist] Brevo list sync skipped", brevoError);
+    }
 
     return NextResponse.json({
       ok: true,
