@@ -60,13 +60,11 @@ function PactDetailConnected({ pactId }: PactDetailScreenProps) {
   const { userId, loading: userLoading } = useCurrentUser();
   const detail = useQuery(
     api.pacts.getById,
-    userId
-      ? { pactId: pactId as Id<"pacts">, userId }
-      : "skip"
+    userId ? { pactId: pactId as Id<"pacts"> } : "skip"
   );
   const health = useQuery(
     api.health.forPact,
-    { pactId: pactId as Id<"pacts"> }
+    userId ? { pactId: pactId as Id<"pacts"> } : "skip"
   );
   const createInvite = useMutation(api.pacts.createInvite);
   const refreshHealth = useMutation(api.health.refresh);
@@ -109,7 +107,6 @@ function PactDetailConnected({ pactId }: PactDetailScreenProps) {
     startTransition(async () => {
       const token = await createInvite({
         pactId: pact._id,
-        createdBy: userId,
       });
       setInviteToken(token);
       await refreshHealth({ pactId: pact._id });

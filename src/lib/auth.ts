@@ -1,12 +1,15 @@
 import { dash, sentinel } from "@better-auth/infra";
 import { betterAuth } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
+import { jwt } from "better-auth/plugins";
 import { Pool } from "pg";
 
 /**
  * Better Auth (Next.js) + Infrastructure dashboard via `dash()` + `sentinel()`.
  * Uses Postgres (Neon) so auth works on Vercel serverless.
+ * JWT plugin issues ES256 tokens for Convex (`ctx.auth.getUserIdentity()`).
  * @see https://better-auth.com/docs/infrastructure/getting-started
+ * @see https://better-auth.com/docs/plugins/jwt
  */
 function createDatabase() {
   const databaseUrl = process.env.DATABASE_URL;
@@ -26,6 +29,13 @@ function createDatabase() {
 }
 
 const infraApiKey = process.env.BETTER_AUTH_API_KEY;
+
+/** Public origin used as JWT `iss` — must match Convex `BETTER_AUTH_ISSUER`. */
+export const authJwtIssuer =
+  process.env.BETTER_AUTH_JWT_ISSUER ??
+  process.env.BETTER_AUTH_URL ??
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  "https://pact-flowtag-projects.vercel.app";
 
 function infraConnectionOptions() {
   return {
@@ -84,6 +94,24 @@ export const auth = betterAuth({
           }),
         ]
       : []),
+    // Convex customJwt supports ES256/RS256 only (not EdDSA default).
+    jwt({
+      jwks: {
+        keyPairConfig: {
+          alg: "ES256",
+        },
+      },
+      jwt: {
+        issuer: authJwtIssuer,
+        audience: "convex",
+        expirationTime: "1h",
+        definePayload: ({ user }) => ({
+          name: user.name,
+          email: user.email,
+          picture: user.image,
+        }),
+      },
+    }),
     nextCookies(),
   ],
 });

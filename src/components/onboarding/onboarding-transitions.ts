@@ -1,4 +1,4 @@
-import type { Variants } from "motion/react";
+import type { TargetAndTransition, Transition } from "motion/react";
 
 export type OnboardingTransition =
   | "fadeUp"
@@ -7,6 +7,12 @@ export type OnboardingTransition =
   | "zoom"
   | "flip"
   | "blur";
+
+type StepVariant = {
+  initial: TargetAndTransition;
+  animate: TargetAndTransition;
+  exit: TargetAndTransition;
+};
 
 export const stepTransitions: Record<
   number,
@@ -24,7 +30,7 @@ export const stepTransitions: Record<
   9: { enter: "fadeUp", exit: "zoom" },
 };
 
-const variants: Record<OnboardingTransition, Variants> = {
+const variants: Record<OnboardingTransition, StepVariant> = {
   fadeUp: {
     initial: { opacity: 0, y: 32 },
     animate: { opacity: 1, y: 0 },
@@ -57,7 +63,9 @@ const variants: Record<OnboardingTransition, Variants> = {
   },
 };
 
-export function getStepMotion(step: number, phase: "enter" | "exit") {
+export function getStepMotion(step: number, phase: "enter" | "exit"): StepVariant & {
+  transition: Transition;
+} {
   const config = stepTransitions[step] ?? stepTransitions[0]!;
   const key = phase === "enter" ? config.enter : config.exit;
   const variant = variants[key];
@@ -65,6 +73,6 @@ export function getStepMotion(step: number, phase: "enter" | "exit") {
     initial: variant.initial,
     animate: variant.animate,
     exit: variant.exit,
-    transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] as const },
+    transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] },
   };
 }

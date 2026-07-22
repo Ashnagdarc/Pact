@@ -37,11 +37,11 @@ function InsightsScreenConnected() {
   const { userId, loading: userLoading } = useCurrentUser();
   const overview = useQuery(
     api.insights.weekOverview,
-    userId ? { userId } : "skip"
+    userId ? {} : "skip"
   );
   const pactHealth = useQuery(
     api.health.forUserPacts,
-    userId ? { userId } : "skip"
+    userId ? {} : "skip"
   );
   const ensureReview = useMutation(api.insights.ensureReview);
   const refreshHealth = useMutation(api.health.refresh);
@@ -61,7 +61,7 @@ function InsightsScreenConnected() {
   function saveReview() {
     if (!userId) return;
     startTransition(async () => {
-      await ensureReview({ userId });
+      await ensureReview({});
       for (const row of pactHealth ?? []) {
         if (row) {
           await refreshHealth({ pactId: row.pact._id });

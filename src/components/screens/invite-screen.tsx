@@ -87,7 +87,6 @@ function InviteScreenConnected({ token }: InviteScreenProps) {
         const result = await accept({
           token,
           displayName: name.trim() || user?.displayName || "Partner",
-          existingUserId: userId,
         });
         router.push(`/pacts/${result.pactId}`);
       } catch (err) {

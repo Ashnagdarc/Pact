@@ -26,7 +26,7 @@ function NotificationsConnected() {
   const { userId, loading: userLoading } = useCurrentUser();
   const notifications = useQuery(
     api.notifications.listForUser,
-    userId ? { userId } : "skip"
+    userId ? {} : "skip"
   );
   const markRead = useMutation(api.notifications.markRead);
   const markAllRead = useMutation(api.notifications.markAllRead);
@@ -35,7 +35,7 @@ function NotificationsConnected() {
 
   useEffect(() => {
     if (!userId) return;
-    void syncRescuePrompts({ userId });
+    void syncRescuePrompts({});
   }, [userId, syncRescuePrompts]);
 
   if (userLoading || notifications === undefined) {
@@ -69,7 +69,7 @@ function NotificationsConnected() {
             disabled={isPending}
             onClick={() =>
               startTransition(async () => {
-                if (userId) await markAllRead({ userId });
+                if (userId) await markAllRead({});
               })
             }
             variant="ghost"
@@ -137,7 +137,6 @@ function NotificationsConnected() {
                     if (!userId || notification.readAt) return;
                     void markRead({
                       notificationId: notification._id,
-                      userId,
                     });
                   }}
                 >

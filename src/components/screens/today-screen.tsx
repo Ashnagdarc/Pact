@@ -60,13 +60,13 @@ export function TodayScreen() {
 
   const stats = useQuery(
     api.commitments.weekStats,
-    userId ? { userId } : "skip"
+    userId ? {} : "skip"
   );
   const todayCommitments = useQuery(
     api.commitments.listForToday,
-    userId ? { userId } : "skip"
+    userId ? {} : "skip"
   );
-  const boards = useQuery(api.pacts.listForUser, userId ? { userId } : "skip");
+  const boards = useQuery(api.pacts.listForUser, userId ? {} : "skip");
 
   useEffect(() => {
     if (!isAuthenticated || userLoading || !user) return;

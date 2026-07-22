@@ -58,7 +58,7 @@ function NewCommitmentForm({ initialPactId }: { initialPactId?: string }) {
   const { userId, loading, error } = useCurrentUser();
   const boards = useQuery(
     api.pacts.listForUser,
-    userId ? { userId } : "skip"
+    userId ? {} : "skip"
   );
   const createCommitment = useMutation(api.commitments.create);
   const [submitting, setSubmitting] = useState(false);
@@ -85,7 +85,6 @@ function NewCommitmentForm({ initialPactId }: { initialPactId?: string }) {
     try {
       const commitmentId = await createCommitment({
         assigneeId: userId,
-        creatorId: userId,
         title: values.title,
         description: values.description || undefined,
         pactId: values.pactId

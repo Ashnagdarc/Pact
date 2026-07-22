@@ -69,7 +69,6 @@ function CreatePactForm() {
     setSubmitting(true);
     try {
       const result = await createPact({
-        ownerId: userId,
         title: values.title,
         description: values.description || undefined,
         goalType: values.goalType,

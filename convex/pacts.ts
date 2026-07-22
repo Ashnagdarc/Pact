@@ -6,6 +6,7 @@ import {
   checkInFrequency,
   memberRole,
 } from "./lib/validators";
+import { requireAppUser, requirePactMember } from "./lib/auth";
 
 function createInviteToken() {
   const bytes = new Uint8Array(18);
@@ -14,11 +15,13 @@ function createInviteToken() {
 }
 
 export const listForUser = query({
-  args: { userId: v.id("users") },
-  handler: async (ctx, args) => {
+  args: {},
+  handler: async (ctx) => {
+    const user = await requireAppUser(ctx);
+
     const memberships = await ctx.db
       .query("pactMembers")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
       .collect();
 
     const accepted = memberships.filter(
@@ -74,21 +77,20 @@ export const listForUser = query({
 });
 
 export const getById = query({
-  args: { pactId: v.id("pacts"), userId: v.optional(v.id("users")) },
+  args: { pactId: v.id("pacts") },
   handler: async (ctx, args) => {
+    const user = await requireAppUser(ctx);
     const pact = await ctx.db.get(args.pactId);
     if (!pact) {
       return null;
     }
 
-    const membership = args.userId
-      ? await ctx.db
-          .query("pactMembers")
-          .withIndex("by_pact_user", (q) =>
-            q.eq("pactId", args.pactId).eq("userId", args.userId!)
-          )
-          .unique()
-      : null;
+    const membership = await ctx.db
+      .query("pactMembers")
+      .withIndex("by_pact_user", (q) =>
+        q.eq("pactId", args.pactId).eq("userId", user._id)
+      )
+      .unique();
 
     if (!membership || membership.invitationStatus !== "accepted") {
       return { pact: null, forbidden: true as const };
@@ -102,14 +104,14 @@ export const getById = query({
 
     const memberUsers = await Promise.all(
       members.map(async (m) => {
-        const user = await ctx.db.get(m.userId);
-        return user
+        const memberUser = await ctx.db.get(m.userId);
+        return memberUser
           ? {
               membership: m,
               user: {
-                _id: user._id,
-                displayName: user.displayName,
-                avatarUrl: user.avatarUrl,
+                _id: memberUser._id,
+                displayName: memberUser.displayName,
+                avatarUrl: memberUser.avatarUrl,
               },
             }
           : null;
@@ -135,7 +137,9 @@ export const getById = query({
       members: memberUsers.filter(Boolean),
       inviteToken: pendingInvite?.token ?? null,
       commitments: commitments.sort(
-        (a, b) => (a.dueAt ?? Number.MAX_SAFE_INTEGER) - (b.dueAt ?? Number.MAX_SAFE_INTEGER)
+        (a, b) =>
+          (a.dueAt ?? Number.MAX_SAFE_INTEGER) -
+          (b.dueAt ?? Number.MAX_SAFE_INTEGER)
       ),
     };
   },
@@ -143,7 +147,6 @@ export const getById = query({
 
 export const create = mutation({
   args: {
-    ownerId: v.id("users"),
     title: v.string(),
     description: v.optional(v.string()),
     goalType: v.optional(v.string()),
@@ -154,8 +157,10 @@ export const create = mutation({
     inviteRole: v.optional(memberRole),
   },
   handler: async (ctx, args) => {
+    const owner = await requireAppUser(ctx);
+
     const pactId = await ctx.db.insert("pacts", {
-      ownerId: args.ownerId,
+      ownerId: owner._id,
       title: args.title,
       description: args.description,
       goalType: args.goalType,
@@ -170,7 +175,7 @@ export const create = mutation({
 
     await ctx.db.insert("pactMembers", {
       pactId,
-      userId: args.ownerId,
+      userId: owner._id,
       role: "owner",
       invitationStatus: "accepted",
       joinedAt: Date.now(),
@@ -178,7 +183,7 @@ export const create = mutation({
     });
 
     await ctx.db.insert("activityEvents", {
-      userId: args.ownerId,
+      userId: owner._id,
       pactId,
       eventName: "pact_created",
       metadata: { title: args.title },
@@ -193,14 +198,14 @@ export const create = mutation({
       await ctx.db.insert("invitations", {
         token: inviteToken,
         pactId,
-        createdBy: args.ownerId,
+        createdBy: owner._id,
         role: args.inviteRole ?? "partner",
         status: "pending",
         expiresAt,
       });
 
       await ctx.db.insert("activityEvents", {
-        userId: args.ownerId,
+        userId: owner._id,
         pactId,
         eventName: "partner_invited",
         metadata: { token: inviteToken },
@@ -214,23 +219,18 @@ export const create = mutation({
 export const createInvite = mutation({
   args: {
     pactId: v.id("pacts"),
-    createdBy: v.id("users"),
     role: v.optional(memberRole),
   },
   handler: async (ctx, args) => {
+    const user = await requireAppUser(ctx);
     const pact = await ctx.db.get(args.pactId);
     if (!pact) {
       throw new Error("Pact not found");
     }
 
-    const membership = await ctx.db
-      .query("pactMembers")
-      .withIndex("by_pact_user", (q) =>
-        q.eq("pactId", args.pactId).eq("userId", args.createdBy)
-      )
-      .unique();
+    const membership = await requirePactMember(ctx, args.pactId, user._id);
 
-    if (!membership || membership.role !== "owner") {
+    if (membership.role !== "owner") {
       throw new Error("Only the owner can create invites");
     }
 
@@ -249,14 +249,14 @@ export const createInvite = mutation({
     await ctx.db.insert("invitations", {
       token,
       pactId: args.pactId,
-      createdBy: args.createdBy,
+      createdBy: user._id,
       role: args.role ?? "partner",
       status: "pending",
       expiresAt: Date.now() + 1000 * 60 * 60 * 24 * 14,
     });
 
     await ctx.db.insert("activityEvents", {
-      userId: args.createdBy,
+      userId: user._id,
       pactId: args.pactId,
       eventName: "partner_invited",
       metadata: { token },

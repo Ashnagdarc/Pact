@@ -75,15 +75,24 @@ function CommitmentDetailConnected({
   commitmentId,
 }: CommitmentDetailScreenProps) {
   const { userId, loading: userLoading } = useCurrentUser();
-  const detail = useQuery(api.commitments.getById, {
-    commitmentId: commitmentId as Id<"commitments">,
-  });
-  const checkIns = useQuery(api.checkIns.listForCommitment, {
-    commitmentId: commitmentId as Id<"commitments">,
-  });
-  const recoveryPlans = useQuery(api.rescue.listForCommitment, {
-    commitmentId: commitmentId as Id<"commitments">,
-  });
+  const detail = useQuery(
+    api.commitments.getById,
+    userId
+      ? { commitmentId: commitmentId as Id<"commitments"> }
+      : "skip"
+  );
+  const checkIns = useQuery(
+    api.checkIns.listForCommitment,
+    userId
+      ? { commitmentId: commitmentId as Id<"commitments"> }
+      : "skip"
+  );
+  const recoveryPlans = useQuery(
+    api.rescue.listForCommitment,
+    userId
+      ? { commitmentId: commitmentId as Id<"commitments"> }
+      : "skip"
+  );
 
   const submitCheckIn = useMutation(api.checkIns.submit);
   const respond = useMutation(api.checkIns.respond);
@@ -142,7 +151,6 @@ function CommitmentDetailConnected({
     startTransition(async () => {
       await submitCheckIn({
         commitmentId: commitment._id,
-        userId,
         signal,
         note: note.trim() || undefined,
       });
@@ -168,7 +176,6 @@ function CommitmentDetailConnected({
     startTransition(async () => {
       await respond({
         checkInId,
-        responderId: userId,
         responseType,
       });
     });
@@ -385,7 +392,6 @@ function CommitmentDetailConnected({
                       startTransition(async () => {
                         await reviewPlan({
                           planId: plan._id,
-                          reviewerId: userId,
                           approvalStatus: "acknowledged",
                         });
                       })

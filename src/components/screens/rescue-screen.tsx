@@ -44,9 +44,12 @@ export function RescueScreen({ commitmentId }: RescueScreenProps) {
 function RescueScreenConnected({ commitmentId }: RescueScreenProps) {
   const router = useRouter();
   const { userId, loading: userLoading } = useCurrentUser();
-  const detail = useQuery(api.commitments.getById, {
-    commitmentId: commitmentId as Id<"commitments">,
-  });
+  const detail = useQuery(
+    api.commitments.getById,
+    userId
+      ? { commitmentId: commitmentId as Id<"commitments"> }
+      : "skip"
+  );
   const createPlan = useMutation(api.rescue.createPlan);
 
   const [step, setStep] = useState<Step>("blocker");
@@ -124,7 +127,6 @@ function RescueScreenConnected({ commitmentId }: RescueScreenProps) {
 
         await createPlan({
           commitmentId: commitment._id,
-          createdBy: userId,
           blockerType: blocker,
           recoveryAction: action,
           revisedTitle:

@@ -120,7 +120,6 @@ export function OnboardingScreen() {
 
       if (isAuthenticated && userId) {
         await completeOnboarding({
-          userId,
           displayName: draft.displayName.trim() || undefined,
           goalFocus: draft.goalFocus,
           defaultAccountabilityStyle: draft.accountabilityStyle,

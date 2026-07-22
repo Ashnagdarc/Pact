@@ -1,10 +1,13 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { computePactHealth, refreshPactHealth } from "./lib/health";
+import { requireAppUser, requirePactMember } from "./lib/auth";
 
 export const forPact = query({
   args: { pactId: v.id("pacts") },
   handler: async (ctx, args) => {
+    const user = await requireAppUser(ctx);
+    await requirePactMember(ctx, args.pactId, user._id);
     return await computePactHealth(ctx, args.pactId);
   },
 });
@@ -12,16 +15,19 @@ export const forPact = query({
 export const refresh = mutation({
   args: { pactId: v.id("pacts") },
   handler: async (ctx, args) => {
+    const user = await requireAppUser(ctx);
+    await requirePactMember(ctx, args.pactId, user._id);
     return await refreshPactHealth(ctx, args.pactId);
   },
 });
 
 export const forUserPacts = query({
-  args: { userId: v.id("users") },
-  handler: async (ctx, args) => {
+  args: {},
+  handler: async (ctx) => {
+    const user = await requireAppUser(ctx);
     const memberships = await ctx.db
       .query("pactMembers")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
       .collect();
 
     const accepted = memberships.filter(

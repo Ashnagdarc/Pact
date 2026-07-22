@@ -2,6 +2,11 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { checkInSignal, partnerResponseType } from "./lib/validators";
 import { notify, notifyPactPartners } from "./lib/notify";
+import {
+  requireAppUser,
+  requireCommitmentAccess,
+  requirePactMember,
+} from "./lib/auth";
 
 const signalToStatus = {
   done: "done",
@@ -22,6 +27,9 @@ const signalLabel = {
 export const listForCommitment = query({
   args: { commitmentId: v.id("commitments") },
   handler: async (ctx, args) => {
+    const user = await requireAppUser(ctx);
+    await requireCommitmentAccess(ctx, args.commitmentId, user._id);
+
     const checkIns = await ctx.db
       .query("checkIns")
       .withIndex("by_commitment", (q) =>
@@ -33,7 +41,7 @@ export const listForCommitment = query({
       checkIns
         .sort((a, b) => b._creationTime - a._creationTime)
         .map(async (checkIn) => {
-          const user = await ctx.db.get(checkIn.userId);
+          const checkInUser = await ctx.db.get(checkIn.userId);
           const responses = await ctx.db
             .query("partnerResponses")
             .withIndex("by_checkIn", (q) => q.eq("checkInId", checkIn._id))
@@ -46,7 +54,7 @@ export const listForCommitment = query({
             })
           );
 
-          return { checkIn, user, responses: responseDetails };
+          return { checkIn, user: checkInUser, responses: responseDetails };
         })
     );
 
@@ -57,20 +65,25 @@ export const listForCommitment = query({
 export const submit = mutation({
   args: {
     commitmentId: v.id("commitments"),
-    userId: v.id("users"),
     signal: checkInSignal,
     note: v.optional(v.string()),
     blockerType: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const commitment = await ctx.db.get(args.commitmentId);
-    if (!commitment) {
-      throw new Error("Commitment not found");
+    const user = await requireAppUser(ctx);
+    const commitment = await requireCommitmentAccess(
+      ctx,
+      args.commitmentId,
+      user._id
+    );
+
+    if (commitment.assigneeId !== user._id) {
+      throw new Error("Only the assignee can submit a check-in");
     }
 
     const checkInId = await ctx.db.insert("checkIns", {
       commitmentId: args.commitmentId,
-      userId: args.userId,
+      userId: user._id,
       signal: args.signal,
       note: args.note,
       blockerType: args.blockerType,
@@ -83,7 +96,7 @@ export const submit = mutation({
     });
 
     await ctx.db.insert("activityEvents", {
-      userId: args.userId,
+      userId: user._id,
       pactId: commitment.pactId,
       eventName: "check_in_submitted",
       metadata: {
@@ -93,8 +106,7 @@ export const submit = mutation({
       },
     });
 
-    const actor = await ctx.db.get(args.userId);
-    const actorName = actor?.displayName ?? "Your partner";
+    const actorName = user.displayName;
     const href = `/commitments/${args.commitmentId}`;
 
     if (commitment.pactId) {
@@ -103,8 +115,8 @@ export const submit = mutation({
 
       await notifyPactPartners(ctx, {
         pactId: commitment.pactId,
-        excludeUserId: args.userId,
-        actorId: args.userId,
+        excludeUserId: user._id,
+        actorId: user._id,
         commitmentId: args.commitmentId,
         type: isHelp ? "help_request" : "partner_update",
         title: isHelp ? "Help requested" : "Partner update",
@@ -122,28 +134,40 @@ export const submit = mutation({
 export const respond = mutation({
   args: {
     checkInId: v.id("checkIns"),
-    responderId: v.id("users"),
     responseType: partnerResponseType,
     note: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const responder = await requireAppUser(ctx);
     const checkIn = await ctx.db.get(args.checkInId);
     if (!checkIn) {
       throw new Error("Check-in not found");
     }
 
+    if (checkIn.userId === responder._id) {
+      throw new Error("Cannot respond to your own check-in");
+    }
+
+    const commitment = await requireCommitmentAccess(
+      ctx,
+      checkIn.commitmentId,
+      responder._id
+    );
+
+    if (commitment.pactId) {
+      await requirePactMember(ctx, commitment.pactId, responder._id);
+    }
+
     const responseId = await ctx.db.insert("partnerResponses", {
       checkInId: args.checkInId,
-      responderId: args.responderId,
+      responderId: responder._id,
       responseType: args.responseType,
       note: args.note,
     });
 
-    const commitment = await ctx.db.get(checkIn.commitmentId);
-
     await ctx.db.insert("activityEvents", {
-      userId: args.responderId,
-      pactId: commitment?.pactId,
+      userId: responder._id,
+      pactId: commitment.pactId,
       eventName: "partner_response_sent",
       metadata: {
         checkInId: args.checkInId,
@@ -152,15 +176,14 @@ export const respond = mutation({
       },
     });
 
-    const responder = await ctx.db.get(args.responderId);
     await notify(ctx, {
       userId: checkIn.userId,
-      actorId: args.responderId,
+      actorId: responder._id,
       type: "partner_response",
       title: "Partner responded",
-      body: `${responder?.displayName ?? "Your partner"} replied on “${commitment?.title ?? "your commitment"}”.`,
-      href: commitment ? `/commitments/${commitment._id}` : undefined,
-      pactId: commitment?.pactId,
+      body: `${responder.displayName} replied on “${commitment.title}”.`,
+      href: `/commitments/${commitment._id}`,
+      pactId: commitment.pactId,
       commitmentId: checkIn.commitmentId,
     });
 

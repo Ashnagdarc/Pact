@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useMutation, useQuery } from "convex/react";
+import { useConvexAuth, useMutation, useQuery } from "convex/react";
 
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
@@ -14,27 +14,28 @@ import {
 
 export function useCurrentUser() {
   const { data: session, isPending: sessionPending } = authClient.useSession();
+  const { isAuthenticated: convexAuthenticated, isLoading: convexAuthLoading } =
+    useConvexAuth();
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const ensureAppUser = useMutation(api.users.ensureAppUser);
   const completeOnboarding = useMutation(api.users.completeOnboarding);
-  const authUserId = session?.user?.id ?? null;
 
   const appUser = useQuery(
-    api.users.getByAuthUserId,
-    authUserId ? { authUserId } : "skip"
+    api.users.getCurrent,
+    convexAuthenticated ? {} : "skip"
   );
 
   useEffect(() => {
     let cancelled = false;
 
     async function bootstrap() {
-      if (sessionPending) {
+      if (sessionPending || convexAuthLoading) {
         return;
       }
 
-      if (!session?.user) {
+      if (!session?.user || !convexAuthenticated) {
         if (!cancelled) {
           setReady(true);
           setError(null);
@@ -43,20 +44,11 @@ export function useCurrentUser() {
       }
 
       try {
-        const userId = await ensureAppUser({
-          authUserId: session.user.id,
-          email: session.user.email,
-          displayName:
-            session.user.name ||
-            session.user.email.split("@")[0] ||
-            "Pact user",
-          avatarUrl: session.user.image ?? undefined,
-        });
+        await ensureAppUser({});
 
         const pending = readOnboardingPending();
         if (pending) {
           await completeOnboarding({
-            userId,
             displayName: pending.displayName.trim() || undefined,
             goalFocus: pending.goalFocus,
             defaultAccountabilityStyle: pending.accountabilityStyle,
@@ -84,16 +76,24 @@ export function useCurrentUser() {
     return () => {
       cancelled = true;
     };
-  }, [completeOnboarding, ensureAppUser, session, sessionPending]);
+  }, [
+    completeOnboarding,
+    convexAuthLoading,
+    convexAuthenticated,
+    ensureAppUser,
+    session,
+    sessionPending,
+  ]);
 
   const signOut = useCallback(async () => {
     await authClient.signOut();
   }, []);
 
-  const isAuthenticated = Boolean(session?.user);
+  const isAuthenticated = Boolean(session?.user) && convexAuthenticated;
   const loading =
     sessionPending ||
-    (isAuthenticated && (!ready || appUser === undefined));
+    convexAuthLoading ||
+    (Boolean(session?.user) && (!ready || appUser === undefined));
 
   return {
     user: appUser ?? null,

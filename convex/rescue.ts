@@ -7,10 +7,18 @@ import {
 } from "./lib/validators";
 import { notify, notifyPactPartners } from "./lib/notify";
 import { recoveryActionLabel } from "./lib/recoveryLabels";
+import {
+  requireAppUser,
+  requireCommitmentAccess,
+  requirePactMember,
+} from "./lib/auth";
 
 export const listForCommitment = query({
   args: { commitmentId: v.id("commitments") },
   handler: async (ctx, args) => {
+    const user = await requireAppUser(ctx);
+    await requireCommitmentAccess(ctx, args.commitmentId, user._id);
+
     const plans = await ctx.db
       .query("recoveryPlans")
       .withIndex("by_commitment", (q) =>
@@ -25,6 +33,9 @@ export const listForCommitment = query({
 export const getLatest = query({
   args: { commitmentId: v.id("commitments") },
   handler: async (ctx, args) => {
+    const user = await requireAppUser(ctx);
+    await requireCommitmentAccess(ctx, args.commitmentId, user._id);
+
     const plans = await ctx.db
       .query("recoveryPlans")
       .withIndex("by_commitment", (q) =>
@@ -41,7 +52,6 @@ export const getLatest = query({
 export const createPlan = mutation({
   args: {
     commitmentId: v.id("commitments"),
-    createdBy: v.id("users"),
     blockerType,
     recoveryAction,
     revisedTitle: v.optional(v.string()),
@@ -58,13 +68,19 @@ export const createPlan = mutation({
     notifyPartner: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const commitment = await ctx.db.get(args.commitmentId);
-    if (!commitment) {
-      throw new Error("Commitment not found");
+    const user = await requireAppUser(ctx);
+    const commitment = await requireCommitmentAccess(
+      ctx,
+      args.commitmentId,
+      user._id
+    );
+
+    if (commitment.assigneeId !== user._id) {
+      throw new Error("Only the assignee can start Rescue Mode");
     }
 
     await ctx.db.insert("activityEvents", {
-      userId: args.createdBy,
+      userId: user._id,
       pactId: commitment.pactId,
       eventName: "rescue_mode_started",
       metadata: {
@@ -75,7 +91,7 @@ export const createPlan = mutation({
 
     const planId = await ctx.db.insert("recoveryPlans", {
       commitmentId: args.commitmentId,
-      createdBy: args.createdBy,
+      createdBy: user._id,
       blockerType: args.blockerType,
       recoveryAction: args.recoveryAction,
       revisedTitle: args.revisedTitle,
@@ -149,7 +165,7 @@ export const createPlan = mutation({
     });
 
     await ctx.db.insert("activityEvents", {
-      userId: args.createdBy,
+      userId: user._id,
       pactId: commitment.pactId,
       eventName: "recovery_plan_created",
       metadata: {
@@ -160,16 +176,15 @@ export const createPlan = mutation({
       },
     });
 
-    const actor = await ctx.db.get(args.createdBy);
     if (commitment.pactId && (args.notifyPartner ?? true)) {
       await notifyPactPartners(ctx, {
         pactId: commitment.pactId,
-        excludeUserId: args.createdBy,
-        actorId: args.createdBy,
+        excludeUserId: user._id,
+        actorId: user._id,
         commitmentId: args.commitmentId,
         type: "recovery_plan",
         title: "Recovery plan shared",
-        body: `${actor?.displayName ?? "Your partner"} chose to ${recoveryActionLabel[args.recoveryAction]} on “${commitment.title}”.`,
+        body: `${user.displayName} chose to ${recoveryActionLabel[args.recoveryAction]} on “${commitment.title}”.`,
         href: `/commitments/${args.commitmentId}`,
       });
     }
@@ -181,27 +196,39 @@ export const createPlan = mutation({
 export const reviewPlan = mutation({
   args: {
     planId: v.id("recoveryPlans"),
-    reviewerId: v.id("users"),
     approvalStatus: recoveryApprovalStatus,
     note: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const reviewer = await requireAppUser(ctx);
     const plan = await ctx.db.get(args.planId);
     if (!plan) {
       throw new Error("Recovery plan not found");
     }
 
+    if (plan.createdBy === reviewer._id) {
+      throw new Error("Cannot review your own recovery plan");
+    }
+
+    const commitment = await requireCommitmentAccess(
+      ctx,
+      plan.commitmentId,
+      reviewer._id
+    );
+
+    if (commitment.pactId) {
+      await requirePactMember(ctx, commitment.pactId, reviewer._id);
+    }
+
     await ctx.db.patch(args.planId, {
       approvalStatus: args.approvalStatus,
-      approvedBy: args.reviewerId,
+      approvedBy: reviewer._id,
       note: args.note ?? plan.note,
     });
 
-    const commitment = await ctx.db.get(plan.commitmentId);
-
     await ctx.db.insert("activityEvents", {
-      userId: args.reviewerId,
-      pactId: commitment?.pactId,
+      userId: reviewer._id,
+      pactId: commitment.pactId,
       eventName: "recovery_plan_approved",
       metadata: {
         planId: args.planId,
@@ -209,15 +236,14 @@ export const reviewPlan = mutation({
       },
     });
 
-    const reviewer = await ctx.db.get(args.reviewerId);
     await notify(ctx, {
       userId: plan.createdBy,
-      actorId: args.reviewerId,
+      actorId: reviewer._id,
       type: "partner_response",
       title: "Recovery acknowledged",
-      body: `${reviewer?.displayName ?? "Your partner"} acknowledged your recovery plan${commitment ? ` for “${commitment.title}”` : ""}.`,
-      href: commitment ? `/commitments/${commitment._id}` : undefined,
-      pactId: commitment?.pactId,
+      body: `${reviewer.displayName} acknowledged your recovery plan for “${commitment.title}”.`,
+      href: `/commitments/${commitment._id}`,
+      pactId: commitment.pactId,
       commitmentId: plan.commitmentId,
     });
   },

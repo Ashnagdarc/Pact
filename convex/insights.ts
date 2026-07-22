@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { endOfWeek, startOfWeek } from "./lib/health";
+import { requireAppUser, requirePactMember } from "./lib/auth";
 
 const DAY_LABELS = ["M", "T", "W", "T", "F", "S", "S"] as const;
 const DAY_MS = 1000 * 60 * 60 * 24;
@@ -156,21 +157,34 @@ function buildSummary(input: {
 
 export const weekOverview = query({
   args: {
-    userId: v.id("users"),
     pactId: v.optional(v.id("pacts")),
   },
   handler: async (ctx, args) => {
-    return await buildWeeklySnapshot(ctx, args);
+    const user = await requireAppUser(ctx);
+    if (args.pactId) {
+      await requirePactMember(ctx, args.pactId, user._id);
+    }
+    return await buildWeeklySnapshot(ctx, {
+      userId: user._id,
+      pactId: args.pactId,
+    });
   },
 });
 
 export const ensureReview = mutation({
   args: {
-    userId: v.id("users"),
     pactId: v.optional(v.id("pacts")),
   },
   handler: async (ctx, args) => {
-    const snapshot = await buildWeeklySnapshot(ctx, args);
+    const user = await requireAppUser(ctx);
+    if (args.pactId) {
+      await requirePactMember(ctx, args.pactId, user._id);
+    }
+
+    const snapshot = await buildWeeklySnapshot(ctx, {
+      userId: user._id,
+      pactId: args.pactId,
+    });
     const weekStart = snapshot.weekStart;
 
     if (args.pactId) {
@@ -189,11 +203,11 @@ export const ensureReview = mutation({
       const id = await ctx.db.insert("weeklyReviews", {
         ...snapshot,
         pactId: args.pactId,
-        userId: args.userId,
+        userId: user._id,
       });
 
       await ctx.db.insert("activityEvents", {
-        userId: args.userId,
+        userId: user._id,
         pactId: args.pactId,
         eventName: "weekly_review_completed",
         metadata: { reviewId: id },
@@ -205,7 +219,7 @@ export const ensureReview = mutation({
     const existingRows = await ctx.db
       .query("weeklyReviews")
       .withIndex("by_user_week", (q) =>
-        q.eq("userId", args.userId).eq("weekStart", weekStart)
+        q.eq("userId", user._id).eq("weekStart", weekStart)
       )
       .collect();
     const existing = existingRows.find((row) => !row.pactId);
@@ -217,11 +231,11 @@ export const ensureReview = mutation({
 
     const id = await ctx.db.insert("weeklyReviews", {
       ...snapshot,
-      userId: args.userId,
+      userId: user._id,
     });
 
     await ctx.db.insert("activityEvents", {
-      userId: args.userId,
+      userId: user._id,
       eventName: "weekly_review_completed",
       metadata: { reviewId: id },
     });

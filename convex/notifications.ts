@@ -1,15 +1,16 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { requireAppUser } from "./lib/auth";
 
 export const listForUser = query({
   args: {
-    userId: v.id("users"),
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const user = await requireAppUser(ctx);
     const rows = await ctx.db
       .query("notifications")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
       .collect();
 
     return rows
@@ -19,11 +20,12 @@ export const listForUser = query({
 });
 
 export const unreadCount = query({
-  args: { userId: v.id("users") },
-  handler: async (ctx, args) => {
+  args: {},
+  handler: async (ctx) => {
+    const user = await requireAppUser(ctx);
     const rows = await ctx.db
       .query("notifications")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
       .collect();
 
     return rows.filter((n) => !n.readAt).length;
@@ -33,11 +35,11 @@ export const unreadCount = query({
 export const markRead = mutation({
   args: {
     notificationId: v.id("notifications"),
-    userId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const user = await requireAppUser(ctx);
     const notification = await ctx.db.get(args.notificationId);
-    if (!notification || notification.userId !== args.userId) {
+    if (!notification || notification.userId !== user._id) {
       throw new Error("Notification not found");
     }
     if (!notification.readAt) {
@@ -47,11 +49,12 @@ export const markRead = mutation({
 });
 
 export const markAllRead = mutation({
-  args: { userId: v.id("users") },
-  handler: async (ctx, args) => {
+  args: {},
+  handler: async (ctx) => {
+    const user = await requireAppUser(ctx);
     const rows = await ctx.db
       .query("notifications")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
       .collect();
 
     const now = Date.now();
@@ -65,8 +68,9 @@ export const markAllRead = mutation({
 
 /** Soft overdue prompts for the assignee — idempotent per commitment/day */
 export const syncRescuePrompts = mutation({
-  args: { userId: v.id("users") },
-  handler: async (ctx, args) => {
+  args: {},
+  handler: async (ctx) => {
+    const user = await requireAppUser(ctx);
     const now = Date.now();
     const dayStart = new Date();
     dayStart.setHours(0, 0, 0, 0);
@@ -74,7 +78,7 @@ export const syncRescuePrompts = mutation({
 
     const commitments = await ctx.db
       .query("commitments")
-      .withIndex("by_assignee", (q) => q.eq("assigneeId", args.userId))
+      .withIndex("by_assignee", (q) => q.eq("assigneeId", user._id))
       .collect();
 
     const overdue = commitments.filter(
@@ -87,7 +91,7 @@ export const syncRescuePrompts = mutation({
 
     const existing = await ctx.db
       .query("notifications")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
       .collect();
 
     let created = 0;
@@ -104,7 +108,7 @@ export const syncRescuePrompts = mutation({
       if (already) continue;
 
       await ctx.db.insert("notifications", {
-        userId: args.userId,
+        userId: user._id,
         type: "rescue_prompt",
         title: "Rescue available",
         body: `“${commitment.title}” is overdue. Open Rescue Mode when you’re ready.`,

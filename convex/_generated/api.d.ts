@@ -13,6 +13,7 @@ import type * as commitments from "../commitments.js";
 import type * as health from "../health.js";
 import type * as insights from "../insights.js";
 import type * as invitations from "../invitations.js";
+import type * as lib_auth from "../lib/auth.js";
 import type * as lib_health from "../lib/health.js";
 import type * as lib_notificationTypes from "../lib/notificationTypes.js";
 import type * as lib_notify from "../lib/notify.js";
@@ -36,6 +37,7 @@ declare const fullApi: ApiFromModules<{
   health: typeof health;
   insights: typeof insights;
   invitations: typeof invitations;
+  "lib/auth": typeof lib_auth;
   "lib/health": typeof lib_health;
   "lib/notificationTypes": typeof lib_notificationTypes;
   "lib/notify": typeof lib_notify;

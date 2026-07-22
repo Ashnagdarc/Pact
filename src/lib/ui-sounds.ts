@@ -1,4 +1,4 @@
-type UiSound =
+export type UiSound =
   | "slide"
   | "tick"
   | "chime"

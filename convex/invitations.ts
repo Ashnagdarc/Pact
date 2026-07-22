@@ -1,6 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { notify } from "./lib/notify";
+import { requireAppUser } from "./lib/auth";
 
 export const getByToken = query({
   args: { token: v.string() },
@@ -50,9 +51,10 @@ export const accept = mutation({
   args: {
     token: v.string(),
     displayName: v.string(),
-    existingUserId: v.optional(v.id("users")),
   },
   handler: async (ctx, args) => {
+    const user = await requireAppUser(ctx);
+
     const invitation = await ctx.db
       .query("invitations")
       .withIndex("by_token", (q) => q.eq("token", args.token))
@@ -81,32 +83,17 @@ export const accept = mutation({
       throw new Error("Enter a display name");
     }
 
-    let userId = args.existingUserId;
-
-    if (userId) {
-      const existing = await ctx.db.get(userId);
-      if (!existing) {
-        userId = undefined;
-      } else if (existing._id === pact.ownerId) {
-        throw new Error("You already own this Pact");
-      }
+    if (user._id === pact.ownerId) {
+      throw new Error("You already own this Pact");
     }
 
-    if (!userId) {
-      userId = await ctx.db.insert("users", {
-        displayName: name,
-        timezone: "Africa/Lagos",
-        onboardingCompleted: true,
-        isDemo: true,
-      });
-    } else {
-      await ctx.db.patch(userId, { displayName: name });
-    }
+    await ctx.db.patch(user._id, { displayName: name });
+    const userId = user._id;
 
     const existingMembership = await ctx.db
       .query("pactMembers")
       .withIndex("by_pact_user", (q) =>
-        q.eq("pactId", invitation.pactId).eq("userId", userId!)
+        q.eq("pactId", invitation.pactId).eq("userId", userId)
       )
       .unique();
 
@@ -172,6 +159,7 @@ export const decline = mutation({
     displayName: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    // Token is the capability secret; auth optional for decline.
     const invitation = await ctx.db
       .query("invitations")
       .withIndex("by_token", (q) => q.eq("token", args.token))

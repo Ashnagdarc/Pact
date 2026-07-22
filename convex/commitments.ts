@@ -2,6 +2,11 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { cardTone, commitmentStatus } from "./lib/validators";
+import {
+  requireAppUser,
+  requireCommitmentAccess,
+  requirePactMember,
+} from "./lib/auth";
 
 function startOfLocalDay(ms = Date.now()) {
   const d = new Date(ms);
@@ -25,14 +30,15 @@ function startOfWeek(ms = Date.now()) {
 }
 
 export const listForToday = query({
-  args: { userId: v.id("users") },
-  handler: async (ctx, args) => {
+  args: {},
+  handler: async (ctx) => {
+    const user = await requireAppUser(ctx);
     const dayStart = startOfLocalDay();
     const dayEnd = endOfLocalDay();
 
     const commitments = await ctx.db
       .query("commitments")
-      .withIndex("by_assignee", (q) => q.eq("assigneeId", args.userId))
+      .withIndex("by_assignee", (q) => q.eq("assigneeId", user._id))
       .collect();
 
     return commitments
@@ -45,11 +51,12 @@ export const listForToday = query({
 });
 
 export const listForAssignee = query({
-  args: { userId: v.id("users") },
-  handler: async (ctx, args) => {
+  args: {},
+  handler: async (ctx) => {
+    const user = await requireAppUser(ctx);
     return await ctx.db
       .query("commitments")
-      .withIndex("by_assignee", (q) => q.eq("assigneeId", args.userId))
+      .withIndex("by_assignee", (q) => q.eq("assigneeId", user._id))
       .collect();
   },
 });
@@ -57,10 +64,12 @@ export const listForAssignee = query({
 export const getById = query({
   args: { commitmentId: v.id("commitments") },
   handler: async (ctx, args) => {
-    const commitment = await ctx.db.get(args.commitmentId);
-    if (!commitment) {
-      return null;
-    }
+    const user = await requireAppUser(ctx);
+    const commitment = await requireCommitmentAccess(
+      ctx,
+      args.commitmentId,
+      user._id
+    );
 
     const pact = commitment.pactId
       ? await ctx.db.get(commitment.pactId)
@@ -78,12 +87,13 @@ export const getById = query({
 });
 
 export const weekStats = query({
-  args: { userId: v.id("users") },
-  handler: async (ctx, args) => {
+  args: {},
+  handler: async (ctx) => {
+    const user = await requireAppUser(ctx);
     const weekStart = startOfWeek();
     const commitments = await ctx.db
       .query("commitments")
-      .withIndex("by_assignee", (q) => q.eq("assigneeId", args.userId))
+      .withIndex("by_assignee", (q) => q.eq("assigneeId", user._id))
       .collect();
 
     const completedThisWeek = commitments.filter(
@@ -113,7 +123,6 @@ export const weekStats = query({
 export const create = mutation({
   args: {
     assigneeId: v.id("users"),
-    creatorId: v.id("users"),
     title: v.string(),
     description: v.optional(v.string()),
     pactId: v.optional(v.id("pacts")),
@@ -131,9 +140,18 @@ export const create = mutation({
     ),
   },
   handler: async (ctx, args) => {
+    const creator = await requireAppUser(ctx);
+
+    if (args.pactId) {
+      await requirePactMember(ctx, args.pactId, creator._id);
+      await requirePactMember(ctx, args.pactId, args.assigneeId);
+    } else if (args.assigneeId !== creator._id) {
+      throw new Error("Cannot assign solo commitments to others");
+    }
+
     const commitmentId = await ctx.db.insert("commitments", {
       pactId: args.pactId,
-      creatorId: args.creatorId,
+      creatorId: creator._id,
       assigneeId: args.assigneeId,
       title: args.title,
       description: args.description,
@@ -146,7 +164,7 @@ export const create = mutation({
     });
 
     await ctx.db.insert("activityEvents", {
-      userId: args.creatorId,
+      userId: creator._id,
       pactId: args.pactId,
       eventName: "commitment_created",
       metadata: { commitmentId, title: args.title },
@@ -162,9 +180,15 @@ export const updateStatus = mutation({
     status: commitmentStatus,
   },
   handler: async (ctx, args) => {
-    const existing = await ctx.db.get(args.commitmentId);
-    if (!existing) {
-      throw new Error("Commitment not found");
+    const user = await requireAppUser(ctx);
+    const existing = await requireCommitmentAccess(
+      ctx,
+      args.commitmentId,
+      user._id
+    );
+
+    if (existing.assigneeId !== user._id && existing.creatorId !== user._id) {
+      throw new Error("Forbidden");
     }
 
     await ctx.db.patch(args.commitmentId, {
@@ -188,8 +212,18 @@ export const toggleChecklistItem = mutation({
     index: v.number(),
   },
   handler: async (ctx, args) => {
-    const existing = await ctx.db.get(args.commitmentId);
-    if (!existing?.checklist) {
+    const user = await requireAppUser(ctx);
+    const existing = await requireCommitmentAccess(
+      ctx,
+      args.commitmentId,
+      user._id
+    );
+
+    if (existing.assigneeId !== user._id && existing.creatorId !== user._id) {
+      throw new Error("Forbidden");
+    }
+
+    if (!existing.checklist) {
       throw new Error("Checklist not found");
     }
 
@@ -201,7 +235,11 @@ export const toggleChecklistItem = mutation({
 
     await ctx.db.patch(args.commitmentId, {
       checklist,
-      status: allDone ? "done" : existing.status === "done" ? "on_track" : existing.status,
+      status: allDone
+        ? "done"
+        : existing.status === "done"
+          ? "on_track"
+          : existing.status,
       completedAt: allDone ? Date.now() : undefined,
     });
   },

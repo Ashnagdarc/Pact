@@ -18,13 +18,13 @@ export function NotificationBell({ className }: NotificationBellProps) {
   const { userId } = useCurrentUser();
   const unread = useQuery(
     api.notifications.unreadCount,
-    userId ? { userId } : "skip"
+    userId ? {} : "skip"
   );
   const syncRescuePrompts = useMutation(api.notifications.syncRescuePrompts);
 
   useEffect(() => {
     if (!userId) return;
-    void syncRescuePrompts({ userId });
+    void syncRescuePrompts({});
   }, [userId, syncRescuePrompts]);
 
   return (

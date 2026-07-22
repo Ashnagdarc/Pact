@@ -24,7 +24,7 @@ function PactsScreenConnected() {
   const { userId, user, loading, isAuthenticated } = useCurrentUser();
   const boards = useQuery(
     api.pacts.listForUser,
-    userId ? { userId } : "skip"
+    userId ? {} : "skip"
   );
 
   if (loading || (userId && boards === undefined)) {
