@@ -1,22 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useMutation } from "convex/react";
-import { ArrowRight, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 import { api } from "@convex/_generated/api";
 import { AppShell } from "@/components/navigation/app-shell";
+import { WaitlistComingSoon } from "@/components/screens/waitlist-coming-soon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { readWaitlistEmail, writeWaitlistEmail } from "@/lib/launch";
 
 export default function WaitlistPage() {
   const join = useMutation(api.waitlist.join);
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
-  const [done, setDone] = useState(false);
+  const [joinedEmail, setJoinedEmail] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    setJoinedEmail(readWaitlistEmail());
+    setHydrated(true);
+  }, []);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -28,7 +36,9 @@ export default function WaitlistPage() {
         name: name.trim() || undefined,
         source: "waitlist",
       });
-      setDone(true);
+      const normalized = email.trim().toLowerCase();
+      writeWaitlistEmail(normalized);
+      setJoinedEmail(normalized);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not join waitlist");
     } finally {
@@ -46,23 +56,16 @@ export default function WaitlistPage() {
           Join the private beta
         </h1>
         <p className="mt-2 text-sm text-white/55">
-          Test structured accountability with someone you trust. We&apos;ll
-          invite you as slots open.
+          Test structured accountability with someone you trust. Launch is about
+          three months out — we&apos;ll invite you as slots open.
         </p>
 
-        {done ? (
-          <div className="mt-8 rounded-3xl border border-volt-500/25 bg-volt-500/10 p-5">
-            <p className="font-semibold text-volt-500">You&apos;re on the list</p>
-            <p className="mt-2 text-sm text-white/65">
-              Watch {email} for an invite. Bring a partner when you join.
-            </p>
-            <Button asChild className="mt-5 h-11 rounded-full bg-volt-500 text-ink-950">
-              <Link href="/sign-in">
-                Already invited? Sign in
-                <ArrowRight className="size-4" />
-              </Link>
-            </Button>
+        {!hydrated ? (
+          <div className="mt-10 flex justify-center">
+            <Loader2 className="size-6 animate-spin text-volt-500" />
           </div>
+        ) : joinedEmail ? (
+          <WaitlistComingSoon email={joinedEmail} />
         ) : (
           <form onSubmit={onSubmit} className="mt-8 grid gap-3">
             <Input
@@ -89,7 +92,18 @@ export default function WaitlistPage() {
               disabled={busy}
               className="h-12 rounded-full bg-volt-500 font-semibold text-ink-950 hover:bg-volt-500/90"
             >
-              {busy ? <Loader2 className="size-4 animate-spin" /> : "Request invite"}
+              {busy ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                "Request invite"
+              )}
+            </Button>
+            <Button
+              asChild
+              variant="ghost"
+              className="h-11 rounded-full text-white/55 hover:text-white"
+            >
+              <Link href="/sign-in">Already invited? Sign in</Link>
             </Button>
           </form>
         )}

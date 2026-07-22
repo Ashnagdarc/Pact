@@ -47,13 +47,15 @@ export function WelcomeScreen() {
           </p>
         </motion.div>
 
-        <WelcomePreviewStack />
+        <div className="flex min-h-[7.5rem] flex-1 items-center justify-center py-8">
+          <WelcomePreviewStack />
+        </div>
 
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-          className="mt-auto grid gap-2.5"
+          className="grid gap-2.5"
         >
           <div className="mb-1 grid gap-2">
             {features.map((feature, index) => (
@@ -81,17 +83,17 @@ export function WelcomeScreen() {
             asChild
             className="h-12 rounded-full bg-volt-500 text-base font-semibold text-ink-950 hover:bg-volt-500/90"
           >
-            <Link href="/onboarding">
-              Get started
+            <Link href="/waitlist">
+              Join the private beta waitlist
               <ArrowRight className="size-4" />
             </Link>
           </Button>
           <Button
             asChild
             variant="ghost"
-            className="h-11 rounded-full text-white/60 hover:text-white"
+            className="h-11 rounded-full text-white/45 hover:text-white/75"
           >
-            <Link href="/waitlist">Join the private beta waitlist</Link>
+            <Link href="/sign-in">Have an invite? Sign in</Link>
           </Button>
         </motion.div>
       </div>

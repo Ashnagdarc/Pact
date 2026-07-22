@@ -52,7 +52,7 @@ export function WelcomePreviewStack() {
 
   return (
     <div
-      className="relative mx-auto mt-7 mb-6 h-[6.75rem] w-full max-w-[17rem]"
+      className="relative mx-auto h-[6.75rem] w-full max-w-[17rem]"
       aria-live="polite"
       aria-atomic="true"
     >

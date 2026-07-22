@@ -20,8 +20,9 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
+  // `/` stays public so marketing/welcome can render for signed-out users.
+  // Authenticated Today is gated client-side (and by Convex JWT).
   matcher: [
-    "/",
     "/pacts/:path*",
     "/commitments/:path*",
     "/insights",

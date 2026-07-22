@@ -12,13 +12,42 @@ import {
   readOnboardingPending,
 } from "@/lib/onboarding";
 
+const SESSION_HINT_KEY = "pact.hasSession";
+
+function readSessionHint() {
+  if (typeof window === "undefined") return false;
+  try {
+    return window.sessionStorage.getItem(SESSION_HINT_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function writeSessionHint(hasSession: boolean) {
+  if (typeof window === "undefined") return;
+  try {
+    if (hasSession) {
+      window.sessionStorage.setItem(SESSION_HINT_KEY, "1");
+    } else {
+      window.sessionStorage.removeItem(SESSION_HINT_KEY);
+    }
+  } catch {
+    // Ignore storage failures (private mode, etc.).
+  }
+}
+
 export function useCurrentUser() {
-  const { data: session, isPending: sessionPending } = authClient.useSession();
+  const {
+    data: session,
+    isPending: sessionPending,
+    isRefetching: sessionRefetching,
+  } = authClient.useSession();
   const { isAuthenticated: convexAuthenticated, isLoading: convexAuthLoading } =
     useConvexAuth();
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [applyingPending, setApplyingPending] = useState(false);
+  const [sessionHint, setSessionHint] = useState(false);
   const bootGen = useRef(0);
 
   const ensureAppUser = useMutation(api.users.ensureAppUser);
@@ -28,6 +57,18 @@ export function useCurrentUser() {
     api.users.getCurrent,
     convexAuthenticated ? {} : "skip"
   );
+
+  useEffect(() => {
+    setSessionHint(readSessionHint());
+  }, []);
+
+  // Remember that this tab had a session so brief refetches don't flash Welcome.
+  useEffect(() => {
+    if (sessionPending || sessionRefetching) return;
+    const hasSession = Boolean(session?.user);
+    writeSessionHint(hasSession);
+    setSessionHint(hasSession);
+  }, [session?.user, sessionPending, sessionRefetching]);
 
   // Clear local pending only after Convex reflects onboardingCompleted.
   useEffect(() => {
@@ -46,7 +87,7 @@ export function useCurrentUser() {
     let cancelled = false;
 
     async function bootstrap() {
-      if (sessionPending || convexAuthLoading) {
+      if (sessionPending || sessionRefetching || convexAuthLoading) {
         setReady(false);
         return;
       }
@@ -111,9 +152,12 @@ export function useCurrentUser() {
     ensureAppUser,
     session,
     sessionPending,
+    sessionRefetching,
   ]);
 
   const signOut = useCallback(async () => {
+    writeSessionHint(false);
+    setSessionHint(false);
     await authClient.signOut();
   }, []);
 
@@ -126,9 +170,14 @@ export function useCurrentUser() {
     applyingPending &&
     appUser != null &&
     !appUser.onboardingCompleted;
+  // Avoid treating a transient null session (or in-flight refetch) as logged out.
+  const waitingForSessionSettlement =
+    sessionPending ||
+    sessionRefetching ||
+    (sessionHint && !session?.user);
 
   const loading =
-    sessionPending ||
+    waitingForSessionSettlement ||
     waitingForConvex ||
     waitingForUserRow ||
     waitingForPendingOnboarding;
