@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { useMutation, useQuery } from "convex/react";
 import { format } from "date-fns";
@@ -29,6 +29,11 @@ import {
   type CheckInSignal,
   type PartnerResponseType,
 } from "@/lib/check-in";
+import {
+  clearCheckInDraft,
+  readCheckInDraft,
+  saveCheckInDraft,
+} from "@/lib/offline-drafts";
 import {
   blockerLabel,
   needsRescue,
@@ -105,6 +110,34 @@ function CommitmentDetailConnected({
     null
   );
   const [isPending, startTransition] = useTransition();
+  const [draftHint, setDraftHint] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void readCheckInDraft(commitmentId).then((draft) => {
+      if (cancelled || !draft) return;
+      setNote(draft.note);
+      setDraftHint("Restored offline draft");
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [commitmentId]);
+
+  useEffect(() => {
+    if (!note.trim()) {
+      void clearCheckInDraft(commitmentId);
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      void saveCheckInDraft({
+        commitmentId,
+        signal: pendingSignal ?? "on_track",
+        note,
+      }).then(() => setDraftHint("Draft saved offline"));
+    }, 400);
+    return () => window.clearTimeout(timer);
+  }, [commitmentId, note, pendingSignal]);
 
   if (
     userLoading ||
@@ -156,6 +189,8 @@ function CommitmentDetailConnected({
       });
       setNote("");
       setPendingSignal(null);
+      setDraftHint(null);
+      await clearCheckInDraft(commitmentId);
     });
   }
 
@@ -323,6 +358,9 @@ function CommitmentDetailConnected({
           rows={2}
           className="mt-3 rounded-2xl border-white/10 bg-white/5 text-white placeholder:text-white/35"
         />
+        {draftHint ? (
+          <p className="mt-1.5 text-xs text-white/40">{draftHint}</p>
+        ) : null}
 
         <div className="mt-3 grid grid-cols-2 gap-2">
           {checkInSignals.map((signal) => (

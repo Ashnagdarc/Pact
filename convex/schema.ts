@@ -221,6 +221,28 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_user_readAt", ["userId", "readAt"]),
 
+  pushSubscriptions: defineTable({
+    userId: v.id("users"),
+    endpoint: v.string(),
+    expirationTime: v.optional(v.number()),
+    keys: v.object({
+      p256dh: v.string(),
+      auth: v.string(),
+    }),
+    userAgent: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_endpoint", ["endpoint"]),
+
+  waitlistSignups: defineTable({
+    email: v.string(),
+    name: v.optional(v.string()),
+    source: v.optional(v.string()),
+    createdAt: v.number(),
+  }).index("by_email", ["email"]),
+
   activityEvents: defineTable({
     userId: v.optional(v.id("users")),
     pactId: v.optional(v.id("pacts")),

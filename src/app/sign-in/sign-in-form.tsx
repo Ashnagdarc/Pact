@@ -108,6 +108,17 @@ export default function SignInForm() {
             className="h-12 rounded-2xl border-white/10 bg-white/5"
           />
 
+          {mode === "sign-in" ? (
+            <div className="flex justify-end">
+              <Link
+                href="/forgot-password"
+                className="text-xs text-white/50 underline-offset-2 hover:underline"
+              >
+                Forgot password?
+              </Link>
+            </div>
+          ) : null}
+
           {error ? (
             <p className="text-sm text-coral-400" role="alert">
               {error}

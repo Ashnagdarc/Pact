@@ -21,9 +21,12 @@ import type * as lib_recoveryLabels from "../lib/recoveryLabels.js";
 import type * as lib_validators from "../lib/validators.js";
 import type * as notifications from "../notifications.js";
 import type * as pacts from "../pacts.js";
+import type * as push from "../push.js";
+import type * as pushSubscriptions from "../pushSubscriptions.js";
 import type * as rescue from "../rescue.js";
 import type * as seed from "../seed.js";
 import type * as users from "../users.js";
+import type * as waitlist from "../waitlist.js";
 
 import type {
   ApiFromModules,
@@ -45,9 +48,12 @@ declare const fullApi: ApiFromModules<{
   "lib/validators": typeof lib_validators;
   notifications: typeof notifications;
   pacts: typeof pacts;
+  push: typeof push;
+  pushSubscriptions: typeof pushSubscriptions;
   rescue: typeof rescue;
   seed: typeof seed;
   users: typeof users;
+  waitlist: typeof waitlist;
 }>;
 
 /**

@@ -86,6 +86,13 @@ export function WelcomeScreen() {
               <ArrowRight className="size-4" />
             </Link>
           </Button>
+          <Button
+            asChild
+            variant="ghost"
+            className="h-11 rounded-full text-white/60 hover:text-white"
+          >
+            <Link href="/waitlist">Join the private beta waitlist</Link>
+          </Button>
         </motion.div>
       </div>
     </AppShell>

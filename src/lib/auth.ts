@@ -4,6 +4,8 @@ import { nextCookies } from "better-auth/next-js";
 import { jwt } from "better-auth/plugins";
 import { Pool } from "pg";
 
+import { captureResetLink, sendEmail } from "@/lib/email";
+
 /**
  * Better Auth (Next.js) + Infrastructure dashboard via `dash()` + `sentinel()`.
  * Uses Postgres (Neon) so auth works on Vercel serverless.
@@ -96,6 +98,22 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false,
+    revokeSessionsOnPasswordReset: true,
+    resetPasswordTokenExpiresIn: 60 * 60,
+    sendResetPassword: async ({ user, url, token }) => {
+      captureResetLink({ email: user.email, url, token });
+      void sendEmail({
+        to: user.email,
+        subject: "Reset your Pact password",
+        text: `Reset your Pact password:\n\n${url}\n\nThis link expires in 1 hour. If you did not request a reset, you can ignore this email.`,
+        html: `<p>Reset your Pact password:</p><p><a href="${url}">${url}</a></p><p>This link expires in 1 hour. If you did not request a reset, you can ignore this email.</p>`,
+      }).catch((error) => {
+        console.error("[pact-email] reset email failed", error);
+      });
+    },
+    onPasswordReset: async ({ user }) => {
+      console.info("[pact-auth] password reset completed for", user.email);
+    },
   },
   socialProviders:
     process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET

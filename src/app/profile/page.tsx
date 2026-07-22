@@ -6,6 +6,7 @@ import { Bell, Download, Loader2 } from "lucide-react";
 import { SurfaceCard } from "@/components/cards/surface-card";
 import { AppShell } from "@/components/navigation/app-shell";
 import { InstallPrompt } from "@/components/pwa/install-prompt";
+import { PushOptInButton } from "@/components/pwa/push-opt-in-button";
 import { Button } from "@/components/ui/button";
 import { useCurrentUser } from "@/hooks/use-demo-user";
 
@@ -56,6 +57,7 @@ export default function ProfilePage() {
       </SurfaceCard>
 
       <div className="mt-4 grid gap-3">
+        {isAuthenticated ? <PushOptInButton /> : null}
         <Button
           asChild
           className="h-12 justify-start rounded-2xl border border-white/10 bg-white/5 text-white hover:bg-white/10"

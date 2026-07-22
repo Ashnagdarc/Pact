@@ -73,9 +73,8 @@ export function TodayScreen() {
     if (!isAuthenticated || userLoading || !user) return;
     // Pending local onboarding is applied during useCurrentUser bootstrap.
     // Don't bounce to /onboarding while that write is in flight / about to run.
-    if (!user.onboardingCompleted && !readOnboardingPending()) {
-      router.replace("/onboarding");
-    }
+    if (user.onboardingCompleted || readOnboardingPending()) return;
+    router.replace("/onboarding");
   }, [isAuthenticated, user, userLoading, router]);
 
   const filteredCommitments = (todayCommitments ?? []).filter((c) => {

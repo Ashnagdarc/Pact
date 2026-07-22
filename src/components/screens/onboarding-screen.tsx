@@ -18,7 +18,6 @@ import { useCurrentUser } from "@/hooks/use-demo-user";
 import { getOnboardingStepMeta } from "@/lib/onboarding-story";
 import {
   clearOnboardingDraft,
-  clearOnboardingPending,
   defaultOnboardingDraft,
   ONBOARDING_STEP_COUNT,
   readOnboardingDraft,
@@ -99,6 +98,8 @@ export function OnboardingScreen() {
     pendingApplyStarted.current = true;
     setFinishing(true);
 
+    // Keep pending in localStorage until Convex shows onboardingCompleted
+    // (cleared by useCurrentUser). Clearing here caused Today→onboarding bounce.
     void completeOnboarding({
       displayName: pending.displayName.trim() || undefined,
       goalFocus: pending.goalFocus,
@@ -106,16 +107,15 @@ export function OnboardingScreen() {
       defaultCheckInFrequency: pending.checkInFrequency,
     })
       .then(() => {
-        clearOnboardingPending();
         clearOnboardingDraft();
         router.replace("/");
       })
       .catch((err) => {
         pendingApplyStarted.current = false;
+        setFinishing(false);
         setError(
           err instanceof Error ? err.message : "Could not finish onboarding"
         );
-        setFinishing(false);
       });
   }, [
     completeOnboarding,
@@ -159,6 +159,13 @@ export function OnboardingScreen() {
       }
 
       if (isAuthenticated && userId) {
+        saveOnboardingPending({
+          displayName: draft.displayName,
+          goalFocus: draft.goalFocus,
+          accountabilityStyle: draft.accountabilityStyle,
+          checkInFrequency: draft.checkInFrequency,
+          notificationsEnabled: draft.notificationsEnabled,
+        });
         await completeOnboarding({
           displayName: draft.displayName.trim() || undefined,
           goalFocus: draft.goalFocus,
@@ -166,7 +173,7 @@ export function OnboardingScreen() {
           defaultCheckInFrequency: draft.checkInFrequency,
         });
         clearOnboardingDraft();
-        clearOnboardingPending();
+        // Pending stays until useCurrentUser sees onboardingCompleted.
         router.push("/");
         router.refresh();
         return;
