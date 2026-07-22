@@ -136,6 +136,24 @@ export const auth = betterAuth({
           sentinel({
             apiKey: infraApiKey,
             ...infraConnectionOptions(),
+            security: {
+              // Gmail dots/aliases become one identity (avoids duplicate accounts).
+              emailNormalization: { enabled: true },
+              // Dev/beta: challenge instead of hard-block after failed logins.
+              credentialStuffing: {
+                enabled: true,
+                thresholds: { challenge: 8, block: 20 },
+                windowSeconds: 3600,
+                cooldownSeconds: 300,
+              },
+              velocity: {
+                enabled: true,
+                thresholds: { challenge: 30, block: 60 },
+                maxSignInsPerIp: 80,
+                windowSeconds: 3600,
+                action: "challenge",
+              },
+            },
           }),
         ]
       : []),
