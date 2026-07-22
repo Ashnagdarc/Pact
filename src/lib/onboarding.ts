@@ -1,6 +1,9 @@
 import type { CreatePactValues } from "@/lib/validation/pact";
 
+export const ONBOARDING_FIRST_STEP = 4;
 export const ONBOARDING_STEP_COUNT = 10;
+export const ONBOARDING_VISIBLE_STEP_COUNT =
+  ONBOARDING_STEP_COUNT - ONBOARDING_FIRST_STEP;
 export const ONBOARDING_DRAFT_KEY = "pact_onboarding_draft";
 export const ONBOARDING_PENDING_KEY = "pact_onboarding_pending";
 
@@ -19,7 +22,7 @@ export const defaultOnboardingDraft: OnboardingDraft = {
   accountabilityStyle: "supportive",
   checkInFrequency: "daily",
   notificationsEnabled: true,
-  step: 0,
+  step: ONBOARDING_FIRST_STEP,
 };
 
 export function readOnboardingDraft(): OnboardingDraft {
@@ -27,7 +30,18 @@ export function readOnboardingDraft(): OnboardingDraft {
   try {
     const raw = sessionStorage.getItem(ONBOARDING_DRAFT_KEY);
     if (!raw) return defaultOnboardingDraft;
-    return { ...defaultOnboardingDraft, ...JSON.parse(raw) };
+    const stored = {
+      ...defaultOnboardingDraft,
+      ...JSON.parse(raw),
+    } as OnboardingDraft;
+
+    // Migrate unfinished drafts from the former ten-screen onboarding. The
+    // underlying screen components remain unchanged; only the active entry
+    // point is shortened.
+    return {
+      ...stored,
+      step: Math.max(ONBOARDING_FIRST_STEP, stored.step),
+    };
   } catch {
     return defaultOnboardingDraft;
   }
