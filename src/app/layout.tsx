@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { DM_Sans, Syne } from "next/font/google";
+import { PostOnboardingRedirect } from "@/components/navigation/post-onboarding-redirect";
 import { ConvexClientProvider } from "@/components/providers/convex-client-provider";
 import { ServiceWorkerRegister } from "@/components/pwa/service-worker-register";
 import "./globals.css";
@@ -59,6 +60,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col font-sans">
         <ConvexClientProvider>
           <ServiceWorkerRegister />
+          <PostOnboardingRedirect />
           {children}
         </ConvexClientProvider>
       </body>
