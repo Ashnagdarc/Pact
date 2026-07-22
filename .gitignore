@@ -46,3 +46,7 @@ auth.db
 auth.db-*
 pact-auth.db
 pact-auth.db-*
+
+
+#Ignore vscode AI rules
+.github/instructions/codacy.instructions.md
