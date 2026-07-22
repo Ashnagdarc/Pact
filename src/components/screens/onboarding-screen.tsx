@@ -19,6 +19,7 @@ import { getOnboardingStepMeta } from "@/lib/onboarding-story";
 import {
   clearOnboardingDraft,
   defaultOnboardingDraft,
+  ONBOARDING_FIRST_STEP,
   ONBOARDING_STEP_COUNT,
   readOnboardingDraft,
   readOnboardingPending,
@@ -34,7 +35,7 @@ export function OnboardingScreen() {
   const { user, userId, isAuthenticated, loading } = useCurrentUser();
   const completeOnboarding = useMutation(api.users.completeOnboarding);
 
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(ONBOARDING_FIRST_STEP);
   const [draft, setDraft] = useState<OnboardingDraft>(defaultOnboardingDraft);
   const [finishing, setFinishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -71,7 +72,7 @@ export function OnboardingScreen() {
     }
     if (!soundReady) return;
     playFeedback({
-      sound: step === 0 ? "chime" : step === 3 ? "whoosh" : "whoosh",
+      sound: "whoosh",
       haptic: "step",
     });
   }, [step, soundReady]);
@@ -141,7 +142,7 @@ export function OnboardingScreen() {
 
   function goBack() {
     playFeedback({ sound: soundReady ? "tick" : undefined, haptic: "light" });
-    setStep((prev) => Math.max(prev - 1, 0));
+    setStep((prev) => Math.max(prev - 1, ONBOARDING_FIRST_STEP));
   }
 
   async function finish() {
@@ -206,7 +207,7 @@ export function OnboardingScreen() {
       <ConfettiBurst burstKey={confettiKey} />
       <div className="relative flex min-h-[calc(100dvh-2rem)] flex-col">
         <header className="mb-6 flex items-center gap-3 pt-1">
-          {step > 0 ? (
+          {step > ONBOARDING_FIRST_STEP ? (
             <button
               type="button"
               onClick={goBack}
