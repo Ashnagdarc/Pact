@@ -228,9 +228,6 @@ export function LandingPage() {
             <Link href="/terms" className="hover:text-white/70">
               Terms
             </Link>
-            <Link href="/sign-in" className="hover:text-white/70">
-              Sign in
-            </Link>
             <span>© {new Date().getFullYear()} joinpact.tech</span>
           </div>
         </div>
