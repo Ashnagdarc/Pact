@@ -51,9 +51,33 @@ function infraConnectionOptions() {
   };
 }
 
+const productionHost = "pact-flowtag-projects.vercel.app";
+const productionOrigin = `https://${productionHost}`;
+
 export const auth = betterAuth({
   appName: "Pact",
-  baseURL: process.env.BETTER_AUTH_URL ?? process.env.NEXT_PUBLIC_SITE_URL,
+  // Allow canonical + Vercel preview/deployment hosts (fixes "Invalid origin").
+  baseURL: {
+    allowedHosts: [
+      productionHost,
+      "pact-two-ashy.vercel.app",
+      "localhost:3000",
+      "127.0.0.1:3000",
+      "*.vercel.app",
+    ],
+    protocol: "auto",
+    fallback:
+      process.env.BETTER_AUTH_URL ??
+      process.env.NEXT_PUBLIC_SITE_URL ??
+      productionOrigin,
+  },
+  trustedOrigins: [
+    productionOrigin,
+    "https://pact-two-ashy.vercel.app",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "https://*.vercel.app",
+  ],
   secret: process.env.BETTER_AUTH_SECRET,
   database: createDatabase(),
   advanced: {
@@ -98,8 +122,12 @@ export const auth = betterAuth({
         ]
       : []),
     // Convex customJwt supports ES256/RS256 only (not EdDSA default).
+    // Private-key encryption is disabled: Neon JWKS rows were encrypted under
+    // mismatched secrets and broke /token. Convex tokens are minted separately
+    // by `/api/convex-token` using PACT_CONVEX_JWT_PRIVATE_JWK.
     jwt({
       jwks: {
+        disablePrivateKeyEncryption: true,
         keyPairConfig: {
           alg: "ES256",
         },
@@ -108,17 +136,14 @@ export const auth = betterAuth({
         issuer: authJwtIssuer,
         audience: authJwtAudience,
         expirationTime: "1h",
-        // Put iss/aud on the payload too — SignJWT prefers payload values.
-        definePayload: (session) => {
-          const user = "user" in session ? session.user : session;
-          return {
-            name: user.name,
-            email: user.email,
-            picture: user.image,
-            iss: authJwtIssuer,
-            aud: authJwtAudience,
-          };
-        },
+        // Better Auth passes `{ user, session }` here (see jwt plugin getJwtToken).
+        definePayload: ({ user }) => ({
+          name: user.name,
+          email: user.email,
+          picture: user.image,
+          iss: authJwtIssuer,
+          aud: authJwtAudience,
+        }),
       },
     }),
     nextCookies(),

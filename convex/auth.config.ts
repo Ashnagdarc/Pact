@@ -1,7 +1,7 @@
 import type { AuthConfig } from "convex/server";
 
 /**
- * Verifies Better Auth JWTs issued by the Next.js app (Neon-backed sessions).
+ * Verifies Pact-issued JWTs from `/api/convex-token` (Better Auth session → ES256).
  *
  * Convex matches providers on exact `iss` + `aud` (applicationID).
  * We register local + production issuers and both `aud=convex` and site-URL
@@ -11,9 +11,12 @@ const productionIssuer =
   process.env.BETTER_AUTH_ISSUER ?? "https://pact-flowtag-projects.vercel.app";
 const localIssuer = "http://localhost:3000";
 
-/** Public ES256 JWKS currently stored in Neon (kid F0Rh4wGk3DEPmahc3Nen29rt2EGOGwTf). */
+/**
+ * Public ES256 JWKS for Pact-issued Convex JWTs (kid pact-convex-es256).
+ * Private key lives in Next.js as PACT_CONVEX_JWT_PRIVATE_JWK — not Neon JWKS.
+ */
 const FALLBACK_JWKS_DATA_URI =
-  "data:text/plain;charset=utf-8;base64,eyJrZXlzIjpbeyJhbGciOiJFUzI1NiIsImNydiI6IlAtMjU2Iiwia3R5IjoiRUMiLCJ4IjoiM2M3aGJNdW9GWDBBblR5MDhMT0VNTGdTNWM4V0w0ZG5XdVRvR183aVo3YyIsInkiOiJNTlFWQkhCdVVIMkhISUFuRnNkSElOZGhUVnNRUm40Q1dvWXdaTW0ydDFZIiwia2lkIjoiRjBSaDR3R2szREVQbWFoYzNOZW4yOXJ0MkVHT0d3VGYifV19";
+  "data:text/plain;charset=utf-8;base64,eyJrZXlzIjpbeyJrdHkiOiJFQyIsIngiOiJMaVFtZnBmN0gyWWhqbng0elphNWd6djdwaUVRbTZmLXR2R0dWM1NpWVJFIiwieSI6IldoR1JueGRBZDVvejZVMXZiVkE5QTFhTGJBLXVqelZKVkhtTVJIcjZUbWsiLCJjcnYiOiJQLTI1NiIsImtpZCI6InBhY3QtY29udmV4LWVzMjU2IiwidXNlIjoic2lnIiwiYWxnIjoiRVMyNTYifV19";
 
 const jwks = process.env.BETTER_AUTH_JWKS ?? FALLBACK_JWKS_DATA_URI;
 

@@ -8,6 +8,60 @@ import { authClient } from "@/lib/auth-client";
 const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
 const convex = convexUrl ? new ConvexReactClient(convexUrl) : null;
 
+function decodeJwtClaims(token: string): {
+  iss?: unknown;
+  aud?: unknown;
+  sub?: unknown;
+  alg?: unknown;
+  kid?: unknown;
+} | null {
+  try {
+    const [headerB64, payloadB64] = token.split(".");
+    const header = JSON.parse(
+      atob(headerB64.replace(/-/g, "+").replace(/_/g, "/"))
+    );
+    const payload = JSON.parse(
+      atob(payloadB64.replace(/-/g, "+").replace(/_/g, "/"))
+    );
+    return {
+      alg: header.alg,
+      kid: header.kid,
+      iss: payload.iss,
+      aud: payload.aud,
+      sub: payload.sub,
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function fetchConvexJwt(): Promise<string | null> {
+  // Same-origin issuer with typ/iss/aud Convex expects (not Better Auth /token).
+  const response = await fetch("/api/convex-token", {
+    method: "GET",
+    credentials: "include",
+    headers: { Accept: "application/json" },
+  });
+
+  if (!response.ok) {
+    if (process.env.NODE_ENV !== "production") {
+      console.warn("[pact-auth] /api/convex-token failed", response.status);
+    }
+    return null;
+  }
+
+  const data = (await response.json()) as { token?: string };
+  if (!data.token) {
+    return null;
+  }
+
+  if (process.env.NODE_ENV !== "production") {
+    console.info("[pact-auth] jwt claims", decodeJwtClaims(data.token));
+  }
+
+  return data.token;
+}
+
 function useAuthFromBetterAuth() {
   const { data: session, isPending } = authClient.useSession();
   const isAuthenticated = Boolean(session?.user);
@@ -18,14 +72,15 @@ function useAuthFromBetterAuth() {
         return null;
       }
 
-      // Better Auth issues a fresh JWT from the session cookie.
-      // forceRefreshToken is honored by always calling /token (no long-lived cache).
       void forceRefreshToken;
-      const { data, error } = await authClient.token();
-      if (error || !data?.token) {
+      try {
+        return await fetchConvexJwt();
+      } catch (error) {
+        if (process.env.NODE_ENV !== "production") {
+          console.warn("[pact-auth] token fetch error", error);
+        }
         return null;
       }
-      return data.token;
     },
     [session?.user]
   );

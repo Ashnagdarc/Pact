@@ -4,8 +4,8 @@ import { jwtClient } from "better-auth/client/plugins";
 
 /**
  * Use same-origin in the browser so local `localhost:3000` talks to local
- * `/api/auth/*` (not the production Vercel host). JWT iss/aud are set
- * server-side and must match Convex auth.config.ts.
+ * `/api/auth/*` (not the production Vercel host). Convex JWTs come from
+ * `/api/convex-token` and must match `convex/auth.config.ts` iss/aud/JWKS.
  */
 export const authClient = createAuthClient({
   baseURL:
