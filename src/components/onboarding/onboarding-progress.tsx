@@ -1,6 +1,9 @@
 "use client";
 
-import { ONBOARDING_STEP_COUNT } from "@/lib/onboarding";
+import {
+  ONBOARDING_FIRST_STEP,
+  ONBOARDING_VISIBLE_STEP_COUNT,
+} from "@/lib/onboarding";
 import { cn } from "@/lib/utils";
 
 type OnboardingProgressProps = {
@@ -9,7 +12,8 @@ type OnboardingProgressProps = {
 };
 
 export function OnboardingProgress({ step, className }: OnboardingProgressProps) {
-  const progress = ((step + 1) / ONBOARDING_STEP_COUNT) * 100;
+  const visibleStep = Math.max(0, step - ONBOARDING_FIRST_STEP);
+  const progress = ((visibleStep + 1) / ONBOARDING_VISIBLE_STEP_COUNT) * 100;
 
   return (
     <div
@@ -18,10 +22,10 @@ export function OnboardingProgress({ step, className }: OnboardingProgressProps)
         className,
       )}
       role="progressbar"
-      aria-valuenow={step + 1}
+      aria-valuenow={visibleStep + 1}
       aria-valuemin={1}
-      aria-valuemax={ONBOARDING_STEP_COUNT}
-      aria-label={`Onboarding step ${step + 1} of ${ONBOARDING_STEP_COUNT}`}
+      aria-valuemax={ONBOARDING_VISIBLE_STEP_COUNT}
+      aria-label={`Onboarding step ${visibleStep + 1} of ${ONBOARDING_VISIBLE_STEP_COUNT}`}
     >
       <div
         className="h-full rounded-full bg-white/30 transition-[width] duration-500 ease-out"
