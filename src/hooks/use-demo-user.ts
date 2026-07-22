@@ -90,10 +90,12 @@ export function useCurrentUser() {
   }, []);
 
   const isAuthenticated = Boolean(session?.user) && convexAuthenticated;
+  // Don't spin forever when the session exists but Convex JWT auth never connects
+  // (e.g. JWKS unreachable). Surface that as an error path instead.
   const loading =
     sessionPending ||
     convexAuthLoading ||
-    (Boolean(session?.user) && (!ready || appUser === undefined));
+    (isAuthenticated && (!ready || appUser === undefined));
 
   return {
     user: appUser ?? null,
@@ -101,7 +103,14 @@ export function useCurrentUser() {
     isAuthenticated,
     isDemoOwner: false,
     ready,
-    error,
+    error:
+      error ??
+      (Boolean(session?.user) &&
+      !convexAuthLoading &&
+      !convexAuthenticated &&
+      ready
+        ? "Signed in, but Convex could not verify your session token. Check auth JWKS / issuer config."
+        : null),
     loading,
     signOut,
     setSessionUser: (_userId: Id<"users">) => undefined,

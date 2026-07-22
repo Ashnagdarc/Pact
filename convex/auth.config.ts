@@ -4,24 +4,26 @@ import type { AuthConfig } from "convex/server";
  * Verifies Better Auth JWTs issued by the Next.js app (Neon-backed sessions).
  *
  * Convex only accepts RS256/ES256 — Better Auth JWT plugin is configured for ES256.
- * Set BETTER_AUTH_ISSUER on the Convex deployment to the public site origin
- * (e.g. https://pact-two-ashy.vercel.app) so JWKS is fetchable from Convex cloud.
+ *
+ * Prefer a static JWKS data URI (BETTER_AUTH_JWKS) so Convex does not need to
+ * fetch `/api/auth/jwks` over the public internet. That fetch fails when Vercel
+ * Deployment Protection / SSO is enabled on the site.
  */
-const issuer = process.env.BETTER_AUTH_ISSUER;
+const issuer = process.env.BETTER_AUTH_ISSUER ?? "https://pact-flowtag-projects.vercel.app";
 
-if (!issuer) {
-  console.warn(
-    "BETTER_AUTH_ISSUER is not set on this Convex deployment. Auth will fail until it is configured."
-  );
-}
+/** Public ES256 JWKS currently stored in Neon (kid F0Rh4wGk3DEPmahc3Nen29rt2EGOGwTf). */
+const FALLBACK_JWKS_DATA_URI =
+  "data:text/plain;charset=utf-8;base64,eyJrZXlzIjpbeyJhbGciOiJFUzI1NiIsImNydiI6IlAtMjU2Iiwia3R5IjoiRUMiLCJ4IjoiM2M3aGJNdW9GWDBBblR5MDhMT0VNTGdTNWM4V0w0ZG5XdVRvR183aVo3YyIsInkiOiJNTlFWQkhCdVVIMkhISUFuRnNkSElOZGhUVnNRUm40Q1dvWXdaTW0ydDFZIiwia2lkIjoiRjBSaDR3R2szREVQbWFoYzNOZW4yOXJ0MkVHT0d3VGYifV19";
+
+const jwks = process.env.BETTER_AUTH_JWKS ?? FALLBACK_JWKS_DATA_URI;
 
 export default {
   providers: [
     {
       type: "customJwt",
       applicationID: "convex",
-      issuer: issuer ?? "https://pact-flowtag-projects.vercel.app",
-      jwks: `${issuer ?? "https://pact-flowtag-projects.vercel.app"}/api/auth/jwks`,
+      issuer,
+      jwks,
       algorithm: "ES256",
     },
   ],
