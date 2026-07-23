@@ -90,10 +90,10 @@ function InsightsScreenConnected() {
       </div>
 
       <SurfaceCard tone="signal" padding="lg" className="mt-6 rounded-[2rem]">
-        <p className="text-display text-[5.5rem] leading-none text-white">
+        <p className="text-display text-[5.5rem] leading-none text-ink-950">
           {overview.completedCount}
         </p>
-        <p className="mt-2 max-w-[16rem] text-sm font-semibold text-white/85">
+        <p className="mt-2 max-w-[16rem] text-sm font-semibold text-ink-950">
           Commitments completed this week. {overview.summary}
         </p>
       </SurfaceCard>

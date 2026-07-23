@@ -280,8 +280,10 @@ export function StoryStepTogether() {
             people={[{ name: "You" }, { name: "Alex" }]}
             size="md"
           />
-          <p className={cn(onboardingUi.cardTitle, "mt-4")}>Studio sprint pact</p>
-          <p className={onboardingUi.cardMeta}>
+          <p className={cn(onboardingUi.cardTitleOnLight, "mt-4")}>
+            Studio sprint pact
+          </p>
+          <p className={onboardingUi.cardMetaOnLight}>
             Alex nudged you 2h ago · you&apos;re still on track
           </p>
         </SurfaceCard>

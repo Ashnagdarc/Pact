@@ -193,16 +193,16 @@ function NewCommitmentForm({ initialPactId }: { initialPactId?: string }) {
 
       <form onSubmit={form.handleSubmit(onSubmit)} className="mt-6 space-y-4">
         <SurfaceCard tone={selectedTone} padding="lg" className="rounded-[2rem]">
-          <label className="mb-2 block text-xs font-semibold uppercase tracking-wide opacity-60">
+          <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-ink-950">
             Title
           </label>
           <Input
             {...form.register("title")}
             placeholder="Finish portfolio homepage"
-            className="h-12 rounded-2xl border-black/10 bg-white/40 text-base font-semibold text-ink-950 placeholder:text-ink-950/40"
+            className="h-12 rounded-2xl border-ink-950/20 bg-white text-base font-semibold text-ink-950 placeholder:text-ink-950/50 dark:bg-white dark:placeholder:text-ink-950/50"
           />
           {form.formState.errors.title ? (
-            <p className="mt-2 text-sm font-medium text-ink-950/70">
+            <p className="mt-2 text-sm font-medium text-ink-950">
               {form.formState.errors.title.message}
             </p>
           ) : null}

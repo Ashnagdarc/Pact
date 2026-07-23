@@ -10,7 +10,8 @@ const surfaceVariants = cva(
       tone: {
         ink: "bg-ink-800 text-white",
         volt: "bg-volt-500 text-ink-950",
-        signal: "bg-signal text-white",
+        // Signal blue is mid-luminance — white body copy fails WCAG; match other chromatic tones.
+        signal: "bg-signal text-ink-950",
         coral: "bg-coral-400 text-ink-950",
         cream: "bg-cream-200 text-ink-950",
         mint: "bg-mint-300 text-ink-950",

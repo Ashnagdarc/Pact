@@ -124,28 +124,28 @@ function CreatePactForm() {
 
       <form onSubmit={form.handleSubmit(onSubmit)} className="mt-6 space-y-4">
         <SurfaceCard tone={selectedTone} padding="lg" className="rounded-[2rem]">
-          <label className="mb-2 block text-xs font-semibold uppercase tracking-wide opacity-60">
+          <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-ink-950">
             Goal
           </label>
           <Input
             {...form.register("title")}
             placeholder="Ship portfolio by August"
-            className="h-12 rounded-2xl border-black/10 bg-white/40 text-base font-semibold text-ink-950 placeholder:text-ink-950/40"
+            className="h-12 rounded-2xl border-ink-950/20 bg-white text-base font-semibold text-ink-950 placeholder:text-ink-950/50 dark:bg-white dark:placeholder:text-ink-950/50"
           />
           {form.formState.errors.title ? (
-            <p className="mt-2 text-sm font-medium text-ink-950/70">
+            <p className="mt-2 text-sm font-medium text-ink-950">
               {form.formState.errors.title.message}
             </p>
           ) : null}
 
-          <label className="mt-4 mb-2 block text-xs font-semibold uppercase tracking-wide opacity-60">
+          <label className="mt-4 mb-2 block text-xs font-semibold uppercase tracking-wide text-ink-950">
             Why it matters
           </label>
           <Textarea
             {...form.register("description")}
             placeholder="Optional context for your partner"
             rows={3}
-            className="rounded-2xl border-black/10 bg-white/40 text-sm text-ink-950 placeholder:text-ink-950/40"
+            className="rounded-2xl border-ink-950/20 bg-white text-sm text-ink-950 placeholder:text-ink-950/50 dark:bg-white dark:placeholder:text-ink-950/50"
           />
         </SurfaceCard>
 
