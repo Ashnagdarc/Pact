@@ -2,12 +2,14 @@ import { dash, sentinel } from "@better-auth/infra";
 import { betterAuth, APIError } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
 import { jwt } from "better-auth/plugins";
+import { attachDatabasePool } from "@vercel/functions";
 import { cookies } from "next/headers";
 import { Pool } from "pg";
 
 import { BETA_ACCESS_COOKIE, betaAccessOpen } from "@/lib/beta-access";
-import { consumeBetaInvite, validateBetaInvite } from "@/lib/convex-http";
+import { claimBetaInvite, deleteConvexAccountByAuthUserId } from "@/lib/convex-http";
 import { captureResetLink, queueEmail } from "@/lib/email";
+import { escapeHtml, wrapEmailHtml } from "@/lib/email-html";
 
 /**
  * Better Auth (Next.js) + Infrastructure dashboard via `dash()` + `sentinel()`.
@@ -15,6 +17,7 @@ import { captureResetLink, queueEmail } from "@/lib/email";
  * JWT plugin issues ES256 tokens for Convex (`ctx.auth.getUserIdentity()`).
  * @see https://better-auth.com/docs/infrastructure/getting-started
  * @see https://better-auth.com/docs/plugins/jwt
+ * @see https://neon.com/docs/connect/connection-pooling (pooled URL + small pool)
  */
 function createDatabase() {
   const databaseUrl = process.env.DATABASE_URL;
@@ -24,13 +27,18 @@ function createDatabase() {
     );
   }
 
-  return new Pool({
+  const isLocal =
+    databaseUrl.includes("localhost") || databaseUrl.includes("127.0.0.1");
+
+  // B9: max 1 connection per serverless instance; verify TLS for Neon.
+  // Prefer DATABASE_URL with Neon's -pooler hostname on Vercel.
+  const pool = new Pool({
     connectionString: databaseUrl,
-    ssl:
-      databaseUrl.includes("localhost") || databaseUrl.includes("127.0.0.1")
-        ? undefined
-        : { rejectUnauthorized: false },
+    max: 1,
+    ssl: isLocal ? undefined : { rejectUnauthorized: true },
   });
+  attachDatabasePool(pool);
+  return pool;
 }
 
 const infraApiKey = process.env.BETTER_AUTH_API_KEY;
@@ -108,6 +116,8 @@ export const auth = betterAuth({
   databaseHooks: {
     user: {
       create: {
+        // Claim invite atomically before the user row exists so two parallel
+        // signups cannot both validate then both consume the same code (B2).
         before: async () => {
           if (betaAccessOpen()) return;
           const jar = await cookies();
@@ -118,25 +128,14 @@ export const auth = betterAuth({
                 "Early beta requires a one-time invite code. Join the waitlist first.",
             });
           }
-          const invite = await validateBetaInvite({ token });
-          if (!invite.valid) {
+          const claim = await claimBetaInvite({ token });
+          if (!claim.claimed) {
             throw new APIError("FORBIDDEN", {
               message:
-                invite.reason === "used"
+                claim.reason === "used"
                   ? "This invite code was already used."
                   : "Invalid beta invite. Request a new code from the waitlist.",
             });
-          }
-        },
-        after: async () => {
-          if (betaAccessOpen()) return;
-          const jar = await cookies();
-          const token = jar.get(BETA_ACCESS_COOKIE)?.value;
-          if (!token) return;
-          try {
-            await consumeBetaInvite({ token });
-          } catch (error) {
-            console.error("[pact-auth] failed to consume beta invite", error);
           }
         },
       },
@@ -145,13 +144,29 @@ export const auth = betterAuth({
   user: {
     deleteUser: {
       enabled: true,
+      // B6: wipe Convex app data before Neon auth row is removed so we never
+      // leave an Auth user without a matching Convex wipe attempt.
+      beforeDelete: async (user) => {
+        try {
+          await deleteConvexAccountByAuthUserId(user.id);
+        } catch (error) {
+          console.error("[pact-auth] Convex cascade failed before delete", error);
+          throw new APIError("INTERNAL_SERVER_ERROR", {
+            message:
+              "Could not remove your Pact data. Try again or contact support.",
+          });
+        }
+      },
       sendDeleteAccountVerification: async ({ user, url }) => {
-        // Do not await — timing; waitUntil keeps the Vercel function alive.
+        const safeUrl = escapeHtml(url);
         queueEmail({
           to: user.email,
           subject: "Confirm deleting your Pact account",
           text: `Confirm account deletion:\n\n${url}\n\nIf you did not request this, you can ignore this email.`,
-          html: `<p>Confirm deleting your Pact account:</p><p><a href="${url}">${url}</a></p><p>If you did not request this, you can ignore this email.</p>`,
+          html: wrapEmailHtml(
+            `<p style="margin:0 0 16px;color:#ddd">Confirm deleting your Pact account:</p><p style="margin:0"><a href="${safeUrl}" style="color:#c9ff4a">${safeUrl}</a></p><p style="margin:16px 0 0;color:#888;font-size:13px">If you did not request this, you can ignore this email.</p>`,
+            { title: "Confirm account deletion" },
+          ),
         });
       },
     },
@@ -176,12 +191,15 @@ export const auth = betterAuth({
     resetPasswordTokenExpiresIn: 60 * 60,
     sendResetPassword: async ({ user, url, token }) => {
       captureResetLink({ email: user.email, url, token });
-      // Do not await — timing; waitUntil keeps the Vercel function alive.
+      const safeUrl = escapeHtml(url);
       queueEmail({
         to: user.email,
         subject: "Reset your Pact password",
         text: `Reset your Pact password:\n\n${url}\n\nThis link expires in 1 hour. If you did not request a reset, you can ignore this email.`,
-        html: `<p>Reset your Pact password:</p><p><a href="${url}">${url}</a></p><p>This link expires in 1 hour. If you did not request a reset, you can ignore this email.</p>`,
+        html: wrapEmailHtml(
+          `<p style="margin:0 0 16px;color:#ddd">Reset your Pact password:</p><p style="margin:0"><a href="${safeUrl}" style="color:#c9ff4a">${safeUrl}</a></p><p style="margin:16px 0 0;color:#888;font-size:13px">This link expires in 1 hour. If you did not request a reset, you can ignore this email.</p>`,
+          { title: "Reset password" },
+        ),
       });
     },
     onPasswordReset: async ({ user }) => {
@@ -249,6 +267,7 @@ export const auth = betterAuth({
         definePayload: ({ user }) => ({
           name: user.name,
           email: user.email,
+          email_verified: Boolean(user.emailVerified),
           picture: user.image,
           iss: authJwtIssuer,
           aud: authJwtAudience,

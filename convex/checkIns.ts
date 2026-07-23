@@ -8,6 +8,8 @@ import {
   requirePactMember,
 } from "./lib/auth";
 
+const CHECK_IN_DEDUP_MS = 15_000;
+
 const signalToStatus = {
   done: "done",
   on_track: "on_track",
@@ -79,6 +81,24 @@ export const submit = mutation({
 
     if (commitment.assigneeId !== user._id) {
       throw new Error("Only the assignee can submit a check-in");
+    }
+
+    // B8: reject duplicate submit within a short window (double-tap / retry).
+    const recent = await ctx.db
+      .query("checkIns")
+      .withIndex("by_commitment", (q) =>
+        q.eq("commitmentId", args.commitmentId)
+      )
+      .collect();
+    const latestMine = recent
+      .filter((row) => row.userId === user._id)
+      .sort((a, b) => b._creationTime - a._creationTime)[0];
+    if (
+      latestMine &&
+      Date.now() - latestMine._creationTime < CHECK_IN_DEDUP_MS &&
+      latestMine.signal === args.signal
+    ) {
+      return latestMine._id;
     }
 
     if (args.signal === "done" && commitment.evidenceRequired) {
@@ -168,6 +188,21 @@ export const respond = mutation({
 
     if (commitment.pactId) {
       await requirePactMember(ctx, commitment.pactId, responder._id);
+    }
+
+    const existing = await ctx.db
+      .query("partnerResponses")
+      .withIndex("by_checkIn", (q) => q.eq("checkInId", args.checkInId))
+      .collect();
+    const mineRecent = existing
+      .filter((row) => row.responderId === responder._id)
+      .sort((a, b) => b._creationTime - a._creationTime)[0];
+    if (
+      mineRecent &&
+      Date.now() - mineRecent._creationTime < CHECK_IN_DEDUP_MS &&
+      mineRecent.responseType === args.responseType
+    ) {
+      return mineRecent._id;
     }
 
     const responseId = await ctx.db.insert("partnerResponses", {

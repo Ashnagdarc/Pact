@@ -61,8 +61,8 @@ export function BottomTabs() {
               key={tab.href}
               href={tab.href}
               className={cn(
-                "flex min-w-14 flex-col items-center gap-1 rounded-2xl px-2 py-1.5 text-[10px] font-semibold transition-colors",
-                active ? "text-volt-500" : "text-white/45 hover:text-white/80"
+                "flex min-w-14 flex-col items-center gap-1 rounded-2xl px-2 py-1.5 text-xs font-semibold transition-colors",
+                active ? "text-volt-500" : "text-white/65 hover:text-white/85"
               )}
             >
               <Icon className="size-5" strokeWidth={active ? 2.4 : 2} />

@@ -31,12 +31,30 @@ const steps = [
 ] as const;
 
 const differentiators = [
-  "Accountability Agreements",
-  "Five-second check-ins",
-  "Pact Health",
-  "Rescue Mode",
-  "Weekly reviews",
-  "Privacy controls",
+  {
+    title: "Accountability Agreements",
+    blurb: "Spell out the goal, deadline, and support you expect from a partner.",
+  },
+  {
+    title: "Five-second check-ins",
+    blurb: "Send a quick status so partners know you’re moving without a long update.",
+  },
+  {
+    title: "Pact Health",
+    blurb: "See when a shared pact is on track, slipping, or at risk.",
+  },
+  {
+    title: "Rescue Mode",
+    blurb: "Turn a miss into a realistic recovery plan instead of dropping the goal.",
+  },
+  {
+    title: "Weekly reviews",
+    blurb: "A short look back so you adjust together before another week slips.",
+  },
+  {
+    title: "Privacy controls",
+    blurb: "Personal tasks stay yours; partners only see what you invite them into.",
+  },
 ] as const;
 
 export function LandingPage() {
@@ -65,7 +83,7 @@ export function LandingPage() {
         <nav className="flex items-center gap-2 sm:gap-3">
           <Link
             href="#how"
-            className="hidden text-sm text-white/55 transition-colors hover:text-white/85 sm:inline"
+            className="hidden text-sm text-white/70 transition-colors hover:text-white/85 sm:inline"
           >
             How it works
           </Link>
@@ -78,17 +96,17 @@ export function LandingPage() {
         </nav>
       </header>
 
-      <main className="relative z-10">
+      <main id="content" className="relative z-10">
         <section className="relative mx-auto grid w-full max-w-6xl items-start gap-10 px-5 pb-16 pt-10 sm:px-8 lg:min-h-[calc(100dvh-4.5rem)] lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-12 lg:pb-20 lg:pt-6">
           <div className="max-w-xl">
-            <motion.p
+            <motion.h1
               initial={{ opacity: 1, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
               className="font-heading text-[clamp(3rem,10vw,5.75rem)] leading-[0.86] font-extrabold tracking-[-0.05em] text-volt-500"
             >
               Pact
-            </motion.p>
+            </motion.h1>
             <LandingDynamicHeadline />
             <motion.p
               initial={{ opacity: 1, y: 10 }}
@@ -98,7 +116,7 @@ export function LandingPage() {
                 delay: 0.1,
                 ease: [0.22, 1, 0.36, 1],
               }}
-              className="mt-3 max-w-md text-base leading-relaxed text-white/60 sm:text-lg"
+              className="mt-3 max-w-md text-base leading-relaxed text-white/70 sm:text-lg"
             >
               Make commitments with people you trust, show progress, and recover
               together when plans change.
@@ -123,7 +141,7 @@ export function LandingPage() {
               <Button
                 asChild
                 variant="ghost"
-                className="h-12 rounded-full px-5 text-base text-white/55 hover:bg-white/5 hover:text-white"
+                className="h-12 rounded-full px-5 text-base text-white/70 hover:bg-white/5 hover:text-white"
               >
                 <Link href="#how">
                   See how it works
@@ -141,7 +159,7 @@ export function LandingPage() {
             <h2 className="font-heading text-[clamp(1.75rem,4vw,2.75rem)] leading-[1.1] font-bold tracking-tight">
               A task list cannot hold you accountable.
             </h2>
-            <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-white/55 sm:text-lg">
+            <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-white/70 sm:text-lg">
               You can organise every task perfectly and still postpone the work.
               Pact adds the missing layer: a clear commitment, a trusted person,
               and a plan for what happens when progress stops.
@@ -170,7 +188,7 @@ export function LandingPage() {
                   <h3 className="font-heading mt-3 text-xl font-bold tracking-tight">
                     {step.title}
                   </h3>
-                  <p className="mt-2 text-sm leading-relaxed text-white/50 sm:text-[0.95rem]">
+                  <p className="mt-2 text-sm leading-relaxed text-white/70 sm:text-[0.95rem]">
                     {step.description}
                   </p>
                 </li>
@@ -184,13 +202,15 @@ export function LandingPage() {
             <h2 className="font-heading text-[clamp(1.6rem,3.5vw,2.25rem)] font-bold tracking-tight">
               Built for follow-through
             </h2>
-            <ul className="mt-10 grid gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
+            <ul className="mt-10 grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
               {differentiators.map((item) => (
-                <li
-                  key={item}
-                  className="border-b border-white/8 py-3 text-base text-white/70"
-                >
-                  {item}
+                <li key={item.title} className="border-b border-white/8 py-3">
+                  <p className="text-base font-semibold text-white/90">
+                    {item.title}
+                  </p>
+                  <p className="mt-1.5 text-sm leading-relaxed text-white/70">
+                    {item.blurb}
+                  </p>
                 </li>
               ))}
             </ul>
@@ -205,7 +225,7 @@ export function LandingPage() {
             <h2 className="font-heading text-[clamp(1.75rem,4vw,2.75rem)] leading-[1.1] font-bold tracking-tight">
               Join the private beta waitlist
             </h2>
-            <p className="mx-auto mt-5 max-w-xl text-base text-white/55 sm:text-lg">
+            <p className="mx-auto mt-5 max-w-xl text-base text-white/70 sm:text-lg">
               Leave your email — we&apos;ll send a welcome note with a one-time
               6-digit code and personal link to open the early beta.
             </p>
@@ -221,11 +241,11 @@ export function LandingPage() {
           <p className="font-heading text-lg font-extrabold tracking-tight text-volt-500">
             Pact
           </p>
-          <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-white/40">
-            <Link href="/privacy" className="hover:text-white/70">
+          <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-white/65">
+            <Link href="/privacy" className="hover:text-white/85">
               Privacy
             </Link>
-            <Link href="/terms" className="hover:text-white/70">
+            <Link href="/terms" className="hover:text-white/85">
               Terms
             </Link>
             <span>© {new Date().getFullYear()} joinpact.tech</span>

@@ -9,7 +9,6 @@ import {
   Check,
   LifeBuoy,
   Loader2,
-  MoreHorizontal,
   Upload,
 } from "lucide-react";
 
@@ -22,6 +21,7 @@ import { ConvexSetupScreen } from "@/components/screens/convex-setup-screen";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useCurrentUser } from "@/hooks/use-demo-user";
+import { playFeedback } from "@/lib/feedback";
 import {
   checkInSignalLabel,
   checkInSignals,
@@ -199,6 +199,7 @@ function CommitmentDetailConnected({
         signal,
         note: note.trim() || undefined,
       });
+      playFeedback({ sound: "success", haptic: "success" });
       setNote("");
       setPendingSignal(null);
       setDraftHint(null);
@@ -281,14 +282,6 @@ function CommitmentDetailConnected({
           <Link href="/app" aria-label="Back">
             <ArrowLeft className="size-5" />
           </Link>
-        </Button>
-        <Button
-          size="icon"
-          variant="ghost"
-          className="size-11 rounded-full border border-white/10 bg-white/5"
-          aria-label="More"
-        >
-          <MoreHorizontal className="size-5" />
         </Button>
       </header>
 

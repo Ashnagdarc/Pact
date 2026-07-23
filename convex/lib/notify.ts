@@ -2,6 +2,11 @@ import type { Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { internal } from "../_generated/api";
 
+type NotifyChannels = {
+  /** Insert in-app row only — skip email and push fan-out. */
+  inAppOnly?: boolean;
+};
+
 type NotifyArgs = {
   userId: Id<"users">;
   type: string;
@@ -12,6 +17,7 @@ type NotifyArgs = {
   commitmentId?: Id<"commitments">;
   actorId?: Id<"users">;
   metadata?: unknown;
+  channels?: NotifyChannels;
 };
 
 export async function notify(ctx: MutationCtx, args: NotifyArgs) {
@@ -31,19 +37,32 @@ export async function notify(ctx: MutationCtx, args: NotifyArgs) {
     metadata: args.metadata,
   });
 
-  await ctx.scheduler.runAfter(0, internal.push.deliverToUser, {
-    userId: args.userId,
-    title: args.title,
-    body: args.body,
-    href: args.href,
-  });
+  if (args.channels?.inAppOnly) {
+    return notificationId;
+  }
 
-  await ctx.scheduler.runAfter(0, internal.email.deliverToUser, {
-    userId: args.userId,
-    title: args.title,
-    body: args.body,
-    href: args.href,
-  });
+  const user = await ctx.db.get(args.userId);
+  // Undefined prefs default to on so legacy rows keep prior behavior.
+  const pushOk = user?.pushNotifications !== false;
+  const emailOk = user?.emailNotifications !== false;
+
+  if (pushOk) {
+    await ctx.scheduler.runAfter(0, internal.push.deliverToUser, {
+      userId: args.userId,
+      title: args.title,
+      body: args.body,
+      href: args.href,
+    });
+  }
+
+  if (emailOk) {
+    await ctx.scheduler.runAfter(0, internal.email.deliverToUser, {
+      userId: args.userId,
+      title: args.title,
+      body: args.body,
+      href: args.href,
+    });
+  }
 
   return notificationId;
 }

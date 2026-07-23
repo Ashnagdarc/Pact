@@ -281,7 +281,7 @@ export const createInvite = mutation({
       throw new Error("Only the owner can create invites");
     }
 
-    // Revoke previous pending invites so one active link is shared
+    // Revoke previous pending invites — invites are single-use (B5).
     const pending = await ctx.db
       .query("invitations")
       .withIndex("by_pact", (q) => q.eq("pactId", args.pactId))

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 
 import { SurfaceCard } from "@/components/cards/surface-card";
+import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 import { playUiSound, soundForPreviewTone } from "@/lib/ui-sounds";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +25,7 @@ const previewDeck: PreviewCard[] = [
 const CYCLE_MS = 3200;
 
 export function WelcomePreviewStack() {
+  const reduceMotion = usePrefersReducedMotion();
   const [index, setIndex] = useState(0);
   const [soundReady, setSoundReady] = useState(false);
   const prevIndex = useRef(index);
@@ -38,17 +40,18 @@ export function WelcomePreviewStack() {
   }, []);
 
   useEffect(() => {
+    if (reduceMotion) return;
     const timer = window.setInterval(() => {
       setIndex((prev) => (prev + 1) % previewDeck.length);
     }, CYCLE_MS);
     return () => window.clearInterval(timer);
-  }, []);
+  }, [reduceMotion]);
 
   useEffect(() => {
-    if (!soundReady || prevIndex.current === index) return;
+    if (reduceMotion || !soundReady || prevIndex.current === index) return;
     prevIndex.current = index;
     playUiSound(soundForPreviewTone(current.tone));
-  }, [index, soundReady, current.tone]);
+  }, [index, soundReady, current.tone, reduceMotion]);
 
   return (
     <div

@@ -291,7 +291,6 @@ export function InviteShareCard({
         body: JSON.stringify({
           email: inviteEmail.trim(),
           token,
-          pactTitle,
         }),
       });
       const data = (await response.json()) as { error?: string };

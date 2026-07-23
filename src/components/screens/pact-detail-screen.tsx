@@ -434,7 +434,6 @@ function PactDetailConnected({ pactId }: PactDetailScreenProps) {
                     ? `Due ${format(commitment.dueAt, "MMM d")}`
                     : undefined
                 }
-                favorited={commitment.favorited}
                 href={`/app/commitments/${commitment._id}`}
               />
             ))}

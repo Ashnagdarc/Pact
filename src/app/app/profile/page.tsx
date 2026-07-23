@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMutation, useQuery } from "convex/react";
-import { Bell, Download, Loader2, Trash2, Users } from "lucide-react";
+import { useQuery } from "convex/react";
+import { Bell, Download, Loader2, Trash2, Users, Volume2, VolumeX } from "lucide-react";
 
 import { api } from "@convex/_generated/api";
 import { SurfaceCard } from "@/components/cards/surface-card";
@@ -16,11 +16,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
 import { useCurrentUser } from "@/hooks/use-demo-user";
+import {
+  readFeedbackMuted,
+  writeFeedbackMuted,
+} from "@/lib/feedback-prefs";
 
 export default function ProfilePage() {
   const router = useRouter();
   const { user, loading, isAuthenticated, signOut } = useCurrentUser();
-  const deleteAccountData = useMutation(api.users.deleteAccountData);
   const partners = useQuery(
     api.pacts.listPartners,
     isAuthenticated ? {} : "skip"
@@ -32,6 +35,17 @@ export default function ProfilePage() {
   const [password, setPassword] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [feedbackMuted, setFeedbackMuted] = useState(false);
+
+  useEffect(() => {
+    setFeedbackMuted(readFeedbackMuted());
+  }, []);
+
+  function toggleFeedbackMute() {
+    const next = !feedbackMuted;
+    writeFeedbackMuted(next);
+    setFeedbackMuted(next);
+  }
 
   if (loading) {
     return (
@@ -52,9 +66,7 @@ export default function ProfilePage() {
         throw new Error("Enter your password to delete this account.");
       }
 
-      // Remove Convex data while the session is still valid.
-      await deleteAccountData({});
-
+      // B6: Auth delete runs first; Convex cascade happens in beforeDelete.
       const result = await authClient.deleteUser({
         password: trimmed,
         callbackURL: "/sign-in",
@@ -80,7 +92,7 @@ export default function ProfilePage() {
       <h1 className="font-heading pt-2 text-4xl font-extrabold tracking-tight">
         You
       </h1>
-      <p className="mt-2 text-sm text-white/55">
+      <p className="mt-2 text-sm text-white/70">
         Profile, partners, alerts, and install settings.
       </p>
 
@@ -180,6 +192,18 @@ export default function ProfilePage() {
           <PushOptInButton hasSubscription={(pushSubs?.length ?? 0) > 0} />
         ) : null}
         <Button
+          type="button"
+          onClick={toggleFeedbackMute}
+          className="h-12 justify-start rounded-2xl border border-white/10 bg-white/5 text-white hover:bg-white/10"
+        >
+          {feedbackMuted ? (
+            <VolumeX className="size-4" />
+          ) : (
+            <Volume2 className="size-4" />
+          )}
+          {feedbackMuted ? "Unmute sounds & haptics" : "Mute sounds & haptics"}
+        </Button>
+        <Button
           asChild
           className="h-12 justify-start rounded-2xl border border-white/10 bg-white/5 text-white hover:bg-white/10"
         >
@@ -222,15 +246,18 @@ export default function ProfilePage() {
             Permanently removes your Pact data and auth account. Owned pacts and
             commitments are deleted. Enter your password to confirm.
           </p>
-          <Input
-            type="password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Confirm with your password"
-            autoComplete="current-password"
-            className="mt-4 h-11 rounded-2xl border-white/15 bg-white/5 text-white"
-          />
+          <label className="mt-4 block text-xs font-semibold text-white/55">
+            Confirm with your password
+            <Input
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Your password"
+              autoComplete="current-password"
+              className="mt-2 h-11 rounded-2xl border-white/15 bg-white/5 text-white"
+            />
+          </label>
           <Button
             type="button"
             disabled={deleting || !password.trim()}

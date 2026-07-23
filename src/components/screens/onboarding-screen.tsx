@@ -15,6 +15,7 @@ import { AppShell } from "@/components/navigation/app-shell";
 import { Button } from "@/components/ui/button";
 import { ConfettiBurst } from "@/components/ui/confetti-burst";
 import { useCurrentUser } from "@/hooks/use-demo-user";
+import { usePushSubscription } from "@/hooks/use-push-subscription";
 import { getOnboardingStepMeta } from "@/lib/onboarding-story";
 import {
   clearOnboardingDraft,
@@ -34,6 +35,7 @@ export function OnboardingScreen() {
   const router = useRouter();
   const { user, userId, isAuthenticated, loading } = useCurrentUser();
   const completeOnboarding = useMutation(api.users.completeOnboarding);
+  const { enablePush } = usePushSubscription();
 
   const [step, setStep] = useState(ONBOARDING_FIRST_STEP);
   const [draft, setDraft] = useState<OnboardingDraft>(defaultOnboardingDraft);
@@ -101,25 +103,36 @@ export function OnboardingScreen() {
 
     // Keep pending in localStorage until Convex shows onboardingCompleted
     // (cleared by useCurrentUser). Clearing here caused Today→onboarding bounce.
-    void completeOnboarding({
-      displayName: pending.displayName.trim() || undefined,
-      goalFocus: pending.goalFocus,
-      defaultAccountabilityStyle: pending.accountabilityStyle,
-      defaultCheckInFrequency: pending.checkInFrequency,
-    })
-      .then(() => {
+    void (async () => {
+      try {
+        await completeOnboarding({
+          displayName: pending.displayName.trim() || undefined,
+          goalFocus: pending.goalFocus,
+          defaultAccountabilityStyle: pending.accountabilityStyle,
+          defaultCheckInFrequency: pending.checkInFrequency,
+          emailNotifications: pending.notificationsEnabled,
+          pushNotifications: pending.notificationsEnabled,
+        });
+        if (pending.notificationsEnabled) {
+          try {
+            await enablePush();
+          } catch {
+            // Permission / VAPID may fail; prefs still persist as opted-in.
+          }
+        }
         clearOnboardingDraft();
         router.replace("/app");
-      })
-      .catch((err) => {
+      } catch (err) {
         pendingApplyStarted.current = false;
         setFinishing(false);
         setError(
           err instanceof Error ? err.message : "Could not finish onboarding"
         );
-      });
+      }
+    })();
   }, [
     completeOnboarding,
+    enablePush,
     isAuthenticated,
     loading,
     router,
@@ -155,8 +168,10 @@ export function OnboardingScreen() {
     });
 
     try {
+      let pushGranted = false;
       if (draft.notificationsEnabled && typeof Notification !== "undefined") {
-        await Notification.requestPermission();
+        const permission = await Notification.requestPermission();
+        pushGranted = permission === "granted";
       }
 
       if (isAuthenticated && userId) {
@@ -172,7 +187,16 @@ export function OnboardingScreen() {
           goalFocus: draft.goalFocus,
           defaultAccountabilityStyle: draft.accountabilityStyle,
           defaultCheckInFrequency: draft.checkInFrequency,
+          emailNotifications: draft.notificationsEnabled,
+          pushNotifications: draft.notificationsEnabled && pushGranted,
         });
+        if (draft.notificationsEnabled && pushGranted) {
+          try {
+            await enablePush();
+          } catch {
+            // Prefs already saved; user can enable push later in settings.
+          }
+        }
         clearOnboardingDraft();
         // Pending stays until useCurrentUser sees onboardingCompleted.
         router.push("/app");

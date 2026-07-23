@@ -34,6 +34,7 @@ export async function mintConvexJwt(input: {
   userId: string;
   name?: string | null;
   email?: string | null;
+  emailVerified?: boolean | null;
   image?: string | null;
 }): Promise<string> {
   const jwk = readPrivateJwk();
@@ -42,6 +43,8 @@ export async function mintConvexJwt(input: {
   return new SignJWT({
     name: input.name ?? undefined,
     email: input.email ?? undefined,
+    // Convex UserIdentity.emailVerified maps from JWT claim `email_verified`.
+    email_verified: Boolean(input.emailVerified),
     picture: input.image ?? undefined,
   })
     .setProtectedHeader({

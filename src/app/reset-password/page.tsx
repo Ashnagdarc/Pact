@@ -87,26 +87,32 @@ function ResetPasswordForm() {
           </div>
         ) : (
           <form onSubmit={onSubmit} className="mt-8 grid gap-3">
-            <Input
-              type="password"
-              required
-              minLength={8}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="New password (min 8 chars)"
-              autoComplete="new-password"
-              className="h-12 rounded-2xl border-white/10 bg-white/5"
-            />
-            <Input
-              type="password"
-              required
-              minLength={8}
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
-              placeholder="Confirm new password"
-              autoComplete="new-password"
-              className="h-12 rounded-2xl border-white/10 bg-white/5"
-            />
+            <label className="grid gap-1.5 text-sm font-medium text-white/70">
+              New password
+              <Input
+                type="password"
+                required
+                minLength={8}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="At least 8 characters"
+                autoComplete="new-password"
+                className="h-12 rounded-2xl border-white/10 bg-white/5"
+              />
+            </label>
+            <label className="grid gap-1.5 text-sm font-medium text-white/70">
+              Confirm password
+              <Input
+                type="password"
+                required
+                minLength={8}
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+                placeholder="Repeat password"
+                autoComplete="new-password"
+                className="h-12 rounded-2xl border-white/10 bg-white/5"
+              />
+            </label>
             {error ? (
               <p className="text-sm text-coral-400" role="alert">
                 {error}

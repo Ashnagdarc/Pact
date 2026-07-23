@@ -9,14 +9,13 @@ export const listForUser = query({
   },
   handler: async (ctx, args) => {
     const user = await requireAppUser(ctx);
-    const rows = await ctx.db
+    const limit = args.limit ?? 40;
+    // by_user is ordered by _creationTime; take newest without loading all.
+    return await ctx.db
       .query("notifications")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
-      .collect();
-
-    return rows
-      .sort((a, b) => b._creationTime - a._creationTime)
-      .slice(0, args.limit ?? 40);
+      .order("desc")
+      .take(limit);
   },
 });
 
@@ -24,12 +23,14 @@ export const unreadCount = query({
   args: {},
   handler: async (ctx) => {
     const user = await requireAppUser(ctx);
-    const rows = await ctx.db
+    // Unread rows have readAt undefined — indexed under by_user_readAt.
+    const unread = await ctx.db
       .query("notifications")
-      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .withIndex("by_user_readAt", (q) =>
+        q.eq("userId", user._id).eq("readAt", undefined)
+      )
       .collect();
-
-    return rows.filter((n) => !n.readAt).length;
+    return unread.length;
   },
 });
 
@@ -53,16 +54,16 @@ export const markAllRead = mutation({
   args: {},
   handler: async (ctx) => {
     const user = await requireAppUser(ctx);
-    const rows = await ctx.db
+    const unread = await ctx.db
       .query("notifications")
-      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .withIndex("by_user_readAt", (q) =>
+        q.eq("userId", user._id).eq("readAt", undefined)
+      )
       .collect();
 
     const now = Date.now();
-    for (const row of rows) {
-      if (!row.readAt) {
-        await ctx.db.patch(row._id, { readAt: now });
-      }
+    for (const row of unread) {
+      await ctx.db.patch(row._id, { readAt: now });
     }
   },
 });
@@ -93,7 +94,8 @@ export const syncRescuePrompts = mutation({
     const existing = await ctx.db
       .query("notifications")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
-      .collect();
+      .order("desc")
+      .take(200);
 
     let created = 0;
     for (const commitment of overdue) {
@@ -117,6 +119,7 @@ export const syncRescuePrompts = mutation({
         pactId: commitment.pactId,
         commitmentId: commitment._id,
         metadata: { dayKey },
+        channels: { inAppOnly: true },
       });
       created += 1;
     }

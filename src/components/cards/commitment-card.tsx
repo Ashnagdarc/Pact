@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Check, ChevronRight, Heart } from "lucide-react";
+import { Check, ChevronRight } from "lucide-react";
 
 import { SurfaceCard } from "@/components/cards/surface-card";
 import { StatusChip } from "@/components/feedback/status-chip";
@@ -18,7 +18,6 @@ type CommitmentCardProps = {
   status?: CommitmentStatus;
   meta?: string;
   items?: ChecklistItem[];
-  favorited?: boolean;
   tone?: "coral" | "volt" | "cream" | "mint" | "paper" | "signal";
   className?: string;
   href?: string;
@@ -29,7 +28,6 @@ export function CommitmentCard({
   status,
   meta,
   items,
-  favorited,
   tone = "cream",
   className,
   href,
@@ -43,22 +41,14 @@ export function CommitmentCard({
         className
       )}
     >
-      <div className="mb-3 flex items-start justify-between gap-2">
-        <div>
-          {status ? <StatusChip status={status} className="mb-2" /> : null}
-          <h3 className="font-heading text-xl font-bold leading-tight tracking-tight">
-            {title}
-          </h3>
-          {meta ? (
-            <p className="mt-1 text-xs font-medium opacity-60">{meta}</p>
-          ) : null}
-        </div>
-        <span
-          aria-hidden
-          className="inline-flex size-9 items-center justify-center rounded-full bg-black/5"
-        >
-          <Heart className={cn("size-4", favorited && "fill-current")} />
-        </span>
+      <div className="mb-3">
+        {status ? <StatusChip status={status} className="mb-2" /> : null}
+        <h3 className="font-heading text-xl font-bold leading-tight tracking-tight">
+          {title}
+        </h3>
+        {meta ? (
+          <p className="mt-1 text-xs font-medium opacity-60">{meta}</p>
+        ) : null}
       </div>
 
       {items?.length ? (

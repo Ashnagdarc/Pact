@@ -3,18 +3,7 @@ import { v } from "convex/values";
 
 import { cardTone } from "./lib/validators";
 import { requireAppUser } from "./lib/auth";
-
-function startOfLocalDay(ms = Date.now()) {
-  const d = new Date(ms);
-  d.setHours(0, 0, 0, 0);
-  return d.getTime();
-}
-
-function endOfLocalDay(ms = Date.now()) {
-  const d = new Date(ms);
-  d.setHours(23, 59, 59, 999);
-  return d.getTime();
-}
+import { dayBoundsInTimeZone } from "./lib/time";
 
 export const listMine = query({
   args: {},
@@ -34,8 +23,9 @@ export const listForToday = query({
   args: {},
   handler: async (ctx) => {
     const user = await requireAppUser(ctx);
-    const dayStart = startOfLocalDay();
-    const dayEnd = endOfLocalDay();
+    const { start: dayStart, end: dayEnd } = dayBoundsInTimeZone(
+      user.timezone || "UTC"
+    );
     const tasks = await ctx.db
       .query("tasks")
       .withIndex("by_owner", (q) => q.eq("ownerId", user._id))

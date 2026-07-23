@@ -6,6 +6,7 @@ import { motion } from "motion/react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 import {
   getCountdownParts,
   getLaunchTimeline,
@@ -27,7 +28,7 @@ function CountdownGrid({ parts }: { parts: CountdownParts }) {
         <p className="font-heading text-2xl font-bold text-volt-500">
           Early beta is open
         </p>
-        <p className="mt-2 text-sm text-white/60">
+        <p className="mt-2 text-sm text-white/70">
           Check your email for your one-time access code and link.
         </p>
       </div>
@@ -51,7 +52,7 @@ function CountdownGrid({ parts }: { parts: CountdownParts }) {
           <p className="font-heading text-2xl font-bold tracking-tight tabular-nums">
             {pad(cell.value)}
           </p>
-          <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-white/40">
+          <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-white/65">
             {cell.label}
           </p>
         </div>
@@ -63,22 +64,24 @@ function CountdownGrid({ parts }: { parts: CountdownParts }) {
 function JoinedPanel({
   email,
   name,
-  code,
-  accessUrl,
 }: {
   email: string;
   name?: string | null;
-  code: string;
-  accessUrl: string;
 }) {
+  const reduceMotion = usePrefersReducedMotion();
   const [parts, setParts] = useState(() => getCountdownParts());
   const [tab, setTab] = useState<TabId>("timer");
   const timeline = getLaunchTimeline();
 
   useEffect(() => {
+    if (reduceMotion) return;
     const id = window.setInterval(() => setParts(getCountdownParts()), 1000);
     return () => window.clearInterval(id);
-  }, []);
+  }, [reduceMotion]);
+
+  useEffect(() => {
+    if (reduceMotion) setParts(getCountdownParts());
+  }, [reduceMotion]);
 
   return (
     <div className="mx-auto w-full max-w-md space-y-4 text-left">
@@ -89,24 +92,11 @@ function JoinedPanel({
         <p className="font-heading mt-4 text-2xl font-bold tracking-tight">
           {name ? `You're in, ${name}` : "You're on the list"}
         </p>
-        <p className="mt-2 text-sm leading-relaxed text-white/60">
-          We emailed <span className="text-white/85">{email}</span> a welcome note
-          with your personal access link and one-time code.
+        <p className="mt-2 text-sm leading-relaxed text-white/70">
+          We emailed <span className="text-white/90">{email}</span> a welcome note
+          with your personal access link and one-time code. Check your inbox
+          (and spam) — we don&apos;t show the code here.
         </p>
-        <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-white/40">
-            Your one-time code
-          </p>
-          <p className="font-heading mt-1 text-3xl font-extrabold tracking-[0.2em]">
-            {code}
-          </p>
-          <a
-            href={accessUrl}
-            className="mt-3 inline-flex text-sm font-semibold text-volt-500 underline-offset-2 hover:underline"
-          >
-            Open your access link
-          </a>
-        </div>
       </div>
 
       <div className="rounded-[1.75rem] border border-white/10 bg-white/[0.03] p-4">
@@ -125,7 +115,7 @@ function JoinedPanel({
                 "rounded-full px-3 py-1.5 text-xs font-semibold transition-colors",
                 tab === id
                   ? "bg-volt-500 text-ink-950"
-                  : "bg-white/5 text-white/50 hover:text-white/80",
+                  : "bg-white/5 text-white/65 hover:text-white/85",
               )}
             >
               {label}
@@ -149,7 +139,7 @@ function JoinedPanel({
                 />
                 <div>
                   <p className="text-sm font-semibold">{item.title}</p>
-                  <p className="text-xs text-white/45">{item.description}</p>
+                  <p className="text-xs text-white/65">{item.description}</p>
                 </div>
               </li>
             ))}
@@ -168,8 +158,6 @@ export function LandingBetaForm() {
   const [joined, setJoined] = useState<{
     email: string;
     name?: string | null;
-    code: string;
-    accessUrl: string;
   } | null>(null);
 
   async function onSubmit(e: React.FormEvent) {
@@ -188,13 +176,12 @@ export function LandingBetaForm() {
       });
       const payload = (await response.json().catch(() => null)) as {
         error?: string;
-        code?: string;
-        accessUrl?: string;
+        ok?: boolean;
         email?: string;
         name?: string | null;
       } | null;
 
-      if (!response.ok || !payload?.code || !payload.accessUrl) {
+      if (!response.ok || !payload?.ok) {
         throw new Error(payload?.error || "Could not join the waitlist");
       }
 
@@ -203,8 +190,6 @@ export function LandingBetaForm() {
       setJoined({
         email: normalized,
         name: payload.name ?? (name.trim() || null),
-        code: payload.code,
-        accessUrl: payload.accessUrl,
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not join the waitlist");
@@ -230,22 +215,28 @@ export function LandingBetaForm() {
       onSubmit={onSubmit}
       className="mx-auto grid w-full max-w-md gap-3 text-left"
     >
-      <Input
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder="Name (optional)"
-        autoComplete="name"
-        className="h-12 rounded-2xl border-white/10 bg-white/5 px-4 text-base text-white placeholder:text-white/35"
-      />
-      <Input
-        type="email"
-        required
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder="Email"
-        autoComplete="email"
-        className="h-12 rounded-2xl border-white/10 bg-white/5 px-4 text-base text-white placeholder:text-white/35"
-      />
+      <label className="grid gap-1.5 text-sm font-medium text-white/70">
+        Name <span className="font-normal text-white/65">(optional)</span>
+        <Input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Your name"
+          autoComplete="name"
+          className="h-12 rounded-2xl border-white/10 bg-white/5 px-4 text-base text-white placeholder:text-white/35"
+        />
+      </label>
+      <label className="grid gap-1.5 text-sm font-medium text-white/70">
+        Email
+        <Input
+          type="email"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="you@example.com"
+          autoComplete="email"
+          className="h-12 rounded-2xl border-white/10 bg-white/5 px-4 text-base text-white placeholder:text-white/35"
+        />
+      </label>
       {error ? (
         <p className="text-sm text-coral-400" role="alert">
           {error}
@@ -258,7 +249,7 @@ export function LandingBetaForm() {
       >
         {busy ? <Loader2 className="size-4 animate-spin" /> : "Join the waitlist"}
       </Button>
-      <p className="text-center text-xs text-white/35">
+      <p className="text-center text-xs text-white/65">
         You&apos;ll get a welcome email with a one-time 6-digit code and personal
         link to open the early beta.
       </p>

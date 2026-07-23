@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 
+import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 import { cn } from "@/lib/utils";
 
 type Tone = "mint" | "coral" | "volt" | "signal" | "cream";
@@ -140,17 +141,9 @@ export function LandingHeroDevice() {
   const [start, setStart] = useState(0);
   const [kept, setKept] = useState(12);
   const [popup, setPopup] = useState<Popup | null>(null);
-  const [reduceMotion, setReduceMotion] = useState(false);
+  const reduceMotion = usePrefersReducedMotion();
 
   const visible = visibleSlice(start);
-
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReduceMotion(mq.matches);
-    const onChange = () => setReduceMotion(mq.matches);
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
-  }, []);
 
   useEffect(() => {
     if (reduceMotion) return;

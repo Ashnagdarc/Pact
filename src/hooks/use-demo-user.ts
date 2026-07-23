@@ -5,6 +5,7 @@ import { useConvexAuth, useMutation, useQuery } from "convex/react";
 
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
+import { clearConvexJwtCache } from "@/components/providers/convex-client-provider";
 import { authClient } from "@/lib/auth-client";
 import {
   clearOnboardingDraft,
@@ -127,6 +128,8 @@ export function useCurrentUser() {
             goalFocus: pending.goalFocus,
             defaultAccountabilityStyle: pending.accountabilityStyle,
             defaultCheckInFrequency: pending.checkInFrequency,
+            emailNotifications: pending.notificationsEnabled,
+            pushNotifications: pending.notificationsEnabled,
           });
           // Keep pending in localStorage until appUser.onboardingCompleted
           // flips true (see effect above). Prevents Today from redirecting
@@ -162,15 +165,41 @@ export function useCurrentUser() {
     sessionRefetching,
   ]);
 
+  // Soft-land when Better Auth session exists but Convex JWT never authenticates.
+  useEffect(() => {
+    if (sessionPending || sessionRefetching || convexAuthLoading) return;
+    if (!session?.user) return;
+    if (convexAuthenticated) return;
+
+    const timer = window.setTimeout(() => {
+      writeSessionHint(false);
+      setSessionHint(false);
+      clearConvexJwtCache();
+      void authClient.signOut().finally(() => {
+        window.location.replace("/sign-in");
+      });
+    }, 2500);
+
+    return () => window.clearTimeout(timer);
+  }, [
+    convexAuthLoading,
+    convexAuthenticated,
+    session?.user,
+    sessionPending,
+    sessionRefetching,
+  ]);
+
   const signOut = useCallback(async () => {
     writeSessionHint(false);
     setSessionHint(false);
+    clearConvexJwtCache();
     await authClient.signOut();
   }, []);
 
   const isAuthenticated = Boolean(session?.user) && convexAuthenticated;
+  // Only wait while Convex auth is in-flight — not forever if JWT mint fails (B11).
   const waitingForConvex =
-    Boolean(session?.user) && (convexAuthLoading || !convexAuthenticated);
+    Boolean(session?.user) && convexAuthLoading;
   const waitingForUserRow = isAuthenticated && (!ready || appUser == null);
   const waitingForPendingOnboarding =
     isAuthenticated &&
@@ -200,9 +229,8 @@ export function useCurrentUser() {
       error ??
       (Boolean(session?.user) &&
       !convexAuthLoading &&
-      !convexAuthenticated &&
-      ready
-        ? "Signed in, but Convex could not verify your session token. Check auth JWKS / issuer config."
+      !convexAuthenticated
+        ? "Signed in, but Convex could not verify your session. Redirecting…"
         : null),
     loading,
     signOut,

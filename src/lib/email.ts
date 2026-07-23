@@ -1,10 +1,14 @@
 import { waitUntil } from "@vercel/functions";
 
+import { wrapEmailHtml } from "@/lib/email-html";
+
 type SendEmailInput = {
   to: string;
   subject: string;
   text: string;
   html?: string;
+  /** Absolute List-Unsubscribe URL when sending marketing/product mail. */
+  unsubscribeUrl?: string;
 };
 
 type CapturedResetLink = {
@@ -53,11 +57,12 @@ function parseFromAddress(from: string): { name: string; email: string } {
 
 /**
  * Send via Brevo. Throws when the API key is missing in production or Brevo fails.
+ * Supports optional List-Unsubscribe headers (Brevo `headers` object).
  */
 export async function sendEmail(input: SendEmailInput) {
   const apiKey = process.env.BREVO_API_KEY;
   const from = parseFromAddress(
-    process.env.EMAIL_FROM ?? "Pact <noreply@joinpact.tech>"
+    process.env.EMAIL_FROM ?? "Pact <noreply@joinpact.tech>",
   );
 
   if (!apiKey) {
@@ -67,6 +72,19 @@ export async function sendEmail(input: SendEmailInput) {
     }
     console.info(message, { text: input.text });
     return { sent: false as const };
+  }
+
+  const html =
+    input.html ??
+    wrapEmailHtml(`<p style="margin:0;color:#ddd;white-space:pre-wrap">${input.text.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</p>`, {
+      title: input.subject,
+      unsubscribeUrl: input.unsubscribeUrl,
+    });
+
+  const headers: Record<string, string> = {};
+  if (input.unsubscribeUrl) {
+    headers["List-Unsubscribe"] = `<${input.unsubscribeUrl}>`;
+    headers["List-Unsubscribe-Post"] = "List-Unsubscribe=One-Click";
   }
 
   const response = await fetch("https://api.brevo.com/v3/smtp/email", {
@@ -81,7 +99,8 @@ export async function sendEmail(input: SendEmailInput) {
       to: [{ email: input.to }],
       subject: input.subject,
       textContent: input.text,
-      htmlContent: input.html ?? `<p>${input.text}</p>`,
+      htmlContent: html,
+      ...(Object.keys(headers).length > 0 ? { headers } : {}),
     }),
   });
 

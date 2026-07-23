@@ -17,9 +17,17 @@ const body = DM_Sans({
   weight: ["400", "500", "600", "700"],
 });
 
+const siteDescription =
+  "Make commitments. Show your progress. Recover together.";
+
+const metadataBaseUrl = new URL(
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.joinpact.tech",
+);
+
 export const metadata: Metadata = {
+  metadataBase: metadataBaseUrl,
   title: "Pact",
-  description: "Make commitments. Show your progress. Recover together.",
+  description: siteDescription,
   applicationName: "Pact",
   appleWebApp: {
     capable: true,
@@ -37,12 +45,33 @@ export const metadata: Metadata = {
     ],
   },
   manifest: "/manifest.webmanifest",
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "/",
+    siteName: "Pact",
+    title: "Pact",
+    description: siteDescription,
+    images: [
+      {
+        url: "/icons/icon-512.png",
+        width: 512,
+        height: 512,
+        alt: "Pact",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary",
+    title: "Pact",
+    description: siteDescription,
+    images: ["/icons/icon-512.png"],
+  },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
   themeColor: "#050505",
   viewportFit: "cover",
 };
@@ -58,6 +87,12 @@ export default function RootLayout({
       className={`dark ${display.variable} ${body.variable} h-full`}
     >
       <body className="min-h-full flex flex-col font-sans">
+        <a
+          href="#content"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-volt-500 focus:px-4 focus:py-2 focus:font-semibold focus:text-ink-950 focus:outline-none"
+        >
+          Skip to content
+        </a>
         <ConvexClientProvider>
           <ServiceWorkerRegister />
           <PostOnboardingRedirect />

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { MoreHorizontal, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 
 import { SurfaceCard } from "@/components/cards/surface-card";
 import { AvatarStack, type AvatarPerson } from "@/components/feedback/avatar-stack";
@@ -62,9 +62,6 @@ export function PactBoardCard({
             </Button>
           ) : null}
         </div>
-        <span className="inline-flex size-10 items-center justify-center rounded-full">
-          <MoreHorizontal className="size-5" />
-        </span>
       </div>
 
       {href ? (

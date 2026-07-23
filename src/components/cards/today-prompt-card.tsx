@@ -7,6 +7,7 @@ import { ArrowUpRight, Sparkles } from "lucide-react";
 
 import { SurfaceCard } from "@/components/cards/surface-card";
 import { AvatarStack, type AvatarPerson } from "@/components/feedback/avatar-stack";
+import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 import { cn } from "@/lib/utils";
 
 type TodayPromptCardProps = {
@@ -53,6 +54,7 @@ export function TodayPromptCard({
   blockedCount,
   className,
 }: TodayPromptCardProps) {
+  const reduceMotion = usePrefersReducedMotion();
   const prompts = useMemo(
     () => promptsForState(openCount, blockedCount),
     [openCount, blockedCount]
@@ -65,12 +67,12 @@ export function TodayPromptCard({
   }, [prompts]);
 
   useEffect(() => {
-    if (prompts.length <= 1) return;
+    if (reduceMotion || prompts.length <= 1) return;
     const timer = window.setInterval(() => {
       setPromptIndex((prev) => (prev + 1) % prompts.length);
     }, PROMPT_CYCLE_MS);
     return () => window.clearInterval(timer);
-  }, [prompts]);
+  }, [prompts, reduceMotion]);
 
   const prompt = prompts[promptIndex] ?? prompts[0]!;
 
@@ -127,18 +129,24 @@ export function TodayPromptCard({
                 )}
               />
               <div className="relative h-5 min-w-0 flex-1 overflow-hidden">
-                <AnimatePresence mode="wait" initial={false}>
-                  <motion.p
-                    key={prompt}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-                    className="absolute inset-x-0 truncate text-sm font-semibold"
-                  >
+                {reduceMotion ? (
+                  <p className="truncate text-sm font-semibold text-white">
                     {prompt}
-                  </motion.p>
-                </AnimatePresence>
+                  </p>
+                ) : (
+                  <AnimatePresence mode="wait" initial={false}>
+                    <motion.p
+                      key={prompt}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                      className="absolute inset-x-0 truncate text-sm font-semibold"
+                    >
+                      {prompt}
+                    </motion.p>
+                  </AnimatePresence>
+                )}
               </div>
             </div>
 

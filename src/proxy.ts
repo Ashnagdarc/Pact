@@ -1,16 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSessionCookie } from "better-auth/cookies";
+
+import { auth } from "@/lib/auth";
 
 /**
- * Optimistic route gate via session cookie presence.
- * Real authorization is enforced in Convex via verified JWTs.
- * @see https://better-auth.com/docs/integrations/next#auth-protection
+ * Validate the Better Auth session (not cookie presence alone).
+ * Convex JWT still enforces data access; this soft-gates /app routes.
+ * @see https://www.better-auth.com/docs/integrations/next#auth-protection
  */
-export function proxy(request: NextRequest) {
-  const sessionCookie = getSessionCookie(request);
+export async function proxy(request: NextRequest) {
+  const session = await auth.api.getSession({
+    headers: request.headers,
+  });
   const { pathname } = request.nextUrl;
 
-  if (!sessionCookie) {
+  if (!session) {
     const signIn = new URL("/sign-in", request.url);
     signIn.searchParams.set("next", pathname);
     return NextResponse.redirect(signIn);
@@ -22,7 +25,7 @@ export function proxy(request: NextRequest) {
 export const config = {
   // `/` stays public for the marketing landing page.
   // `/app/onboarding` and `/app/install` stay public (pre-auth / PWA help).
-  // Other `/app` surfaces are cookie-gated; Convex JWT still enforces auth.
+  // Other `/app` surfaces are session-gated; Convex JWT still enforces auth.
   matcher: [
     "/app",
     "/app/pacts/:path*",

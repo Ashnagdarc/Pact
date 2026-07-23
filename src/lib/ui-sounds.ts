@@ -1,3 +1,5 @@
+import { shouldMuteFeedback } from "@/lib/feedback-prefs";
+
 export type UiSound =
   | "slide"
   | "tick"
@@ -50,6 +52,7 @@ function playTone(
 }
 
 export function playUiSound(sound: UiSound) {
+  if (shouldMuteFeedback()) return;
   switch (sound) {
     case "slide":
       playTone(220, 0.08, "sine", 0.04);

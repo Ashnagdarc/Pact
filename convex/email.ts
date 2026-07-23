@@ -3,6 +3,11 @@ import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { internalAction, type ActionCtx } from "./_generated/server";
+import {
+  buildUserUnsubscribeUrl,
+  escapeHtml,
+  wrapEmailHtml,
+} from "./lib/emailHtml";
 
 function siteOrigin() {
   return (
@@ -24,6 +29,15 @@ function parseFromAddress(from: string): { name: string; email: string } {
   return { name: "Pact", email: from.trim() };
 }
 
+function isProductionDeploy() {
+  const site = process.env.SITE_URL ?? "";
+  return (
+    process.env.BREVO_REQUIRED === "1" ||
+    site.includes("joinpact.tech") ||
+    process.env.CONVEX_ENVIRONMENT === "production"
+  );
+}
+
 async function deliver(
   ctx: ActionCtx,
   args: {
@@ -31,11 +45,15 @@ async function deliver(
     title: string;
     body: string;
     href?: string;
-  }
+  },
 ): Promise<{ sent: boolean }> {
   const apiKey = process.env.BREVO_API_KEY;
   if (!apiKey) {
-    console.warn("[email] BREVO_API_KEY is not configured on Convex");
+    const message = "[email] BREVO_API_KEY is not configured on Convex";
+    console.error(message);
+    if (isProductionDeploy()) {
+      throw new Error(message);
+    }
     return { sent: false };
   }
 
@@ -51,6 +69,22 @@ async function deliver(
   const path = args.href?.startsWith("/") ? args.href : `/${args.href ?? "app"}`;
   const link = `${origin}${path}`;
   const from = parseFromAddress(emailFrom());
+  const unsubscribeUrl = await buildUserUnsubscribeUrl(args.userId);
+
+  const safeTitle = escapeHtml(args.title);
+  const safeBody = escapeHtml(args.body);
+  const html = wrapEmailHtml(
+    `<p style="margin:0 0 12px;font-size:18px;font-weight:700;color:#fff">${safeTitle}</p>
+     <p style="margin:0 0 16px;color:#ccc">${safeBody}</p>
+     <p style="margin:0"><a href="${escapeHtml(link)}" style="display:inline-block;background:#c9ff4a;color:#050505;text-decoration:none;font-weight:700;padding:12px 18px;border-radius:999px">Open in Pact</a></p>`,
+    { title: args.title, unsubscribeUrl },
+  );
+
+  const headers: Record<string, string> = {};
+  if (unsubscribeUrl) {
+    headers["List-Unsubscribe"] = `<${unsubscribeUrl}>`;
+    headers["List-Unsubscribe-Post"] = "List-Unsubscribe=One-Click";
+  }
 
   const response = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
@@ -63,8 +97,11 @@ async function deliver(
       sender: from,
       to: [{ email: recipient.email, name: recipient.displayName }],
       subject: args.title,
-      textContent: `${args.body}\n\nOpen in Pact:\n${link}`,
-      htmlContent: `<p>${args.body}</p><p><a href="${link}">Open in Pact</a></p>`,
+      textContent: `${args.body}\n\nOpen in Pact:\n${link}${
+        unsubscribeUrl ? `\n\nUnsubscribe: ${unsubscribeUrl}` : ""
+      }`,
+      htmlContent: html,
+      ...(Object.keys(headers).length > 0 ? { headers } : {}),
     }),
   });
 

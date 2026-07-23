@@ -1,5 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import type { Id } from "./_generated/dataModel";
+import type { MutationCtx } from "./_generated/server";
 import {
   blockerType,
   recoveryAction,
@@ -49,6 +51,88 @@ export const getLatest = query({
   },
 });
 
+async function applyRecovery(
+  ctx: MutationCtx,
+  commitmentId: Id<"commitments">,
+  plan: {
+    recoveryAction:
+      | "reduce_scope"
+      | "split"
+      | "reschedule"
+      | "ask_help"
+      | "pause"
+      | "remove";
+    revisedTitle?: string;
+    revisedDueAt?: number;
+    revisedChecklist?: { label: string; done: boolean }[];
+    note?: string;
+  },
+  commitment: {
+    title: string;
+    description?: string;
+    checklist?: { label: string; done: boolean }[];
+    dueAt?: number;
+  },
+) {
+  switch (plan.recoveryAction) {
+    case "reduce_scope": {
+      await ctx.db.patch(commitmentId, {
+        title: plan.revisedTitle ?? commitment.title,
+        description: plan.note ?? commitment.description,
+        checklist: plan.revisedChecklist ?? commitment.checklist,
+        status: "on_track",
+      });
+      break;
+    }
+    case "split": {
+      await ctx.db.patch(commitmentId, {
+        title: plan.revisedTitle ?? commitment.title,
+        checklist: plan.revisedChecklist ?? [
+          { label: "Step 1", done: false },
+          { label: "Step 2", done: false },
+          { label: "Step 3", done: false },
+        ],
+        status: "on_track",
+      });
+      break;
+    }
+    case "reschedule": {
+      await ctx.db.patch(commitmentId, {
+        dueAt: plan.revisedDueAt ?? commitment.dueAt,
+        status: "on_track",
+      });
+      break;
+    }
+    case "ask_help": {
+      await ctx.db.patch(commitmentId, {
+        status: "need_help",
+        description: plan.note ?? commitment.description,
+      });
+      break;
+    }
+    case "pause": {
+      await ctx.db.patch(commitmentId, {
+        status: "paused",
+      });
+      break;
+    }
+    case "remove": {
+      // Shelve = pause with a note (no cancelled commitment status in schema).
+      await ctx.db.patch(commitmentId, {
+        status: "paused",
+        description: plan.note
+          ? `Shelved via rescue: ${plan.note}`
+          : "Shelved via rescue mode",
+      });
+      break;
+    }
+    default: {
+      const _exhaustive: never = plan.recoveryAction;
+      throw new Error(`Unhandled recovery action: ${String(_exhaustive)}`);
+    }
+  }
+}
+
 export const createPlan = mutation({
   args: {
     commitmentId: v.id("commitments"),
@@ -89,6 +173,7 @@ export const createPlan = mutation({
       },
     });
 
+    const needsPartnerApproval = Boolean(commitment.pactId);
     const planId = await ctx.db.insert("recoveryPlans", {
       commitmentId: args.commitmentId,
       createdBy: user._id,
@@ -98,71 +183,14 @@ export const createPlan = mutation({
       revisedDueAt: args.revisedDueAt,
       revisedChecklist: args.revisedChecklist,
       note: args.note,
-      approvalStatus: "pending",
+      approvalStatus: needsPartnerApproval ? "pending" : "acknowledged",
     });
 
-    // Apply the recovery to the commitment immediately (partner can still acknowledge)
-    switch (args.recoveryAction) {
-      case "reduce_scope": {
-        await ctx.db.patch(args.commitmentId, {
-          title: args.revisedTitle ?? commitment.title,
-          description: args.note ?? commitment.description,
-          checklist: args.revisedChecklist ?? commitment.checklist,
-          status: "on_track",
-        });
-        break;
-      }
-      case "split": {
-        await ctx.db.patch(args.commitmentId, {
-          title: args.revisedTitle ?? commitment.title,
-          checklist: args.revisedChecklist ?? [
-            { label: "Step 1", done: false },
-            { label: "Step 2", done: false },
-            { label: "Step 3", done: false },
-          ],
-          status: "on_track",
-        });
-        break;
-      }
-      case "reschedule": {
-        await ctx.db.patch(args.commitmentId, {
-          dueAt: args.revisedDueAt ?? commitment.dueAt,
-          status: "on_track",
-        });
-        break;
-      }
-      case "ask_help": {
-        await ctx.db.patch(args.commitmentId, {
-          status: "need_help",
-          description: args.note ?? commitment.description,
-        });
-        break;
-      }
-      case "pause": {
-        await ctx.db.patch(args.commitmentId, {
-          status: "paused",
-        });
-        break;
-      }
-      case "remove": {
-        await ctx.db.patch(args.commitmentId, {
-          status: "paused",
-          description: args.note
-            ? `Removed via rescue: ${args.note}`
-            : "Removed via rescue mode",
-        });
-        break;
-      }
-      default: {
-        const _exhaustive: never = args.recoveryAction;
-        throw new Error(`Unhandled recovery action: ${String(_exhaustive)}`);
-      }
+    // B8: apply only when no partner approval is required; otherwise wait for review.
+    if (!needsPartnerApproval) {
+      await applyRecovery(ctx, args.commitmentId, args, commitment);
+      await ctx.db.patch(planId, { appliedAt: Date.now() });
     }
-
-    await ctx.db.patch(planId, {
-      appliedAt: Date.now(),
-      approvalStatus: commitment.pactId ? "pending" : "acknowledged",
-    });
 
     await ctx.db.insert("activityEvents", {
       userId: user._id,
@@ -210,6 +238,10 @@ export const reviewPlan = mutation({
       throw new Error("Cannot review your own recovery plan");
     }
 
+    if (plan.approvalStatus !== "pending") {
+      return;
+    }
+
     const commitment = await requireCommitmentAccess(
       ctx,
       plan.commitmentId,
@@ -225,6 +257,16 @@ export const reviewPlan = mutation({
       approvedBy: reviewer._id,
       note: args.note ?? plan.note,
     });
+
+    // Apply recovery only on approve/acknowledge, and only once.
+    if (
+      (args.approvalStatus === "approved" ||
+        args.approvalStatus === "acknowledged") &&
+      !plan.appliedAt
+    ) {
+      await applyRecovery(ctx, plan.commitmentId, plan, commitment);
+      await ctx.db.patch(args.planId, { appliedAt: Date.now() });
+    }
 
     await ctx.db.insert("activityEvents", {
       userId: reviewer._id,

@@ -134,50 +134,62 @@ export default function SignInForm() {
 
         <form onSubmit={onSubmit} className="mt-8 grid gap-3">
           {mode === "sign-up" ? (
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Display name"
-              autoComplete="name"
-              className="h-12 rounded-2xl border-white/10 bg-white/5"
-            />
+            <label className="grid gap-1.5 text-sm font-medium text-white/70">
+              Display name
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="How partners will see you"
+                autoComplete="name"
+                className="h-12 rounded-2xl border-white/10 bg-white/5"
+              />
+            </label>
           ) : null}
           {mode === "sign-up" && !fromBetaLink ? (
-            <Input
-              inputMode="numeric"
-              pattern="\d{6}"
-              maxLength={6}
-              required
-              value={inviteCode}
-              onChange={(e) =>
-                setInviteCode(e.target.value.replace(/\D/g, "").slice(0, 6))
-              }
-              placeholder="6-digit invite code"
-              autoComplete="one-time-code"
-              className="h-12 rounded-2xl border-white/10 bg-white/5 tracking-[0.35em]"
-            />
+            <label className="grid gap-1.5 text-sm font-medium text-white/70">
+              Invite code
+              <Input
+                inputMode="numeric"
+                pattern="\d{6}"
+                maxLength={6}
+                required
+                value={inviteCode}
+                onChange={(e) =>
+                  setInviteCode(e.target.value.replace(/\D/g, "").slice(0, 6))
+                }
+                placeholder="6-digit code"
+                autoComplete="one-time-code"
+                className="h-12 rounded-2xl border-white/10 bg-white/5 tracking-[0.35em]"
+              />
+            </label>
           ) : null}
-          <Input
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email"
-            autoComplete="email"
-            className="h-12 rounded-2xl border-white/10 bg-white/5"
-          />
-          <Input
-            type="password"
-            required
-            minLength={8}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password (min 8 chars)"
-            autoComplete={
-              mode === "sign-in" ? "current-password" : "new-password"
-            }
-            className="h-12 rounded-2xl border-white/10 bg-white/5"
-          />
+          <label className="grid gap-1.5 text-sm font-medium text-white/70">
+            Email
+            <Input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              autoComplete="email"
+              className="h-12 rounded-2xl border-white/10 bg-white/5"
+            />
+          </label>
+          <label className="grid gap-1.5 text-sm font-medium text-white/70">
+            Password
+            <Input
+              type="password"
+              required
+              minLength={8}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="At least 8 characters"
+              autoComplete={
+                mode === "sign-in" ? "current-password" : "new-password"
+              }
+              className="h-12 rounded-2xl border-white/10 bg-white/5"
+            />
+          </label>
 
           {mode === "sign-in" ? (
             <div className="flex justify-end">

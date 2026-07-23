@@ -4,6 +4,7 @@ import type { Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { endOfWeek, startOfWeek } from "./lib/health";
 import { requireAppUser, requirePactMember } from "./lib/auth";
+import { notify } from "./lib/notify";
 
 const DAY_LABELS = ["M", "T", "W", "T", "F", "S", "S"] as const;
 const DAY_MS = 1000 * 60 * 60 * 24;
@@ -190,8 +191,11 @@ export const ensureReview = mutation({
     if (args.pactId) {
       const existing = await ctx.db
         .query("weeklyReviews")
-        .withIndex("by_pact_week", (q) =>
-          q.eq("pactId", args.pactId!).eq("weekStart", weekStart)
+        .withIndex("by_pact_user_week", (q) =>
+          q
+            .eq("pactId", args.pactId!)
+            .eq("userId", user._id)
+            .eq("weekStart", weekStart)
         )
         .unique();
 
@@ -211,6 +215,16 @@ export const ensureReview = mutation({
         pactId: args.pactId,
         eventName: "weekly_review_completed",
         metadata: { reviewId: id },
+      });
+
+      await notify(ctx, {
+        userId: user._id,
+        type: "weekly_review",
+        title: "Weekly review ready",
+        body: snapshot.summary || "Your weekly Pact review is ready.",
+        href: args.pactId ? `/app/pacts/${args.pactId}` : "/app/insights",
+        pactId: args.pactId,
+        channels: { inAppOnly: true },
       });
 
       return id;
@@ -238,6 +252,15 @@ export const ensureReview = mutation({
       userId: user._id,
       eventName: "weekly_review_completed",
       metadata: { reviewId: id },
+    });
+
+    await notify(ctx, {
+      userId: user._id,
+      type: "weekly_review",
+      title: "Weekly review ready",
+      body: snapshot.summary || "Your weekly Pact review is ready.",
+      href: "/app/insights",
+      channels: { inAppOnly: true },
     });
 
     return id;

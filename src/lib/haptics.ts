@@ -1,3 +1,5 @@
+import { shouldMuteFeedback } from "@/lib/feedback-prefs";
+
 export type HapticPattern = "light" | "medium" | "select" | "step" | "success";
 
 const patterns: Record<HapticPattern, number | number[]> = {
@@ -9,6 +11,7 @@ const patterns: Record<HapticPattern, number | number[]> = {
 };
 
 export function playHaptic(pattern: HapticPattern = "light") {
+  if (shouldMuteFeedback()) return;
   if (typeof navigator === "undefined" || !("vibrate" in navigator)) return;
   try {
     navigator.vibrate(patterns[pattern]);

@@ -7,18 +7,24 @@ import { notify } from "./lib/notify";
 /**
  * Find commitments whose reminder window has opened and notify assignees.
  * Marks reminderSentAt so each reminder fires once.
+ * Uses by_reminderAt index window (due now or earlier) instead of full table scan.
  */
 export const deliverDue = internalMutation({
   args: {},
   handler: async (ctx) => {
     const now = Date.now();
-    const commitments = await ctx.db.query("commitments").collect();
     let sent = 0;
 
-    for (const commitment of commitments) {
-      if (!commitment.reminderAt) continue;
+    // Index range: reminderAt <= now (exclude undefined via gte 0).
+    const dueCommitments = await ctx.db
+      .query("commitments")
+      .withIndex("by_reminderAt", (q) =>
+        q.gte("reminderAt", 0).lte("reminderAt", now)
+      )
+      .collect();
+
+    for (const commitment of dueCommitments) {
       if (commitment.reminderSentAt) continue;
-      if (commitment.reminderAt > now) continue;
       if (commitment.status === "done" || commitment.status === "paused") {
         continue;
       }
@@ -37,10 +43,14 @@ export const deliverDue = internalMutation({
       sent += 1;
     }
 
-    // Personal task reminders (one-shot via activity metadata + patch reminderAt clear)
-    const tasks = await ctx.db.query("tasks").collect();
-    for (const task of tasks) {
-      if (!task.reminderAt || task.reminderAt > now) continue;
+    const dueTasks = await ctx.db
+      .query("tasks")
+      .withIndex("by_reminderAt", (q) =>
+        q.gte("reminderAt", 0).lte("reminderAt", now)
+      )
+      .collect();
+
+    for (const task of dueTasks) {
       if (task.status !== "open") continue;
 
       await notify(ctx, {

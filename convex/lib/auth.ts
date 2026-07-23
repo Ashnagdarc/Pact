@@ -21,18 +21,21 @@ export async function getAppUserOrNull(ctx: Ctx): Promise<Doc<"users"> | null> {
     return null;
   }
 
-  return await ctx.db
+  const rows = await ctx.db
     .query("users")
     .withIndex("by_authUserId", (q) => q.eq("authUserId", identity.subject))
-    .unique();
+    .collect();
+  if (rows.length === 0) return null;
+  return rows.sort((a, b) => a._creationTime - b._creationTime)[0]!;
 }
 
 export async function requireAppUser(ctx: Ctx): Promise<Doc<"users">> {
   const identity = await requireIdentity(ctx);
-  const user = await ctx.db
+  const rows = await ctx.db
     .query("users")
     .withIndex("by_authUserId", (q) => q.eq("authUserId", identity.subject))
-    .unique();
+    .collect();
+  const user = rows.sort((a, b) => a._creationTime - b._creationTime)[0];
 
   if (!user) {
     throw new Error("App user not found");
@@ -46,12 +49,13 @@ export async function requirePactMember(
   pactId: Id<"pacts">,
   userId: Id<"users">
 ) {
-  const membership = await ctx.db
+  const rows = await ctx.db
     .query("pactMembers")
     .withIndex("by_pact_user", (q) =>
       q.eq("pactId", pactId).eq("userId", userId)
     )
-    .unique();
+    .collect();
+  const membership = rows.sort((a, b) => a._creationTime - b._creationTime)[0];
 
   if (!membership || membership.invitationStatus !== "accepted") {
     throw new Error("Forbidden");

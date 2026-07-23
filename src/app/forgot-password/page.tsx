@@ -68,15 +68,18 @@ export default function ForgotPasswordPage() {
           </div>
         ) : (
           <form onSubmit={onSubmit} className="mt-8 grid gap-3">
-            <Input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Email"
-              autoComplete="email"
-              className="h-12 rounded-2xl border-white/10 bg-white/5"
-            />
+            <label className="grid gap-1.5 text-sm font-medium text-white/70">
+              Email
+              <Input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                autoComplete="email"
+                className="h-12 rounded-2xl border-white/10 bg-white/5"
+              />
+            </label>
             {error ? (
               <p className="text-sm text-coral-400" role="alert">
                 {error}

@@ -36,6 +36,7 @@ export function FilterChips({
             key={option.id}
             type="button"
             onClick={() => onChange(option.id)}
+            aria-pressed={active}
             className="shrink-0"
           >
             <StatusChip

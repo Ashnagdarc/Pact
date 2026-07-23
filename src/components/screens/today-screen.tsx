@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery } from "convex/react";
-import { LayoutGrid, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { motion } from "motion/react";
 
 import { api } from "@convex/_generated/api";
@@ -19,13 +19,13 @@ import { NotificationBell } from "@/components/navigation/notification-bell";
 import { InstallPrompt } from "@/components/pwa/install-prompt";
 import { Button } from "@/components/ui/button";
 import { useCurrentUser } from "@/hooks/use-demo-user";
+import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 import { readOnboardingPending } from "@/lib/onboarding";
 import type { CommitmentStatus } from "@/lib/status";
 
 const filters = [
   { id: "all", label: "All" },
   { id: "pacts", label: "Pacts" },
-  { id: "due", label: "Due today" },
   { id: "blocked", label: "Blocked" },
 ];
 
@@ -49,6 +49,7 @@ function toUiStatus(status: string): CommitmentStatus | undefined {
 
 export function TodayScreen() {
   const router = useRouter();
+  const reduceMotion = usePrefersReducedMotion();
   const [filter, setFilter] = useState("all");
   const {
     user,
@@ -97,13 +98,11 @@ export function TodayScreen() {
     count:
       f.id === "all"
         ? todayCommitments?.length
-        : f.id === "due"
-          ? todayCommitments?.length
-          : f.id === "blocked"
-            ? todayCommitments?.filter(
-                (c) => c.status === "blocked" || c.status === "need_help"
-              ).length
-            : boards?.length,
+        : f.id === "blocked"
+          ? todayCommitments?.filter(
+              (c) => c.status === "blocked" || c.status === "need_help"
+            ).length
+          : todayCommitments?.filter((c) => Boolean(c.pactId)).length,
   }));
 
   if (userLoading) {
@@ -154,7 +153,7 @@ export function TodayScreen() {
     <AppShell>
       <header className="mb-5 flex items-start justify-between gap-3 pt-2">
         <div>
-          <p className="text-sm font-medium text-white/55">
+          <p className="text-sm font-medium text-white/70">
             Hello, {user?.displayName ?? "there"}
           </p>
           <h1 className="font-heading text-[2.6rem] leading-none font-extrabold tracking-tight">
@@ -163,14 +162,6 @@ export function TodayScreen() {
         </div>
         <div className="flex items-center gap-2">
           <NotificationBell />
-          <Button
-            size="icon"
-            variant="ghost"
-            className="size-11 rounded-full border border-white/10 bg-white/5"
-            aria-label="Layout"
-          >
-            <LayoutGrid className="size-5" />
-          </Button>
         </div>
       </header>
 
@@ -182,12 +173,47 @@ export function TodayScreen() {
             <div className="h-28 animate-pulse rounded-[1.35rem] bg-white/6" />
             <div className="h-28 animate-pulse rounded-[1.35rem] bg-white/6" />
           </div>
-          <p className="text-center text-xs font-medium text-white/40">
+          <p className="text-center text-xs font-medium text-white/65">
             Syncing your commitments…
           </p>
         </div>
       ) : (
         <>
+          {(() => {
+            const emptyHome =
+              (todayCommitments?.length ?? 0) === 0 &&
+              (todayTasks?.length ?? 0) === 0 &&
+              (boards?.length ?? 0) === 0;
+            if (!emptyHome) return null;
+            return (
+              <SurfaceCard tone="ink" className="mb-5 border border-white/10">
+                <p className="font-heading text-2xl font-bold tracking-tight">
+                  Start with one commitment
+                </p>
+                <p className="mt-2 text-sm text-white/70">
+                  Add something due today — a personal task or a shared pact
+                  commitment. Keep it small.
+                </p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Button asChild className="rounded-full bg-volt-500 text-ink-950">
+                    <Link href="/app/new">Add commitment</Link>
+                  </Button>
+                  <Button
+                    asChild
+                    variant="ghost"
+                    className="rounded-full border border-white/15"
+                  >
+                    <Link href="/app/pacts/new">Create a Pact</Link>
+                  </Button>
+                </div>
+              </SurfaceCard>
+            );
+          })()}
+
+          {(todayCommitments?.length ?? 0) > 0 ||
+          (todayTasks?.length ?? 0) > 0 ||
+          (boards?.length ?? 0) > 0 ? (
+            <>
           <TodayPromptCard
             className="mb-4"
             people={
@@ -232,9 +258,9 @@ export function TodayScreen() {
                 {(todayTasks ?? []).map((task, index) => (
                   <motion.div
                     key={task._id}
-                    initial={{ opacity: 0, y: 10 }}
+                    initial={reduceMotion ? false : { opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.04 * index }}
+                    transition={reduceMotion ? { duration: 0 } : { delay: 0.04 * index }}
                     className={
                       (todayTasks?.length ?? 0) === 1
                         ? "col-span-2"
@@ -244,7 +270,6 @@ export function TodayScreen() {
                     <CommitmentCard
                       title={task.title}
                       tone={task.tone ?? "cream"}
-                      favorited={task.favorited}
                       status={task.status === "done" ? "done" : "on_track"}
                       meta={task.description}
                       href={`/app/tasks/${task._id}`}
@@ -266,7 +291,36 @@ export function TodayScreen() {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              {filteredCommitments.map((commitment, index) => {
+              {filteredCommitments.length === 0 ? (
+                <SurfaceCard
+                  tone="ink"
+                  className="col-span-2 border border-white/10"
+                >
+                  <p className="font-heading text-xl font-bold">
+                    Nothing in focus
+                  </p>
+                  <p className="mt-2 text-sm text-white/55">
+                    {filter === "blocked"
+                      ? "No blocked commitments right now."
+                      : filter === "pacts"
+                        ? "No pact commitments due today."
+                        : "Add a commitment or personal task to fill today’s focus."}
+                  </p>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <Button asChild className="rounded-full bg-signal text-white">
+                      <Link href="/app/new">Add commitment</Link>
+                    </Button>
+                    <Button
+                      asChild
+                      variant="ghost"
+                      className="rounded-full border border-white/15"
+                    >
+                      <Link href="/app/pacts">Browse pacts</Link>
+                    </Button>
+                  </div>
+                </SurfaceCard>
+              ) : (
+                filteredCommitments.map((commitment, index) => {
                 const span =
                   commitment.checklist?.length ||
                   index === filteredCommitments.length - 1
@@ -280,9 +334,11 @@ export function TodayScreen() {
                 return (
                   <motion.div
                     key={commitment._id}
-                    initial={{ opacity: 0, y: 10 }}
+                    initial={reduceMotion ? false : { opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.05 * index }}
+                    transition={
+                      reduceMotion ? { duration: 0 } : { delay: 0.05 * index }
+                    }
                     className={
                       filteredCommitments.length === 1
                         ? "col-span-2"
@@ -294,7 +350,6 @@ export function TodayScreen() {
                     <CommitmentCard
                       title={commitment.title}
                       tone={commitment.tone ?? "cream"}
-                      favorited={commitment.favorited}
                       status={toUiStatus(commitment.status)}
                       meta={commitment.description}
                       items={commitment.checklist}
@@ -302,7 +357,8 @@ export function TodayScreen() {
                     />
                   </motion.div>
                 );
-              })}
+              })
+              )}
             </div>
           </section>
 
@@ -330,6 +386,8 @@ export function TodayScreen() {
               )}
             </div>
           </section>
+            </>
+          ) : null}
         </>
       )}
     </AppShell>

@@ -39,7 +39,7 @@ export const recoveryActionLabel: Record<RecoveryAction, string> = {
   reschedule: "Reschedule",
   ask_help: "Ask partner for help",
   pause: "Pause",
-  remove: "Remove",
+  remove: "Shelve",
 };
 
 export const recoveryActionHint: Record<RecoveryAction, string> = {
@@ -48,7 +48,7 @@ export const recoveryActionHint: Record<RecoveryAction, string> = {
   reschedule: "Pick a kinder deadline and keep moving.",
   ask_help: "Signal your partner that you need support.",
   pause: "Park it without guilt. You can restart later.",
-  remove: "Drop it from active commitments.",
+  remove: "Shelve it from the active list (pauses; you can reopen later).",
 };
 
 /** Suggested actions ranked for a given blocker */

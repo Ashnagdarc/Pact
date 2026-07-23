@@ -1,5 +1,6 @@
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
+import { notifyPactPartners } from "./notify";
 
 type DbCtx = QueryCtx | MutationCtx;
 
@@ -279,8 +280,22 @@ export async function refreshPactHealth(
   ctx: MutationCtx,
   pactId: Id<"pacts">
 ) {
+  const pact = await ctx.db.get(pactId);
+  const previous = pact?.healthStatus;
   const result = await computePactHealth(ctx, pactId);
   if (!result) return null;
   await ctx.db.patch(pactId, { healthStatus: result.status });
+
+  // C7: notify partners when health newly enters at_risk.
+  if (result.status === "at_risk" && previous !== "at_risk" && pact) {
+    await notifyPactPartners(ctx, {
+      pactId,
+      type: "pact_at_risk",
+      title: "Pact at risk",
+      body: `“${pact.title}” needs attention — overdue or blocked commitments are stacking up.`,
+      href: `/app/pacts/${pactId}`,
+    });
+  }
+
   return result;
 }

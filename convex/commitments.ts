@@ -9,18 +9,7 @@ import {
   requirePactMember,
 } from "./lib/auth";
 import { notify } from "./lib/notify";
-
-function startOfLocalDay(ms = Date.now()) {
-  const d = new Date(ms);
-  d.setHours(0, 0, 0, 0);
-  return d.getTime();
-}
-
-function endOfLocalDay(ms = Date.now()) {
-  const d = new Date(ms);
-  d.setHours(23, 59, 59, 999);
-  return d.getTime();
-}
+import { dayBoundsInTimeZone } from "./lib/time";
 
 function startOfWeek(ms = Date.now()) {
   const d = new Date(ms);
@@ -40,8 +29,9 @@ export const listForToday = query({
   args: {},
   handler: async (ctx) => {
     const user = await requireAppUser(ctx);
-    const dayStart = startOfLocalDay();
-    const dayEnd = endOfLocalDay();
+    const { start: dayStart, end: dayEnd } = dayBoundsInTimeZone(
+      user.timezone || "UTC"
+    );
 
     const commitments = await ctx.db
       .query("commitments")

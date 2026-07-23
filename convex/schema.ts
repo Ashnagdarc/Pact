@@ -27,6 +27,10 @@ export default defineSchema({
     defaultAccountabilityStyle: v.optional(accountabilityStyle),
     defaultCheckInFrequency: v.optional(checkInFrequency),
     isDemo: v.optional(v.boolean()),
+    /** Prefer email delivery for notify(); undefined means on (legacy rows). */
+    emailNotifications: v.optional(v.boolean()),
+    /** Prefer push delivery for notify(); undefined means on (legacy rows). */
+    pushNotifications: v.optional(v.boolean()),
   })
     .index("by_authUserId", ["authUserId"])
     .index("by_email", ["email"]),
@@ -51,7 +55,8 @@ export default defineSchema({
     tone: v.optional(cardTone),
   })
     .index("by_owner", ["ownerId"])
-    .index("by_owner_dueAt", ["ownerId", "dueAt"]),
+    .index("by_owner_dueAt", ["ownerId", "dueAt"])
+    .index("by_reminderAt", ["reminderAt"]),
 
   pacts: defineTable({
     ownerId: v.id("users"),
@@ -139,7 +144,8 @@ export default defineSchema({
   })
     .index("by_assignee", ["assigneeId"])
     .index("by_pact", ["pactId"])
-    .index("by_assignee_dueAt", ["assigneeId", "dueAt"]),
+    .index("by_assignee_dueAt", ["assigneeId", "dueAt"])
+    .index("by_reminderAt", ["reminderAt"]),
 
   checkIns: defineTable({
     commitmentId: v.id("commitments"),
@@ -217,6 +223,7 @@ export default defineSchema({
     ),
   })
     .index("by_pact_week", ["pactId", "weekStart"])
+    .index("by_pact_user_week", ["pactId", "userId", "weekStart"])
     .index("by_user_week", ["userId", "weekStart"]),
 
   notifications: defineTable({
@@ -260,6 +267,8 @@ export default defineSchema({
     createdAt: v.number(),
     usedAt: v.optional(v.number()),
     usedByUserId: v.optional(v.id("users")),
+    /** Set when List-Unsubscribe / waitlist opt-out succeeds. */
+    optedOutAt: v.optional(v.number()),
   })
     .index("by_email", ["email"])
     .index("by_code", ["code"])

@@ -39,10 +39,11 @@ export const upsert = mutation({
         userAgent: args.userAgent,
         updatedAt: now,
       });
+      await ctx.db.patch(user._id, { pushNotifications: true });
       return existing._id;
     }
 
-    return await ctx.db.insert("pushSubscriptions", {
+    const id = await ctx.db.insert("pushSubscriptions", {
       userId: user._id,
       endpoint: args.endpoint,
       expirationTime: args.expirationTime,
@@ -51,6 +52,8 @@ export const upsert = mutation({
       createdAt: now,
       updatedAt: now,
     });
+    await ctx.db.patch(user._id, { pushNotifications: true });
+    return id;
   },
 });
 
@@ -67,6 +70,13 @@ export const remove = mutation({
       throw new Error("Not allowed");
     }
     await ctx.db.delete(existing._id);
+    const remaining = await ctx.db
+      .query("pushSubscriptions")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .collect();
+    if (remaining.length === 0) {
+      await ctx.db.patch(user._id, { pushNotifications: false });
+    }
   },
 });
 

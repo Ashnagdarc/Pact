@@ -24,7 +24,8 @@ export function AppShell({
           className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(255,247,104,0.16),_transparent_52%),radial-gradient(ellipse_at_bottom_right,_rgba(22,133,248,0.14),_transparent_48%)]"
         />
       ) : null}
-      <div
+      <main
+        id="content"
         className={cn(
           "relative mx-auto min-h-dvh w-full max-w-md px-4 safe-pt",
           variant === "default" && "dot-grid",
@@ -33,7 +34,7 @@ export function AppShell({
         )}
       >
         {children}
-      </div>
+      </main>
       {showTabs ? <BottomTabs /> : null}
     </div>
   );

@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "convex/react";
-import { Loader2 } from "lucide-react";
+import { ChevronDown, Loader2 } from "lucide-react";
 
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
@@ -60,6 +60,7 @@ function NewCommitmentForm({ initialPactId }: { initialPactId?: string }) {
   const createCommitment = useMutation(api.commitments.create);
   const createTask = useMutation(api.tasks.create);
   const [submitting, setSubmitting] = useState(false);
+  const [showMore, setShowMore] = useState(Boolean(initialPactId));
 
   const form = useForm<CreateCommitmentValues>({
     resolver: zodResolver(createCommitmentSchema),
@@ -180,8 +181,8 @@ function NewCommitmentForm({ initialPactId }: { initialPactId?: string }) {
       <h1 className="font-heading pt-2 text-4xl font-extrabold tracking-tight">
         New
       </h1>
-      <p className="mt-2 text-sm text-white/55">
-        Capture a task or commitment in under 10 seconds.{" "}
+      <p className="mt-2 text-sm text-white/70">
+        Title + due date — under 10 seconds.{" "}
         <Link
           href="/app/pacts/new"
           className="text-signal underline-offset-2 hover:underline"
@@ -205,20 +206,10 @@ function NewCommitmentForm({ initialPactId }: { initialPactId?: string }) {
               {form.formState.errors.title.message}
             </p>
           ) : null}
-
-          <label className="mt-4 mb-2 block text-xs font-semibold uppercase tracking-wide opacity-60">
-            Note
-          </label>
-          <Textarea
-            {...form.register("description")}
-            placeholder="Optional detail"
-            rows={3}
-            className="rounded-2xl border-black/10 bg-white/40 text-sm text-ink-950 placeholder:text-ink-950/40"
-          />
         </SurfaceCard>
 
         <SurfaceCard tone="ink" className="border border-white/10">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-white/45">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-white/65">
             Due
           </p>
           <div className="flex flex-wrap gap-2">
@@ -240,140 +231,172 @@ function NewCommitmentForm({ initialPactId }: { initialPactId?: string }) {
           </div>
         </SurfaceCard>
 
-        <SurfaceCard tone="ink" className="border border-white/10">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-white/45">
-            Where
-          </p>
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                form.setValue("pactId", "");
-                form.setValue("asPersonalTask", true);
-              }}
-              className={cn(
-                "min-h-10 rounded-full border px-4 text-sm font-semibold transition-colors",
-                !selectedPact
-                  ? "border-signal bg-signal text-white"
-                  : "border-white/15 text-white/70"
-              )}
-            >
-              Personal task
-            </button>
-            {(boards ?? []).map((board) =>
-              board ? (
+        <button
+          type="button"
+          onClick={() => setShowMore((v) => !v)}
+          className="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left text-sm font-semibold text-white/85"
+          aria-expanded={showMore}
+        >
+          More options
+          <ChevronDown
+            className={cn(
+              "size-4 text-white/65 transition-transform",
+              showMore && "rotate-180"
+            )}
+          />
+        </button>
+
+        {showMore ? (
+          <>
+            <SurfaceCard tone="ink" className="border border-white/10">
+              <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-white/65">
+                Note
+              </label>
+              <Textarea
+                {...form.register("description")}
+                placeholder="Optional detail"
+                rows={3}
+                className="rounded-2xl border-white/10 bg-white/5 text-sm text-white placeholder:text-white/35"
+              />
+            </SurfaceCard>
+
+            <SurfaceCard tone="ink" className="border border-white/10">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-white/65">
+                Where
+              </p>
+              <div className="flex flex-wrap gap-2">
                 <button
-                  key={board.pact._id}
                   type="button"
                   onClick={() => {
-                    form.setValue("pactId", board.pact._id);
-                    form.setValue("asPersonalTask", false);
+                    form.setValue("pactId", "");
+                    form.setValue("asPersonalTask", true);
                   }}
                   className={cn(
                     "min-h-10 rounded-full border px-4 text-sm font-semibold transition-colors",
-                    selectedPact === board.pact._id
+                    !selectedPact
                       ? "border-signal bg-signal text-white"
                       : "border-white/15 text-white/70"
                   )}
                 >
-                  {board.pact.title}
+                  Personal task
                 </button>
-              ) : null
-            )}
-          </div>
-          {!selectedPact ? (
-            <p className="mt-3 text-xs text-white/45">
-              Personal tasks stay private. Switch to a Pact to assign a partner.
-            </p>
-          ) : null}
-        </SurfaceCard>
-
-        {selectedPact ? (
-          <SurfaceCard tone="ink" className="border border-white/10">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-white/45">
-              Assign to
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {assignees.map((member) => (
-                <button
-                  key={member._id}
-                  type="button"
-                  onClick={() => form.setValue("assigneeId", member._id)}
-                  className={cn(
-                    "min-h-10 rounded-full border px-4 text-sm font-semibold transition-colors",
-                    selectedAssignee === member._id
-                      ? "border-volt-500 bg-volt-500 text-ink-950"
-                      : "border-white/15 text-white/70"
-                  )}
-                >
-                  {member._id === userId ? "You" : member.displayName}
-                </button>
-              ))}
-            </div>
-          </SurfaceCard>
-        ) : null}
-
-        {selectedPact ? (
-          <SurfaceCard tone="ink" className="border border-white/10">
-            <button
-              type="button"
-              onClick={() =>
-                form.setValue("evidenceRequired", !evidenceRequired)
-              }
-              className="flex w-full items-center justify-between gap-3 text-left"
-            >
-              <div>
-                <p className="text-sm font-semibold">Require evidence</p>
-                <p className="mt-1 text-xs text-white/45">
-                  Ask for a photo or file before marking done
-                </p>
+                {(boards ?? []).map((board) =>
+                  board ? (
+                    <button
+                      key={board.pact._id}
+                      type="button"
+                      onClick={() => {
+                        form.setValue("pactId", board.pact._id);
+                        form.setValue("asPersonalTask", false);
+                      }}
+                      className={cn(
+                        "min-h-10 rounded-full border px-4 text-sm font-semibold transition-colors",
+                        selectedPact === board.pact._id
+                          ? "border-signal bg-signal text-white"
+                          : "border-white/15 text-white/70"
+                      )}
+                    >
+                      {board.pact.title}
+                    </button>
+                  ) : null
+                )}
               </div>
-              <span
-                className={cn(
-                  "inline-flex h-7 w-12 items-center rounded-full border px-1 transition-colors",
-                  evidenceRequired
-                    ? "border-volt-500 bg-volt-500"
-                    : "border-white/20 bg-white/5"
-                )}
-              >
-                <span
-                  className={cn(
-                    "size-5 rounded-full bg-white transition-transform",
-                    evidenceRequired ? "translate-x-5" : "translate-x-0"
-                  )}
-                />
-              </span>
-            </button>
-          </SurfaceCard>
-        ) : null}
+              {!selectedPact ? (
+                <p className="mt-3 text-xs text-white/65">
+                  Personal tasks stay private. Switch to a Pact to assign a
+                  partner.
+                </p>
+              ) : null}
+            </SurfaceCard>
 
-        <SurfaceCard tone="ink" className="border border-white/10">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-white/45">
-            Card color
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {tones.map((tone) => (
-              <button
-                key={tone}
-                type="button"
-                aria-label={tone}
-                onClick={() => form.setValue("tone", tone)}
-                className={cn(
-                  "size-10 rounded-full border-2",
-                  tone === "volt" && "bg-volt-500",
-                  tone === "coral" && "bg-coral-400",
-                  tone === "cream" && "bg-cream-200",
-                  tone === "mint" && "bg-mint-300",
-                  tone === "signal" && "bg-signal",
-                  tone === "paper" && "bg-paper-100",
-                  selectedTone === tone
-                    ? "border-white scale-110"
-                    : "border-transparent"
-                )}
-              />
-            ))}
-          </div>
-        </SurfaceCard>
+            {selectedPact ? (
+              <SurfaceCard tone="ink" className="border border-white/10">
+                <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-white/65">
+                  Assign to
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {assignees.map((member) => (
+                    <button
+                      key={member._id}
+                      type="button"
+                      onClick={() => form.setValue("assigneeId", member._id)}
+                      className={cn(
+                        "min-h-10 rounded-full border px-4 text-sm font-semibold transition-colors",
+                        selectedAssignee === member._id
+                          ? "border-volt-500 bg-volt-500 text-ink-950"
+                          : "border-white/15 text-white/70"
+                      )}
+                    >
+                      {member._id === userId ? "You" : member.displayName}
+                    </button>
+                  ))}
+                </div>
+              </SurfaceCard>
+            ) : null}
+
+            {selectedPact ? (
+              <SurfaceCard tone="ink" className="border border-white/10">
+                <button
+                  type="button"
+                  onClick={() =>
+                    form.setValue("evidenceRequired", !evidenceRequired)
+                  }
+                  className="flex w-full items-center justify-between gap-3 text-left"
+                >
+                  <div>
+                    <p className="text-sm font-semibold">Require evidence</p>
+                    <p className="mt-1 text-xs text-white/65">
+                      Ask for a photo or file before marking done
+                    </p>
+                  </div>
+                  <span
+                    className={cn(
+                      "inline-flex h-7 w-12 items-center rounded-full border px-1 transition-colors",
+                      evidenceRequired
+                        ? "border-volt-500 bg-volt-500"
+                        : "border-white/20 bg-white/5"
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "size-5 rounded-full bg-white transition-transform",
+                        evidenceRequired ? "translate-x-5" : "translate-x-0"
+                      )}
+                    />
+                  </span>
+                </button>
+              </SurfaceCard>
+            ) : null}
+
+            <SurfaceCard tone="ink" className="border border-white/10">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-white/65">
+                Card color
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {tones.map((tone) => (
+                  <button
+                    key={tone}
+                    type="button"
+                    aria-label={tone}
+                    onClick={() => form.setValue("tone", tone)}
+                    className={cn(
+                      "size-10 rounded-full border-2",
+                      tone === "volt" && "bg-volt-500",
+                      tone === "coral" && "bg-coral-400",
+                      tone === "cream" && "bg-cream-200",
+                      tone === "mint" && "bg-mint-300",
+                      tone === "signal" && "bg-signal",
+                      tone === "paper" && "bg-paper-100",
+                      selectedTone === tone
+                        ? "border-white scale-110"
+                        : "border-transparent"
+                    )}
+                  />
+                ))}
+              </div>
+            </SurfaceCard>
+          </>
+        ) : null}
 
         <Button
           type="submit"

@@ -5,6 +5,7 @@ import {
   requireAppUser,
   requireCommitmentAccess,
 } from "./lib/auth";
+import { notifyPactPartners } from "./lib/notify";
 
 export const generateUploadUrl = mutation({
   args: {},
@@ -54,6 +55,20 @@ export const attach = mutation({
         checkInId: args.checkInId,
       },
     });
+
+    const commitment = await ctx.db.get(args.commitmentId);
+    if (commitment?.pactId) {
+      await notifyPactPartners(ctx, {
+        pactId: commitment.pactId,
+        excludeUserId: user._id,
+        actorId: user._id,
+        commitmentId: args.commitmentId,
+        type: "evidence_uploaded",
+        title: "Evidence uploaded",
+        body: `${user.displayName} added evidence on “${commitment.title}”.`,
+        href: `/app/commitments/${args.commitmentId}`,
+      });
+    }
 
     return evidenceId;
   },

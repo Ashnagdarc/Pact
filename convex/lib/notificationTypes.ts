@@ -9,5 +9,6 @@ export const notificationType = v.union(
   v.literal("invitation_accepted"),
   v.literal("pact_at_risk"),
   v.literal("weekly_review"),
-  v.literal("commitment_due")
+  v.literal("commitment_due"),
+  v.literal("evidence_uploaded")
 );

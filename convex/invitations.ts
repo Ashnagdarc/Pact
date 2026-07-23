@@ -2,6 +2,8 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { notify } from "./lib/notify";
 import { requireAppUser } from "./lib/auth";
+import { findPactMembership } from "./lib/dedupe";
+import { assertServerSecret } from "./lib/serverSecret";
 
 export const getByToken = query({
   args: { token: v.string() },
@@ -43,6 +45,43 @@ export const getByToken = query({
             avatarUrl: owner.avatarUrl,
           }
         : null,
+    };
+  },
+});
+
+/**
+ * Server-only: load invite for email send — includes creator auth id + DB title.
+ */
+export const getForInviteEmail = query({
+  args: {
+    secret: v.string(),
+    token: v.string(),
+  },
+  handler: async (ctx, args) => {
+    assertServerSecret(args.secret);
+
+    const invitation = await ctx.db
+      .query("invitations")
+      .withIndex("by_token", (q) => q.eq("token", args.token))
+      .unique();
+
+    if (!invitation || invitation.status !== "pending") {
+      return null;
+    }
+    if (invitation.expiresAt < Date.now()) {
+      return null;
+    }
+
+    const creator = await ctx.db.get(invitation.createdBy);
+    const pact = await ctx.db.get(invitation.pactId);
+    if (!creator?.authUserId || !pact) {
+      return null;
+    }
+
+    return {
+      createdByAuthUserId: creator.authUserId,
+      pactTitle: pact.title,
+      inviterName: creator.displayName,
     };
   },
 });
@@ -90,15 +129,22 @@ export const accept = mutation({
     await ctx.db.patch(user._id, { displayName: name });
     const userId = user._id;
 
-    const existingMembership = await ctx.db
-      .query("pactMembers")
-      .withIndex("by_pact_user", (q) =>
-        q.eq("pactId", invitation.pactId).eq("userId", userId)
-      )
-      .unique();
+    const existingMembership = await findPactMembership(
+      ctx,
+      invitation.pactId,
+      userId,
+    );
 
     if (existingMembership?.invitationStatus === "accepted") {
-      // Already a member — keep invite link reusable for others.
+      // Single-use invite: mark accepted even if already a member.
+      if (invitation.status === "pending") {
+        await ctx.db.patch(invitation._id, {
+          status: "accepted",
+          inviteeName: name,
+          inviteeUserId: userId,
+          acceptedAt: Date.now(),
+        });
+      }
       return { userId, pactId: invitation.pactId };
     }
 
@@ -120,8 +166,9 @@ export const accept = mutation({
       });
     }
 
-    // Keep the invite link pending so multiple partners can use the same URL.
+    // Single-use: first accept consumes the invite (B5).
     await ctx.db.patch(invitation._id, {
+      status: "accepted",
       inviteeName: name,
       inviteeUserId: userId,
       acceptedAt: Date.now(),
@@ -154,7 +201,6 @@ export const decline = mutation({
     displayName: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    // Declining is personal — do not revoke the shared invite link.
     const invitation = await ctx.db
       .query("invitations")
       .withIndex("by_token", (q) => q.eq("token", args.token))
@@ -167,6 +213,12 @@ export const decline = mutation({
     if (invitation.status !== "pending") {
       throw new Error(`Invitation is ${invitation.status}`);
     }
+
+    await ctx.db.patch(invitation._id, {
+      status: "declined",
+      declinedAt: Date.now(),
+      inviteeName: args.displayName?.trim() || invitation.inviteeName,
+    });
 
     await ctx.db.insert("activityEvents", {
       eventName: "invitation_declined",
