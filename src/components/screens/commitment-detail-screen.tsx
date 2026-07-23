@@ -35,6 +35,7 @@ import {
   readCheckInDraft,
   saveCheckInDraft,
 } from "@/lib/offline-drafts";
+import { EVIDENCE_MAX_BYTES, isAllowedEvidenceMime } from "@/lib/evidence-upload";
 import {
   blockerLabel,
   needsRescue,
@@ -105,7 +106,6 @@ function CommitmentDetailConnected({
   const toggleChecklist = useMutation(api.commitments.toggleChecklistItem);
   const updateStatus = useMutation(api.commitments.updateStatus);
   const reviewPlan = useMutation(api.rescue.reviewPlan);
-  const generateUploadUrl = useMutation(api.evidence.generateUploadUrl);
   const attachEvidence = useMutation(api.evidence.attach);
   const evidence = useQuery(
     api.evidence.listForCommitment,
@@ -229,22 +229,47 @@ function CommitmentDetailConnected({
     startTransition(async () => {
       try {
         setUploadError(null);
-        const postUrl = await generateUploadUrl({});
-        const result = await fetch(postUrl, {
+        const contentType = file.type || "application/octet-stream";
+        if (!isAllowedEvidenceMime(contentType)) {
+          throw new Error("Only images and PDF files are allowed");
+        }
+        if (file.size > EVIDENCE_MAX_BYTES) {
+          throw new Error(
+            `File too large (max ${Math.round(EVIDENCE_MAX_BYTES / (1024 * 1024))} MB)`
+          );
+        }
+        const signRes = await fetch("/api/evidence/upload-url", {
           method: "POST",
-          headers: { "Content-Type": file.type || "application/octet-stream" },
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            commitmentId: commitment._id,
+            contentType,
+            byteSize: file.size,
+          }),
+        });
+        const signBody = (await signRes.json().catch(() => null)) as {
+          error?: string;
+          uploadUrl?: string;
+          r2Key?: string;
+        } | null;
+        if (!signRes.ok || !signBody?.uploadUrl || !signBody.r2Key) {
+          throw new Error(signBody?.error ?? "Could not start upload");
+        }
+
+        const putRes = await fetch(signBody.uploadUrl, {
+          method: "PUT",
+          headers: { "Content-Type": contentType },
           body: file,
         });
-        if (!result.ok) {
-          throw new Error("Upload failed");
+        if (!putRes.ok) {
+          throw new Error("Upload to storage failed");
         }
-        const { storageId } = (await result.json()) as {
-          storageId: Id<"_storage">;
-        };
+
         await attachEvidence({
           commitmentId: commitment._id,
-          storageId,
-          fileType: file.type || "application/octet-stream",
+          r2Key: signBody.r2Key,
+          byteSize: file.size,
+          fileType: contentType,
           caption: file.name,
         });
       } catch (err) {
@@ -427,38 +452,43 @@ function CommitmentDetailConnected({
               <p className="text-sm text-white/60">No evidence yet.</p>
             </SurfaceCard>
           ) : (
-            evidence.map((item) => (
-              <SurfaceCard
-                key={item._id}
-                tone="ink"
-                className="border border-white/10"
-              >
-                {item.url && item.fileType.startsWith("image/") ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={item.url}
-                    alt={item.caption ?? "Evidence"}
-                    className="mb-2 max-h-48 w-full rounded-xl object-cover"
-                  />
-                ) : null}
-                <p className="text-sm font-semibold">
-                  {item.caption ?? item.fileType}
-                </p>
-                <p className="mt-1 text-xs text-white/45">
-                  {format(item._creationTime, "MMM d · h:mm a")}
-                </p>
-                {item.url && !item.fileType.startsWith("image/") ? (
-                  <a
-                    href={item.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-2 inline-block text-sm text-signal underline-offset-2 hover:underline"
-                  >
-                    Open file
-                  </a>
-                ) : null}
-              </SurfaceCard>
-            ))
+            evidence.map((item) => {
+              const fileUrl =
+                item.url ??
+                (item.r2Key ? `/api/evidence/${item._id}/file` : null);
+              return (
+                <SurfaceCard
+                  key={item._id}
+                  tone="ink"
+                  className="border border-white/10"
+                >
+                  {fileUrl && item.fileType.startsWith("image/") ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={fileUrl}
+                      alt={item.caption ?? "Evidence"}
+                      className="mb-2 max-h-48 w-full rounded-xl object-cover"
+                    />
+                  ) : null}
+                  <p className="text-sm font-semibold">
+                    {item.caption ?? item.fileType}
+                  </p>
+                  <p className="mt-1 text-xs text-white/45">
+                    {format(item._creationTime, "MMM d · h:mm a")}
+                  </p>
+                  {fileUrl && !item.fileType.startsWith("image/") ? (
+                    <a
+                      href={fileUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-2 inline-block text-sm text-signal underline-offset-2 hover:underline"
+                    >
+                      Open file
+                    </a>
+                  ) : null}
+                </SurfaceCard>
+              );
+            })
           )}
         </div>
       </section>

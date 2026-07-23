@@ -41,7 +41,8 @@ export default function PrivacyPage() {
         <div className="mt-8 space-y-4 rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-6 text-sm leading-relaxed text-white/75">
           <p>
             Pact stores account authentication in Postgres (Better Auth) and app
-            data in Convex. Evidence files use Convex file storage.
+            data in Convex. Evidence files (images/PDFs) are stored in Cloudflare
+            R2; older uploads may still live in Convex file storage.
           </p>
           <p>
             Partners only see data inside Pacts you’ve invited them to. Personal
