@@ -148,6 +148,8 @@ export const validateInvite = query({
   args: {
     token: v.optional(v.string()),
     code: v.optional(v.string()),
+    /** When provided (signup), the invite must belong to this email. */
+    email: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const token = args.token?.trim();
@@ -172,6 +174,10 @@ export const validateInvite = query({
     if (row.usedAt) {
       return { valid: false as const, reason: "used" as const };
     }
+    const email = args.email?.trim().toLowerCase();
+    if (email && email !== row.email) {
+      return { valid: false as const, reason: "email_mismatch" as const };
+    }
     return {
       valid: true as const,
       email: row.email,
@@ -184,14 +190,19 @@ export const validateInvite = query({
 
 /**
  * Atomically claim a one-time invite (sets usedAt iff unset).
- * Server-only — call from Better Auth `user.create.before` so signup cannot
- * race two consumers on the same code.
+ * Server-only — called from Better Auth `user.create.after` once the user row
+ * exists, so a failed signup can never burn the invite. Invites are personal:
+ * the claiming email must match the invite's email.
  */
 export const claimInvite = mutation({
   args: {
     secret: v.string(),
     token: v.optional(v.string()),
     code: v.optional(v.string()),
+    /** Optional for backward compat with older deployed callers; when present, must match the invite's email. */
+    email: v.optional(v.string()),
+    /** Better Auth user id of the account that consumed the invite. */
+    usedByUserId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     assertServerSecret(args.secret);
@@ -203,9 +214,14 @@ export const claimInvite = mutation({
     if (row.usedAt) {
       return { claimed: false as const, reason: "used" as const };
     }
+    const claimEmail = args.email?.trim().toLowerCase();
+    if (claimEmail && claimEmail !== row.email) {
+      return { claimed: false as const, reason: "email_mismatch" as const };
+    }
 
     await ctx.db.patch(row._id, {
       usedAt: Date.now(),
+      usedByUserId: args.usedByUserId,
     });
 
     return {

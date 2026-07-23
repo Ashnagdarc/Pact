@@ -7,7 +7,11 @@ import { cookies } from "next/headers";
 import { Pool } from "pg";
 
 import { BETA_ACCESS_COOKIE, betaAccessOpen } from "@/lib/beta-access";
-import { claimBetaInvite, deleteConvexAccountByAuthUserId } from "@/lib/convex-http";
+import {
+  claimBetaInvite,
+  deleteConvexAccountByAuthUserId,
+  validateBetaInvite,
+} from "@/lib/convex-http";
 import { captureResetLink, queueEmail } from "@/lib/email";
 import { escapeHtml, wrapEmailHtml } from "@/lib/email-html";
 
@@ -116,9 +120,9 @@ export const auth = betterAuth({
   databaseHooks: {
     user: {
       create: {
-        // Claim invite atomically before the user row exists so two parallel
-        // signups cannot both validate then both consume the same code (B2).
-        before: async () => {
+        // Validate only — the atomic claim happens in `after` once the user
+        // row exists, so a failed signup can never burn the invite.
+        before: async (user) => {
           if (betaAccessOpen()) return;
           const jar = await cookies();
           const token = jar.get(BETA_ACCESS_COOKIE)?.value;
@@ -128,14 +132,57 @@ export const auth = betterAuth({
                 "Early beta requires a one-time invite code. Join the waitlist first.",
             });
           }
-          const claim = await claimBetaInvite({ token });
+          const invite = await validateBetaInvite({ token, email: user.email });
+          if (!invite.valid) {
+            switch (invite.reason) {
+              case "used":
+                throw new APIError("FORBIDDEN", {
+                  message: "This invite code was already used.",
+                });
+              case "email_mismatch":
+                throw new APIError("FORBIDDEN", {
+                  message: "This invite belongs to a different email address.",
+                });
+              case "not_found":
+                throw new APIError("FORBIDDEN", {
+                  message:
+                    "Invalid beta invite. Request a new code from the waitlist.",
+                });
+              default: {
+                const exhaustive: never = invite;
+                void exhaustive;
+                throw new APIError("FORBIDDEN", {
+                  message:
+                    "Invalid beta invite. Request a new code from the waitlist.",
+                });
+              }
+            }
+          }
+        },
+        // Claim atomically now that the user exists (sets usedAt iff unset).
+        after: async (user) => {
+          if (betaAccessOpen()) return;
+          const jar = await cookies();
+          const token = jar.get(BETA_ACCESS_COOKIE)?.value;
+          if (!token) {
+            console.error(
+              "[pact-auth] beta cookie missing in user.create.after; invite not claimed for",
+              user.email,
+            );
+            return;
+          }
+          const claim = await claimBetaInvite({
+            token,
+            email: user.email,
+            usedByUserId: user.id,
+          });
           if (!claim.claimed) {
-            throw new APIError("FORBIDDEN", {
-              message:
-                claim.reason === "used"
-                  ? "This invite code was already used."
-                  : "Invalid beta invite. Request a new code from the waitlist.",
-            });
+            // Loud: "used" here means another signup consumed the invite
+            // between validate (before) and claim (after) — race indicator.
+            console.error(
+              "[pact-auth] beta invite claim failed after user create",
+              { reason: claim.reason, email: user.email, userId: user.id },
+            );
           }
         },
       },

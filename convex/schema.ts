@@ -270,7 +270,8 @@ export default defineSchema({
     token: v.optional(v.string()),
     createdAt: v.number(),
     usedAt: v.optional(v.number()),
-    usedByUserId: v.optional(v.id("users")),
+    /** Better Auth user id that claimed the invite (Convex users row does not exist yet at signup). */
+    usedByUserId: v.optional(v.string()),
     /** Set when List-Unsubscribe / waitlist opt-out succeeds. */
     optedOutAt: v.optional(v.number()),
   })

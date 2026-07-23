@@ -48,6 +48,7 @@ export default function SignInForm() {
   const [inviteCode, setInviteCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [accountExists, setAccountExists] = useState(false);
 
   async function ensureBetaAccess() {
     // Link redeem already set the httpOnly cookie.
@@ -72,6 +73,7 @@ export default function SignInForm() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setAccountExists(false);
     setBusy(true);
 
     try {
@@ -84,6 +86,13 @@ export default function SignInForm() {
           password,
         });
         if (result.error) {
+          if (
+            result.error.code === "USER_ALREADY_EXISTS" ||
+            result.error.status === 422
+          ) {
+            setAccountExists(true);
+            throw new Error("You already have an account with this email.");
+          }
           throw new Error(result.error.message || "Sign up failed");
         }
 
@@ -207,6 +216,20 @@ export default function SignInForm() {
               {error}
             </p>
           ) : null}
+          {accountExists && mode === "sign-up" ? (
+            <Button
+              type="button"
+              variant="outline"
+              className="h-11 rounded-full border-white/15 bg-white/5 text-paper-100 hover:bg-white/10"
+              onClick={() => {
+                setMode("sign-in");
+                setError(null);
+                setAccountExists(false);
+              }}
+            >
+              Sign in with {email.trim() || "this email"} instead
+            </Button>
+          ) : null}
 
           <Button
             type="submit"
@@ -229,6 +252,7 @@ export default function SignInForm() {
           onClick={() => {
             setMode(mode === "sign-in" ? "sign-up" : "sign-in");
             setError(null);
+            setAccountExists(false);
           }}
         >
           {mode === "sign-in"

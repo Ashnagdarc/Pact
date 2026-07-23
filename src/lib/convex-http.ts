@@ -26,15 +26,19 @@ export async function mintWaitlistInvite(input: {
 export async function validateBetaInvite(input: {
   token?: string;
   code?: string;
+  /** When provided (signup), the invite must belong to this email. */
+  email?: string;
 }) {
   const convex = getConvexHttpClient();
   return convex.query(api.waitlist.validateInvite, input);
 }
 
-/** Atomically claim invite before user create (B2). */
+/** Atomically claim a personal invite after user create (B2). */
 export async function claimBetaInvite(input: {
   token?: string;
   code?: string;
+  email: string;
+  usedByUserId?: string;
 }) {
   const convex = getConvexHttpClient();
   return convex.mutation(api.waitlist.claimInvite, {

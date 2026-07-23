@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as admin_wipe from "../admin_wipe.js";
 import type * as checkIns from "../checkIns.js";
 import type * as commitments from "../commitments.js";
 import type * as crons from "../crons.js";
@@ -44,6 +45,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  admin_wipe: typeof admin_wipe;
   checkIns: typeof checkIns;
   commitments: typeof commitments;
   crons: typeof crons;
