@@ -6,6 +6,30 @@ import { assertServerSecret } from "./lib/serverSecret";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+/**
+ * Match Better Auth sentinel `emailNormalization`: Gmail dots/plus-aliases are
+ * one identity. Signup hooks receive the normalized email, so invite email
+ * comparisons must normalize both sides or Gmail invites fail (email_mismatch).
+ */
+function normalizeEmail(raw: string) {
+  const email = raw.trim().toLowerCase();
+  const at = email.lastIndexOf("@");
+  if (at === -1) return email;
+  let local = email.slice(0, at);
+  let domain = email.slice(at + 1);
+  if (domain === "googlemail.com") domain = "gmail.com";
+  if (domain === "gmail.com") {
+    local = local.replace(/\./g, "");
+    const plus = local.indexOf("+");
+    if (plus !== -1) local = local.slice(0, plus);
+  }
+  return `${local}@${domain}`;
+}
+
+function emailsMatch(a: string, b: string) {
+  return normalizeEmail(a) === normalizeEmail(b);
+}
+
 function randomCode() {
   const bytes = new Uint32Array(1);
   crypto.getRandomValues(bytes);
@@ -174,8 +198,8 @@ export const validateInvite = query({
     if (row.usedAt) {
       return { valid: false as const, reason: "used" as const };
     }
-    const email = args.email?.trim().toLowerCase();
-    if (email && email !== row.email) {
+    const email = args.email?.trim();
+    if (email && !emailsMatch(email, row.email)) {
       return { valid: false as const, reason: "email_mismatch" as const };
     }
     return {
@@ -214,8 +238,8 @@ export const claimInvite = mutation({
     if (row.usedAt) {
       return { claimed: false as const, reason: "used" as const };
     }
-    const claimEmail = args.email?.trim().toLowerCase();
-    if (claimEmail && claimEmail !== row.email) {
+    const claimEmail = args.email?.trim();
+    if (claimEmail && !emailsMatch(claimEmail, row.email)) {
       return { claimed: false as const, reason: "email_mismatch" as const };
     }
 
