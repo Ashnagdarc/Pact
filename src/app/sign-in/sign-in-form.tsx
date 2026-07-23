@@ -51,9 +51,11 @@ export default function SignInForm() {
   const [accountExists, setAccountExists] = useState(false);
 
   async function ensureBetaAccess() {
-    // Link redeem already set the httpOnly cookie.
-    if (fromBetaLink) return;
     const code = inviteCode.trim();
+    // Link redeem already set the httpOnly cookie; only skip when no code was
+    // typed. If the user entered one anyway, validate it so signup can't fail
+    // silently when the cookie was blocked or expired.
+    if (fromBetaLink && !code) return;
     if (!/^\d{6}$/.test(code)) {
       throw new Error("Enter the 6-digit code from your welcome email");
     }
@@ -154,14 +156,14 @@ export default function SignInForm() {
               />
             </label>
           ) : null}
-          {mode === "sign-up" && !fromBetaLink ? (
+          {mode === "sign-up" ? (
             <label className="grid gap-1.5 text-sm font-medium text-white/70">
-              Invite code
+              Invite code{fromBetaLink ? " (optional)" : ""}
               <Input
                 inputMode="numeric"
                 pattern="\d{6}"
                 maxLength={6}
-                required
+                required={!fromBetaLink}
                 value={inviteCode}
                 onChange={(e) =>
                   setInviteCode(e.target.value.replace(/\D/g, "").slice(0, 6))
@@ -170,6 +172,12 @@ export default function SignInForm() {
                 autoComplete="one-time-code"
                 className="h-12 rounded-2xl border-white/10 bg-white/5 tracking-[0.35em]"
               />
+              {fromBetaLink ? (
+                <span className="text-xs font-normal text-white/45">
+                  Your link already unlocked access — only enter the code from
+                  your welcome email if account creation fails.
+                </span>
+              ) : null}
             </label>
           ) : null}
           <label className="grid gap-1.5 text-sm font-medium text-white/70">
