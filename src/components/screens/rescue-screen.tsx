@@ -182,7 +182,7 @@ function RescueScreenConnected({ commitmentId }: RescueScreenProps) {
             What happened?
           </h2>
           <p className="mt-1 text-sm text-white/55">
-            Pick the closest reason. No shame — just signal.
+            Pick the closest reason. No shame, just signal.
           </p>
           <div className="mt-4 grid gap-2">
             {blockerTypes.map((type) => (

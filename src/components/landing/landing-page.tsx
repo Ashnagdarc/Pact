@@ -226,7 +226,7 @@ export function LandingPage() {
               Join the private beta waitlist
             </h2>
             <p className="mx-auto mt-5 max-w-xl text-base text-white/70 sm:text-lg">
-              Leave your email — we&apos;ll send a welcome note with a one-time
+              Leave your email. We&apos;ll send a welcome note with a one-time
               6-digit code and personal link to open the early beta.
             </p>
             <div className="mt-8">

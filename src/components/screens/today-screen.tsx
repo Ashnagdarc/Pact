@@ -191,7 +191,7 @@ export function TodayScreen() {
                   Start with one commitment
                 </p>
                 <p className="mt-2 text-sm text-white/70">
-                  Add something due today — a personal task or a shared pact
+                  Add something due today: a personal task or a shared pact
                   commitment. Keep it small.
                 </p>
                 <div className="mt-4 flex flex-wrap gap-2">

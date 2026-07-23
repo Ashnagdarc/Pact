@@ -135,7 +135,7 @@ Each code is unique and can only be used once.
 
 Unsubscribe: ${input.unsubscribeUrl}
 
-— Pact
+The Pact team
 https://www.joinpact.tech`;
 
   const html = wrapEmailHtml(

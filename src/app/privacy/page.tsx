@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = {
-  title: "Privacy — Pact",
+  title: "Privacy · Pact",
   description: "How Pact handles your account, commitments, and evidence.",
 };
 

@@ -93,9 +93,9 @@ function JoinedPanel({
           {name ? `You're in, ${name}` : "You're on the list"}
         </p>
         <p className="mt-2 text-sm leading-relaxed text-white/70">
-          We emailed <span className="text-white/90">{email}</span> a welcome note
-          with your personal access link and one-time code. Check your inbox
-          (and spam) — we don&apos;t show the code here.
+          We emailed <span className="text-white/90">{email}</span>{" "}
+          a welcome note with your personal access link and one-time code.
+          Check your inbox (and spam). We don&apos;t show the code here.
         </p>
       </div>
 

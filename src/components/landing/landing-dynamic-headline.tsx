@@ -20,7 +20,7 @@ const pairs = [
   },
   {
     issue: "Task lists can't hold you accountable.",
-    solution: "Make a Pact — and show your progress.",
+    solution: "Make a Pact and show your progress.",
   },
   {
     issue: "Good intentions fade without witnesses.",

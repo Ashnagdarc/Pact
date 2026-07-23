@@ -149,7 +149,7 @@ function InsightsScreenConnected() {
           Pact health
         </h2>
         <p className="mt-1 text-sm text-white/55">
-          Status with reasons — never just a mysterious score.
+          Status with reasons, never just a mysterious score.
         </p>
         <div className="mt-4 space-y-3">
           {pactHealth.length === 0 ? (

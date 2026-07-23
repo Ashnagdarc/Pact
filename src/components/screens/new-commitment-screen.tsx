@@ -182,7 +182,7 @@ function NewCommitmentForm({ initialPactId }: { initialPactId?: string }) {
         New
       </h1>
       <p className="mt-2 text-sm text-white/70">
-        Title + due date — under 10 seconds.{" "}
+        Title + due date, under 10 seconds.{" "}
         <Link
           href="/app/pacts/new"
           className="text-signal underline-offset-2 hover:underline"

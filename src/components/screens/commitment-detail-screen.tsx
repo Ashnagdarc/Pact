@@ -401,7 +401,7 @@ function CommitmentDetailConnected({
             <div className="min-w-0 flex-1">
               <p className="font-heading text-lg font-bold">Needs rescue</p>
               <p className="mt-1 text-sm font-medium opacity-80">
-                Recover together — revise scope, reschedule, or ask for help.
+                Recover together: revise scope, reschedule, or ask for help.
               </p>
               <Button
                 asChild

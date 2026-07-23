@@ -152,7 +152,7 @@ export function StoryStepWednesday() {
     <StoryShell
       step={1}
       title="By Wednesday, the goal gets quieter."
-      description="Life fills the space. The commitment is still there — but it's easier to ignore."
+      description="Life fills the space. The commitment is still there, but it's easier to ignore."
       titleAnimation="blurIn"
     >
       <div className="space-y-2.5">
@@ -193,7 +193,7 @@ export function StoryStepSunday() {
     <StoryShell
       step={2}
       title="Sunday arrives. Nobody saw you almost quit."
-      description="Not because you're lazy — because accountability was invisible."
+      description="Not because you're lazy, but because accountability was invisible."
       titleAnimation="blurInUp"
     >
       <motion.div
@@ -305,7 +305,7 @@ export function StoryStepRecover() {
   return (
     <StoryShell
       step={6}
-      title="Miss a day? Recover — don't restart."
+      title="Miss a day? Recover, don't restart."
       description="Rescue mode shrinks the goal, reschedules it, or asks for help. The pact stays alive."
       titleAnimation="blurInUp"
     >

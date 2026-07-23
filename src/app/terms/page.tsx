@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = {
-  title: "Terms — Pact",
+  title: "Terms · Pact",
   description: "Basic terms for the Pact private beta.",
 };
 

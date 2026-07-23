@@ -292,7 +292,7 @@ export async function refreshPactHealth(
       pactId,
       type: "pact_at_risk",
       title: "Pact at risk",
-      body: `“${pact.title}” needs attention — overdue or blocked commitments are stacking up.`,
+      body: `“${pact.title}” needs attention: overdue or blocked commitments are stacking up.`,
       href: `/app/pacts/${pactId}`,
     });
   }

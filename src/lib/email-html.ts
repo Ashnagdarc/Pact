@@ -56,7 +56,7 @@ ${preheader}
         <p style="margin:0 0 20px;font-size:22px;font-weight:800;letter-spacing:-0.02em;color:#c9ff4a">Pact</p>
         ${bodyHtml}
         ${unsub}
-        <p style="margin:20px 0 0;color:#666;font-size:12px">— Pact · <a href="${escapeHtml(origin)}" style="color:#888">${escapeHtml(origin.replace(/^https?:\/\//, ""))}</a></p>
+        <p style="margin:20px 0 0;color:#666;font-size:12px">Pact · <a href="${escapeHtml(origin)}" style="color:#888">${escapeHtml(origin.replace(/^https?:\/\//, ""))}</a></p>
       </td></tr>
     </table>
   </td></tr>
