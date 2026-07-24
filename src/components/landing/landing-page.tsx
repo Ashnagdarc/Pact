@@ -9,8 +9,10 @@ import { motion } from "motion/react";
 import { LandingBetaForm } from "@/components/landing/landing-beta-form";
 import { LandingDynamicHeadline } from "@/components/landing/landing-dynamic-headline";
 import { LandingHeroDevice } from "@/components/landing/landing-hero-device";
+import { SceneBackdrop } from "@/components/media/scene-backdrop";
 import { Button } from "@/components/ui/button";
 import { useCurrentUser } from "@/hooks/use-demo-user";
+import { sceneImages } from "@/lib/scene-images";
 
 const steps = [
   {
@@ -68,36 +70,33 @@ export function LandingPage() {
 
   return (
     <div className="relative min-h-dvh overflow-x-hidden bg-ink-950 text-paper-100">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-[100dvh] bg-[radial-gradient(ellipse_at_20%_0%,_rgba(255,82,38,0.2),_transparent_50%),radial-gradient(ellipse_at_90%_20%,_rgba(158,181,255,0.18),_transparent_45%),linear-gradient(180deg,_#121212_0%,_#1a1a1a_55%,_#121212_100%)]"
-      />
+      <section className="relative isolate min-h-dvh overflow-hidden">
+        <SceneBackdrop src={sceneImages.landingHero} tone="hero" />
 
-      <header className="relative z-20 mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-5 pt-5 safe-pt sm:px-8">
-        <Link
-          href="/"
-          className="font-heading text-xl font-extrabold tracking-tight text-volt-500"
-        >
-          Pact
-        </Link>
-        <nav className="flex items-center gap-2 sm:gap-3">
+        <header className="relative z-20 mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-5 pt-5 safe-pt sm:px-8">
           <Link
-            href="#how"
-            className="hidden text-sm text-white/70 transition-colors hover:text-white/85 sm:inline"
+            href="/"
+            className="font-heading text-xl font-extrabold tracking-tight text-volt-500"
           >
-            How it works
+            Pact
           </Link>
-          <Button
-            asChild
-            className="h-10 rounded-full bg-volt-500 px-4 font-semibold text-white hover:bg-volt-500/90"
-          >
-            <Link href="#waitlist">Join beta</Link>
-          </Button>
-        </nav>
-      </header>
+          <nav className="flex items-center gap-2 sm:gap-3">
+            <Link
+              href="#how"
+              className="hidden text-sm text-white/70 transition-colors hover:text-white/85 sm:inline"
+            >
+              How it works
+            </Link>
+            <Button
+              asChild
+              className="h-10 rounded-full bg-volt-500 px-4 font-semibold text-white hover:bg-volt-500/90"
+            >
+              <Link href="#waitlist">Join beta</Link>
+            </Button>
+          </nav>
+        </header>
 
-      <main id="content" className="relative z-10">
-        <section className="relative mx-auto grid w-full max-w-6xl items-start gap-10 px-5 pb-16 pt-10 sm:px-8 lg:min-h-[calc(100dvh-4.5rem)] lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-12 lg:pb-20 lg:pt-6">
+        <div className="relative z-10 mx-auto grid w-full max-w-6xl items-start gap-10 px-5 pb-16 pt-10 sm:px-8 lg:min-h-[calc(100dvh-4.5rem)] lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-12 lg:pb-20 lg:pt-6">
           <div className="max-w-xl">
             <motion.h1
               initial={{ opacity: 1, y: 10 }}
@@ -116,7 +115,7 @@ export function LandingPage() {
                 delay: 0.1,
                 ease: [0.22, 1, 0.36, 1],
               }}
-              className="mt-3 max-w-md text-base leading-relaxed text-white/70 sm:text-lg"
+              className="mt-3 max-w-md text-base leading-relaxed text-white/80 sm:text-lg"
             >
               Make commitments with people you trust, show progress, and recover
               together when plans change.
@@ -141,7 +140,7 @@ export function LandingPage() {
               <Button
                 asChild
                 variant="ghost"
-                className="h-12 rounded-full px-5 text-base text-white/70 hover:bg-white/5 hover:text-white"
+                className="h-12 rounded-full border border-white/20 bg-white/5 px-5 text-base text-white/85 backdrop-blur-md hover:bg-white/10 hover:text-white"
               >
                 <Link href="#how">
                   See how it works
@@ -152,8 +151,10 @@ export function LandingPage() {
           </div>
 
           <LandingHeroDevice />
-        </section>
+        </div>
+      </section>
 
+      <main id="content" className="relative z-10 bg-ink-950">
         <section className="relative border-t border-white/8 px-5 py-20 sm:px-8 sm:py-28">
           <div className="mx-auto max-w-3xl text-center">
             <h2 className="font-heading text-[clamp(1.75rem,4vw,2.75rem)] leading-[1.1] font-bold tracking-tight">
@@ -248,6 +249,14 @@ export function LandingPage() {
             <Link href="/terms" className="hover:text-white/85">
               Terms
             </Link>
+            <a
+              href="https://www.pexels.com"
+              target="_blank"
+              rel="noreferrer"
+              className="hover:text-white/85"
+            >
+              Photos via Pexels
+            </a>
             <span>© {new Date().getFullYear()} joinpact.tech</span>
           </div>
         </div>

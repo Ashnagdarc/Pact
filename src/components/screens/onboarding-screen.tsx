@@ -7,7 +7,7 @@ import { ArrowRight, ChevronLeft, Loader2 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 
 import { api } from "@convex/_generated/api";
-import { OnboardingAmbient } from "@/components/onboarding/onboarding-ambient";
+import { SceneBackdrop } from "@/components/media/scene-backdrop";
 import { OnboardingProgress } from "@/components/onboarding/onboarding-progress";
 import { renderStoryStep } from "@/components/onboarding/onboarding-story-steps";
 import { getStepMotion } from "@/components/onboarding/onboarding-transitions";
@@ -29,6 +29,7 @@ import {
   type OnboardingDraft,
 } from "@/lib/onboarding";
 import { playFeedback } from "@/lib/feedback";
+import { onboardingSceneForStep } from "@/lib/scene-images";
 import type { CreatePactValues } from "@/lib/validation/pact";
 
 export function OnboardingScreen() {
@@ -229,16 +230,27 @@ export function OnboardingScreen() {
 
   return (
     <AppShell showTabs={false} variant="hero">
-      <OnboardingAmbient />
+      <AnimatePresence mode="sync" initial={false}>
+        <motion.div
+          key={onboardingSceneForStep(step)}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+          className="pointer-events-none fixed inset-0 z-0"
+        >
+          <SceneBackdrop src={onboardingSceneForStep(step)} tone="story" />
+        </motion.div>
+      </AnimatePresence>
       <ConfettiBurst burstKey={confettiKey} />
-      <div className="relative flex min-h-[calc(100dvh-2rem)] flex-col">
+      <div className="relative z-10 flex min-h-[calc(100dvh-2rem)] flex-col">
         <header className="mb-6 flex items-center gap-3 pt-1">
           {step > ONBOARDING_FIRST_STEP ? (
             <button
               type="button"
               onClick={goBack}
               aria-label="Go back"
-              className="-ml-1 shrink-0 rounded-full p-1 text-white/35 transition-colors hover:text-white/70"
+              className="-ml-1 shrink-0 rounded-full p-1 text-white/50 transition-colors hover:text-white/80"
             >
               <ChevronLeft className="size-5" />
             </button>

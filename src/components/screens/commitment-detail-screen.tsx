@@ -182,6 +182,7 @@ function CommitmentDetailConnected({
   }
 
   const { commitment, pact } = detail;
+  const evidenceItems = evidence;
   const tone = commitment.tone ?? "volt";
   const uiStatus = toUiStatus(commitment.status);
   const showRescue = needsRescue({
@@ -194,7 +195,7 @@ function CommitmentDetailConnected({
     if (
       signal === "done" &&
       commitment.evidenceRequired &&
-      evidence.length === 0
+      evidenceItems.length === 0
     ) {
       setUploadError("Upload evidence before marking this done");
       return;
@@ -443,7 +444,7 @@ function CommitmentDetailConnected({
             const doneNeedsEvidence =
               signal === "done" &&
               commitment.evidenceRequired &&
-              evidence.length === 0;
+              evidenceItems.length === 0;
             return (
               <button
                 key={signal}
@@ -473,7 +474,7 @@ function CommitmentDetailConnected({
             );
           })}
         </div>
-        {commitment.evidenceRequired && evidence.length === 0 ? (
+        {commitment.evidenceRequired && evidenceItems.length === 0 ? (
           <p className="mt-2 text-xs text-white/50">
             Upload evidence below before you can mark this done.
           </p>
@@ -510,12 +511,12 @@ function CommitmentDetailConnected({
           />
         </div>
         <div className="space-y-2">
-          {evidence.length === 0 ? (
+          {evidenceItems.length === 0 ? (
             <SurfaceCard tone="ink" className="border border-white/10">
               <p className="text-sm text-white/60">No evidence yet.</p>
             </SurfaceCard>
           ) : (
-            evidence.map((item) => {
+            evidenceItems.map((item) => {
               const fileUrl =
                 item.url ??
                 (item.r2Key ? `/api/evidence/${item._id}/file` : null);
