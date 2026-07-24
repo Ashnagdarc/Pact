@@ -62,19 +62,19 @@
 }
 
 :root {
-  /* Blueprint tokens */
-  --ink-950: #050505;
-  --ink-900: #0f1521;
-  --ink-800: #101b2c;
-  --paper-100: #f7f7f2;
-  --cream-200: #f5efd8;
-  --volt-500: #fff768;
-  --signal-blue: #1685f8;
-  --coral-400: #e78965;
-  --mint-300: #c9e6b8;
+  /* Soft charcoal + warm orange + periwinkle (matched to product UI reference) */
+  --ink-950: #121212;
+  --ink-900: #1a1a1a;
+  --ink-800: #242424;
+  --paper-100: #ffffff;
+  --cream-200: #f2f2f4;
+  --volt-500: #ff5226;
+  --signal-blue: #9eb5ff;
+  --coral-400: #ff6b45;
+  --mint-300: #b8e0a8;
   --white: #ffffff;
-  --grey-300: #d6d6d2;
-  --grey-600: #707070;
+  --grey-300: #d1d1d6;
+  --grey-600: #8e8e93;
 
   /* Light semantic (landing / sheets) */
   --background: var(--paper-100);
@@ -84,23 +84,23 @@
   --popover: var(--white);
   --popover-foreground: var(--ink-900);
   --primary: var(--ink-900);
-  --primary-foreground: var(--volt-500);
+  --primary-foreground: var(--white);
   --secondary: var(--cream-200);
   --secondary-foreground: var(--ink-900);
-  --muted: #ebebe6;
+  --muted: #ebebef;
   --muted-foreground: var(--grey-600);
   --accent: var(--signal-blue);
-  --accent-foreground: var(--white);
-  --destructive: #d9483b;
+  --accent-foreground: var(--ink-950);
+  --destructive: #e5483b;
   --border: color-mix(in srgb, var(--ink-900) 12%, transparent);
   --input: color-mix(in srgb, var(--ink-900) 12%, transparent);
-  --ring: var(--signal-blue);
-  --chart-1: var(--signal-blue);
-  --chart-2: var(--volt-500);
+  --ring: var(--volt-500);
+  --chart-1: var(--volt-500);
+  --chart-2: var(--signal-blue);
   --chart-3: var(--coral-400);
   --chart-4: var(--mint-300);
   --chart-5: var(--ink-800);
-  --radius: 1.5rem;
+  --radius: 1.75rem;
   --sidebar: var(--white);
   --sidebar-foreground: var(--ink-900);
   --sidebar-primary: var(--ink-900);
@@ -108,7 +108,7 @@
   --sidebar-accent: var(--cream-200);
   --sidebar-accent-foreground: var(--ink-900);
   --sidebar-border: color-mix(in srgb, var(--ink-900) 10%, transparent);
-  --sidebar-ring: var(--signal-blue);
+  --sidebar-ring: var(--volt-500);
 }
 
 .dark {
@@ -119,30 +119,30 @@
   --popover: var(--ink-800);
   --popover-foreground: var(--white);
   --primary: var(--volt-500);
-  --primary-foreground: var(--ink-950);
+  --primary-foreground: var(--white);
   --secondary: var(--ink-800);
   --secondary-foreground: var(--white);
-  --muted: #1a2233;
-  --muted-foreground: #a8aeb8;
+  --muted: #2a2a2a;
+  --muted-foreground: var(--grey-600);
   --accent: var(--signal-blue);
-  --accent-foreground: var(--white);
+  --accent-foreground: var(--ink-950);
   --destructive: var(--coral-400);
   --border: color-mix(in srgb, var(--white) 10%, transparent);
   --input: color-mix(in srgb, var(--white) 12%, transparent);
-  --ring: var(--signal-blue);
-  --chart-1: var(--signal-blue);
-  --chart-2: var(--volt-500);
+  --ring: var(--volt-500);
+  --chart-1: var(--volt-500);
+  --chart-2: var(--signal-blue);
   --chart-3: var(--coral-400);
   --chart-4: var(--mint-300);
   --chart-5: var(--cream-200);
   --sidebar: var(--ink-900);
   --sidebar-foreground: var(--white);
-  --sidebar-primary: var(--signal-blue);
+  --sidebar-primary: var(--volt-500);
   --sidebar-primary-foreground: var(--white);
   --sidebar-accent: var(--ink-800);
   --sidebar-accent-foreground: var(--white);
   --sidebar-border: color-mix(in srgb, var(--white) 10%, transparent);
-  --sidebar-ring: var(--signal-blue);
+  --sidebar-ring: var(--volt-500);
 }
 
 @layer base {
@@ -152,6 +152,7 @@
 
   body {
     @apply bg-background text-foreground antialiased;
+    line-height: 1.55;
   }
 
   html {
@@ -163,6 +164,8 @@
   h3,
   .font-heading {
     font-family: var(--font-display), var(--font-body), system-ui, sans-serif;
+    letter-spacing: -0.01em;
+    font-weight: 700;
   }
 }
 
@@ -170,7 +173,7 @@
   .dot-grid {
     background-image: radial-gradient(
       circle at center,
-      color-mix(in srgb, var(--white) 14%, transparent) 1px,
+      color-mix(in srgb, var(--white) 10%, transparent) 1px,
       transparent 1px
     );
     background-size: 18px 18px;
@@ -186,9 +189,9 @@
 
   .text-display {
     font-family: var(--font-display), var(--font-body), system-ui, sans-serif;
-    font-weight: 800;
-    letter-spacing: -0.04em;
-    line-height: 0.9;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 0.98;
   }
 
   .prompt-float {
@@ -209,10 +212,6 @@
 
   .prompt-ring {
     animation: prompt-ring 1.8s ease-out infinite;
-  }
-
-  .prompt-spark {
-    animation: prompt-spark 2.2s ease-in-out infinite;
   }
 
   .prompt-arrow {
@@ -290,22 +289,6 @@
   }
 }
 
-@keyframes prompt-spark {
-  0%,
-  100% {
-    transform: rotate(0deg) scale(1);
-    opacity: 0.85;
-  }
-  40% {
-    transform: rotate(-12deg) scale(1.15);
-    opacity: 1;
-  }
-  70% {
-    transform: rotate(10deg) scale(1.05);
-    opacity: 1;
-  }
-}
-
 @keyframes prompt-arrow {
   0%,
   100% {
@@ -334,7 +317,6 @@
   .prompt-glow-attention,
   .prompt-shimmer,
   .prompt-ring,
-  .prompt-spark,
   .prompt-arrow,
   .prompt-dot {
     animation: none !important;

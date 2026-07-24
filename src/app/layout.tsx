@@ -1,17 +1,19 @@
 import type { Metadata, Viewport } from "next";
-import { DM_Sans, Syne } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import { PostOnboardingRedirect } from "@/components/navigation/post-onboarding-redirect";
 import { ConvexClientProvider } from "@/components/providers/convex-client-provider";
 import { ServiceWorkerRegister } from "@/components/pwa/service-worker-register";
 import "./globals.css";
 
-const display = Syne({
+// Soft geometric sans (same family for headings + body), close to the
+// rounded modern UI look in product references — not sharp AI display faces.
+const display = Plus_Jakarta_Sans({
   variable: "--font-display",
   subsets: ["latin"],
-  weight: ["600", "700", "800"],
+  weight: ["500", "600", "700", "800"],
 });
 
-const body = DM_Sans({
+const body = Plus_Jakarta_Sans({
   variable: "--font-body",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
@@ -72,7 +74,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#050505",
+  themeColor: "#121212",
   viewportFit: "cover",
 };
 
@@ -89,7 +91,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col font-sans">
         <a
           href="#content"
-          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-volt-500 focus:px-4 focus:py-2 focus:font-semibold focus:text-ink-950 focus:outline-none"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-volt-500 focus:px-4 focus:py-2 focus:font-semibold focus:text-white focus:outline-none"
         >
           Skip to content
         </a>

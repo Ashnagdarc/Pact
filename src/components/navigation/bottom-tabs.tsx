@@ -49,7 +49,7 @@ export function BottomTabs() {
                 key={tab.href}
                 href={tab.href}
                 aria-label={tab.label}
-                className="inline-flex size-14 -translate-y-3 items-center justify-center rounded-full bg-signal text-white shadow-[0_10px_30px_rgba(22,133,248,0.45)] transition-transform active:scale-95"
+                className="inline-flex size-14 -translate-y-3 items-center justify-center rounded-full bg-volt-500 text-white shadow-[0_10px_30px_rgba(255,82,38,0.45)] transition-transform active:scale-95"
               >
                 <Icon className="size-6" strokeWidth={2.5} />
               </Link>

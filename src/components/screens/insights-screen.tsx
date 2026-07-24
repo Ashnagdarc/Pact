@@ -72,6 +72,12 @@ function InsightsScreenConnected() {
   }
 
   const weekLabel = `Wk ${format(overview.weekStart, "w")}`;
+  const hasActivity =
+    overview.completedCount > 0 ||
+    overview.openCount > 0 ||
+    overview.checkInCount > 0 ||
+    overview.missedCount > 0 ||
+    overview.recoveredCount > 0;
 
   return (
     <AppShell>
@@ -89,6 +95,30 @@ function InsightsScreenConnected() {
         </span>
       </div>
 
+      {!hasActivity ? (
+        <SurfaceCard tone="ink" padding="lg" className="mt-6 border border-white/10">
+          <p className="font-heading text-2xl font-bold tracking-tight">
+            No signals this week
+          </p>
+          <p className="mt-2 text-sm text-white/70">
+            Check in on commitments or create a Pact to start building weekly
+            insights.
+          </p>
+          <div className="mt-5 flex flex-wrap gap-2">
+            <Button asChild className="rounded-full bg-signal text-ink-950">
+              <Link href="/app">Go to Today</Link>
+            </Button>
+            <Button
+              asChild
+              variant="ghost"
+              className="rounded-full border border-white/15"
+            >
+              <Link href="/app/pacts/new">Create a Pact</Link>
+            </Button>
+          </div>
+        </SurfaceCard>
+      ) : (
+        <>
       <SurfaceCard tone="signal" padding="lg" className="mt-6 rounded-[2rem]">
         <p className="text-display text-[5.5rem] leading-none text-ink-950">
           {overview.completedCount}
@@ -143,6 +173,8 @@ function InsightsScreenConnected() {
           <p className="mt-3 text-sm text-white/45">No rescue blockers logged yet.</p>
         )}
       </SurfaceCard>
+        </>
+      )}
 
       <section className="mt-6">
         <h2 className="font-heading text-2xl font-bold tracking-tight">
@@ -153,11 +185,14 @@ function InsightsScreenConnected() {
         </p>
         <div className="mt-4 space-y-3">
           {pactHealth.length === 0 ? (
-            <SurfaceCard tone="ink" className="border border-white/10">
-              <p className="text-sm text-white/65">
-                Create a Pact to see shared health signals.
+            <SurfaceCard tone="ink" padding="lg" className="border border-white/10">
+              <p className="font-heading text-xl font-bold">
+                No Pacts to measure yet
               </p>
-              <Button asChild className="mt-3 rounded-full bg-signal text-white">
+              <p className="mt-2 text-sm text-white/65">
+                Create a Pact to see shared health signals here.
+              </p>
+              <Button asChild className="mt-4 rounded-full bg-signal text-ink-950">
                 <Link href="/app/pacts/new">Create Pact</Link>
               </Button>
             </SurfaceCard>
@@ -205,20 +240,22 @@ function InsightsScreenConnected() {
         </div>
       </section>
 
-      <Button
-        type="button"
-        disabled={isPending}
-        onClick={saveReview}
-        className="mt-6 h-14 w-full rounded-full border-2 border-ink-950 bg-volt-500 text-base font-bold text-ink-950 hover:bg-volt-500/90"
-      >
-        {isPending ? (
-          <Loader2 className="size-4 animate-spin" />
-        ) : saved ? (
-          "Weekly review saved"
-        ) : (
-          "Save weekly review"
-        )}
-      </Button>
+      {hasActivity ? (
+        <Button
+          type="button"
+          disabled={isPending}
+          onClick={saveReview}
+          className="mt-6 h-14 w-full rounded-full border-2 border-ink-950 bg-volt-500 text-base font-bold text-white hover:bg-volt-500/90"
+        >
+          {isPending ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : saved ? (
+            "Weekly review saved"
+          ) : (
+            "Save weekly review"
+          )}
+        </Button>
+      ) : null}
     </AppShell>
   );
 }

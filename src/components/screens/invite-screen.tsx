@@ -210,7 +210,7 @@ function InviteScreenConnected({ token }: InviteScreenProps) {
                   !(user?.displayName && user.displayName.length >= 2))
               }
               onClick={onAccept}
-              className="h-14 rounded-full bg-volt-500 text-base font-bold text-ink-950 hover:bg-volt-500/90"
+              className="h-14 rounded-full bg-volt-500 text-base font-bold text-white hover:bg-volt-500/90"
             >
               {isPending ? (
                 <Loader2 className="size-4 animate-spin" />
@@ -267,8 +267,12 @@ export function InviteShareCard({
     if (navigator.share) {
       try {
         await navigator.share({
-          title: "Join my Pact",
-          text: "Support me on Pact",
+          title: pactTitle
+            ? `Join my Pact: ${pactTitle}`
+            : "Join my Pact",
+          text: pactTitle
+            ? `Support me on “${pactTitle}” on Pact`
+            : "Support me on Pact",
           url,
         });
         return;

@@ -154,7 +154,7 @@ function TaskDetailConnected({ taskId }: { taskId: string }) {
             "h-14 rounded-full text-base font-bold",
             task.status === "done"
               ? "bg-mint-300/20 text-mint-300"
-              : "bg-volt-500 text-ink-950 hover:bg-volt-500/90"
+              : "bg-volt-500 text-white hover:bg-volt-500/90"
           )}
         >
           <Check className="size-4" />

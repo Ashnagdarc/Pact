@@ -90,8 +90,8 @@ const POPUP_SCRIPT: Omit<Popup, "id">[] = [
 const toneClass: Record<Tone, string> = {
   mint: "bg-mint-300 text-ink-950",
   coral: "bg-coral-400 text-ink-950",
-  volt: "bg-volt-500 text-ink-950",
-  signal: "bg-signal text-white",
+  volt: "bg-volt-500 text-white",
+  signal: "bg-signal text-ink-950",
   cream: "bg-cream-200 text-ink-950",
 };
 
@@ -104,7 +104,7 @@ const popupStyle: Record<
     Icon: CheckCircle2,
   },
   approved: {
-    wrap: "border-volt-500/40 bg-volt-500 text-ink-950",
+    wrap: "border-volt-500/40 bg-volt-500 text-white",
     Icon: ThumbsUp,
   },
   rejected: {
@@ -112,7 +112,7 @@ const popupStyle: Record<
     Icon: XCircle,
   },
   help: {
-    wrap: "border-signal/40 bg-signal text-white",
+    wrap: "border-signal/40 bg-signal text-ink-950",
     Icon: MessageCircleWarning,
   },
   rescue: {
@@ -190,7 +190,7 @@ export function LandingHeroDevice() {
       className="relative mx-auto w-full max-w-[22rem]"
       aria-hidden
     >
-      <div className="absolute -inset-10 rounded-full bg-[radial-gradient(circle,_rgba(255,247,104,0.22),_transparent_65%)] blur-2xl" />
+      <div className="absolute -inset-10 rounded-full bg-[radial-gradient(circle,_rgba(255,82,38,0.24),_transparent_65%)] blur-2xl" />
 
       {/* Floating status popups */}
       <div

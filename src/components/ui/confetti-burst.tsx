@@ -10,7 +10,7 @@ type ConfettiBurstProps = {
   particleCount?: number;
 };
 
-const colors = ["#fff768", "#1685f8", "#e78965", "#c9e6b8", "#f7f7f2"];
+const colors = ["#ff5226", "#9eb5ff", "#ff6b45", "#b8e0a8", "#ffffff"];
 
 export function ConfettiBurst({
   burstKey,

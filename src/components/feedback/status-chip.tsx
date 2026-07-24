@@ -13,8 +13,8 @@ const chipVariants = cva(
     variants: {
       tone: {
         mint: "border-transparent bg-mint-300 text-ink-950",
-        signal: "border-transparent bg-signal text-white",
-        volt: "border-transparent bg-volt-500 text-ink-950",
+        signal: "border-transparent bg-signal text-ink-950",
+        volt: "border-transparent bg-volt-500 text-white",
         coral: "border-transparent bg-coral-400 text-ink-950",
         muted: "border-white/15 bg-white/5 text-white/70",
         outline: "border-white/20 bg-transparent text-white",

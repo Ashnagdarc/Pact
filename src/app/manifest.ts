@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Make commitments. Show your progress. Recover together.",
     start_url: "/app",
     display: "standalone",
-    background_color: "#050505",
-    theme_color: "#050505",
+    background_color: "#121212",
+    theme_color: "#121212",
     orientation: "portrait",
     categories: ["productivity", "lifestyle"],
     icons: [

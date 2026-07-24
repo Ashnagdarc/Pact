@@ -61,7 +61,7 @@ export default function ForgotPasswordPage() {
             </p>
             <Button
               asChild
-              className="mt-5 h-11 rounded-full bg-volt-500 text-ink-950"
+              className="mt-5 h-11 rounded-full bg-volt-500 text-white"
             >
               <Link href="/sign-in">Back to sign in</Link>
             </Button>
@@ -88,7 +88,7 @@ export default function ForgotPasswordPage() {
             <Button
               type="submit"
               disabled={busy}
-              className="h-12 rounded-full bg-volt-500 font-semibold text-ink-950 hover:bg-volt-500/90"
+              className="h-12 rounded-full bg-volt-500 font-semibold text-white hover:bg-volt-500/90"
             >
               {busy ? (
                 <Loader2 className="size-4 animate-spin" />

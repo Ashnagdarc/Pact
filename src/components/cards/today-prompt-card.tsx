@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowUpRight, Sparkles } from "lucide-react";
+import { ArrowUpRight, Target } from "lucide-react";
 
 import { SurfaceCard } from "@/components/cards/surface-card";
 import { AvatarStack, type AvatarPerson } from "@/components/feedback/avatar-stack";
@@ -14,6 +14,8 @@ type TodayPromptCardProps = {
   people: AvatarPerson[];
   openCount: number;
   blockedCount: number;
+  /** Destination for the prompt CTA (blocked → commitment, clear → new, else focus). */
+  href?: string;
   className?: string;
 };
 
@@ -52,6 +54,7 @@ export function TodayPromptCard({
   people,
   openCount,
   blockedCount,
+  href = "/app/new",
   className,
 }: TodayPromptCardProps) {
   const reduceMotion = usePrefersReducedMotion();
@@ -78,7 +81,7 @@ export function TodayPromptCard({
 
   return (
     <div className={cn("prompt-float", className)}>
-      <Link href="/app/new" className="group block outline-none">
+      <Link href={href} className="group block outline-none">
         <SurfaceCard
           tone="glass"
           className={cn(
@@ -88,7 +91,7 @@ export function TodayPromptCard({
             "group-focus-visible:ring-2 group-focus-visible:ring-volt-500/70",
             needsAttention
               ? "border-coral-400/40 shadow-[0_0_28px_rgba(231,137,101,0.18)]"
-              : "shadow-[0_0_24px_rgba(22,133,248,0.12)]"
+              : "shadow-[0_0_24px_rgba(255,82,38,0.14)]"
           )}
         >
           <span
@@ -122,9 +125,9 @@ export function TodayPromptCard({
 
           <div className="relative min-w-0 flex-1">
             <div className="flex items-center gap-1.5">
-              <Sparkles
+              <Target
                 className={cn(
-                  "prompt-spark size-3.5 shrink-0",
+                  "size-3.5 shrink-0",
                   needsAttention ? "text-coral-400" : "text-volt-500"
                 )}
               />

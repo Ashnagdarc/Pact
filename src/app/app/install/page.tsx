@@ -49,7 +49,7 @@ export default function InstallPage() {
         </ol>
       </SurfaceCard>
 
-      <Button asChild className="mt-6 h-12 w-full rounded-full bg-signal text-white">
+      <Button asChild className="mt-6 h-12 w-full rounded-full bg-signal text-ink-950">
         <Link href="/app">Back to Today</Link>
       </Button>
     </AppShell>

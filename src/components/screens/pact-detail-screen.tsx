@@ -89,6 +89,8 @@ function PactDetailConnected({ pactId }: PactDetailScreenProps) {
   const [inviteToken, setInviteToken] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [ensured, setEnsured] = useState(false);
+  // Expand invite after create, or when the owner taps Share.
+  const [inviteExpanded, setInviteExpanded] = useState(justCreated);
 
   const isOwner =
     detail && !detail.forbidden && detail.membership
@@ -168,7 +170,7 @@ function PactDetailConnected({ pactId }: PactDetailScreenProps) {
   }
 
   return (
-    <AppShell className="pb-10">
+    <AppShell>
       <header className="mb-4 flex items-center justify-between pt-2">
         <Button
           asChild
@@ -254,6 +256,64 @@ function PactDetailConnected({ pactId }: PactDetailScreenProps) {
       <section className="mt-5">
         <div className="mb-3 flex items-end justify-between">
           <h2 className="font-heading text-2xl font-bold tracking-tight">
+            Commitments
+          </h2>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-white/45">
+              {commitments.length}
+            </span>
+            <Link
+              href={`/app/new?pactId=${pact._id}`}
+              className="inline-flex min-h-8 items-center gap-1 rounded-full border border-white/15 px-3 text-xs font-semibold text-white/75 transition-colors hover:border-white/35 hover:text-white"
+            >
+              <Plus className="size-3.5" />
+              Add
+            </Link>
+          </div>
+        </div>
+
+        {commitments.length === 0 ? (
+          <SurfaceCard tone="ink" padding="lg" className="border border-white/10">
+            <p className="font-heading text-xl font-bold tracking-tight">
+              This Pact has no commitments yet
+            </p>
+            <p className="mt-2 text-sm text-white/65">
+              Add the first one so partners know what you are holding each other
+              to.
+            </p>
+            <Button
+              asChild
+              className="mt-5 h-12 w-full rounded-full bg-signal text-base font-bold text-white"
+            >
+              <Link href={`/app/new?pactId=${pact._id}`}>
+                <Plus className="size-4" />
+                Add commitment
+              </Link>
+            </Button>
+          </SurfaceCard>
+        ) : (
+          <div className="space-y-3">
+            {commitments.map((commitment) => (
+              <CommitmentCard
+                key={commitment._id}
+                title={commitment.title}
+                tone={commitment.tone ?? "cream"}
+                status={toUiStatus(commitment.status)}
+                meta={
+                  commitment.dueAt
+                    ? `Due ${format(commitment.dueAt, "MMM d")}`
+                    : undefined
+                }
+                href={`/app/commitments/${commitment._id}`}
+              />
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="mt-8">
+        <div className="mb-3 flex items-end justify-between">
+          <h2 className="font-heading text-2xl font-bold tracking-tight">
             Partners
           </h2>
           <span className="text-xs font-semibold text-white/45">
@@ -307,7 +367,7 @@ function PactDetailConnected({ pactId }: PactDetailScreenProps) {
           {acceptedMembers.length <= 1 ? (
             <p className="mt-4 rounded-2xl bg-white/5 px-3 py-2 text-sm text-white/60">
               {isOwner
-                ? "You’re the only one here. Share the invite link below."
+                ? "You’re the only one here. Invite a partner when you’re ready."
                 : "Waiting for more partners to join."}
             </p>
           ) : null}
@@ -315,83 +375,111 @@ function PactDetailConnected({ pactId }: PactDetailScreenProps) {
       </section>
 
       {isOwner ? (
-        <section id="invite" className="mt-5 scroll-mt-24 space-y-3">
-          <div className="mb-1 flex items-end justify-between">
-            <h2 className="font-heading text-2xl font-bold tracking-tight">
-              Invite
-            </h2>
-            <span className="inline-flex items-center gap-1 text-xs font-semibold text-signal">
-              <UserPlus className="size-3.5" />
-              Share link
-            </span>
-          </div>
-
-          {activeToken ? (
-            <InviteShareCard
-              token={activeToken}
-              autoFocus={justCreated}
-              pactTitle={detail.pact.title}
-            />
-          ) : (
+        <section id="invite" className="mt-8 scroll-mt-24 space-y-3">
+          {!inviteExpanded ? (
             <SurfaceCard tone="ink" className="border border-white/10">
-              <p className="text-sm text-white/70">
-                Generating your invite link…
-              </p>
-            </SurfaceCard>
-          )}
-
-          <Button
-            type="button"
-            disabled={isPending}
-            onClick={refreshInvite}
-            variant="ghost"
-            className="h-11 w-full rounded-full border border-white/15 text-white/75"
-          >
-            {isPending ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <RefreshCw className="size-4" />
-            )}
-            {activeToken ? "Refresh invite link" : "Create invite link"}
-          </Button>
-
-          <SurfaceCard tone="ink" className="border border-white/10">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-white/45">
-              Privacy
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {(
-                Object.keys(privacyLabel) as Array<
-                  keyof typeof privacyLabel
-                >
-              ).map((level) => (
-                <button
-                  key={level}
+              <div className="flex items-center gap-3">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-signal/15 text-signal">
+                  <UserPlus className="size-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold">Invite a partner</p>
+                  <p className="mt-0.5 text-xs text-white/55">
+                    Share a link when you want someone keeping you honest.
+                  </p>
+                </div>
+                <Button
                   type="button"
-                  disabled={isPending}
-                  onClick={() =>
-                    startTransition(async () => {
-                      await updateSettings({
-                        pactId: pact._id,
-                        privacyLevel: level,
-                      });
-                    })
-                  }
-                  className={cn(
-                    "min-h-10 rounded-full border px-4 text-sm font-semibold transition-colors",
-                    pact.privacyLevel === level
-                      ? "border-volt-500 bg-volt-500 text-ink-950"
-                      : "border-white/15 text-white/70"
-                  )}
+                  onClick={() => setInviteExpanded(true)}
+                  className="h-10 shrink-0 rounded-full bg-signal px-4 text-sm font-semibold text-white"
                 >
-                  {privacyLabel[level]}
+                  Share
+                </Button>
+              </div>
+            </SurfaceCard>
+          ) : (
+            <>
+              <div className="mb-1 flex items-end justify-between">
+                <h2 className="font-heading text-2xl font-bold tracking-tight">
+                  Invite
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => setInviteExpanded(false)}
+                  className="text-xs font-semibold text-white/55 hover:text-white/80"
+                >
+                  Hide
                 </button>
-              ))}
-            </div>
-            <p className="mt-3 text-xs text-white/45">
-              {privacyHint[pact.privacyLevel as keyof typeof privacyHint]}
-            </p>
-          </SurfaceCard>
+              </div>
+
+              {activeToken ? (
+                <InviteShareCard
+                  token={activeToken}
+                  autoFocus={justCreated}
+                  pactTitle={detail.pact.title}
+                />
+              ) : (
+                <SurfaceCard tone="ink" className="border border-white/10">
+                  <p className="text-sm text-white/70">
+                    Generating your invite link…
+                  </p>
+                </SurfaceCard>
+              )}
+
+              <Button
+                type="button"
+                disabled={isPending}
+                onClick={refreshInvite}
+                variant="ghost"
+                className="h-11 w-full rounded-full border border-white/15 text-white/75"
+              >
+                {isPending ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="size-4" />
+                )}
+                {activeToken ? "Refresh invite link" : "Create invite link"}
+              </Button>
+
+              <SurfaceCard tone="ink" className="border border-white/10">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-white/45">
+                  Privacy
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {(
+                    Object.keys(privacyLabel) as Array<
+                      keyof typeof privacyLabel
+                    >
+                  ).map((level) => (
+                    <button
+                      key={level}
+                      type="button"
+                      disabled={isPending}
+                      onClick={() =>
+                        startTransition(async () => {
+                          await updateSettings({
+                            pactId: pact._id,
+                            privacyLevel: level,
+                          });
+                        })
+                      }
+                      className={cn(
+                        "min-h-10 rounded-full border px-4 text-sm font-semibold transition-colors",
+                        pact.privacyLevel === level
+                          ? "border-volt-500 bg-volt-500 text-white"
+                          : "border-white/15 text-white/70"
+                      )}
+                    >
+                      {privacyLabel[level]}
+                    </button>
+                  ))}
+                </div>
+                <p className="mt-3 text-xs text-white/45">
+                  {privacyHint[pact.privacyLevel as keyof typeof privacyHint]}
+                </p>
+              </SurfaceCard>
+            </>
+          )}
         </section>
       ) : (
         <SurfaceCard tone="ink" className="mt-5 border border-white/10">
@@ -402,44 +490,6 @@ function PactDetailConnected({ pactId }: PactDetailScreenProps) {
         </SurfaceCard>
       )}
 
-      <section className="mt-8">
-        <div className="mb-3 flex items-end justify-between">
-          <h2 className="font-heading text-2xl font-bold tracking-tight">
-            Commitments
-          </h2>
-          <span className="text-xs font-semibold text-white/45">
-            {commitments.length}
-          </span>
-        </div>
-
-        {commitments.length === 0 ? (
-          <SurfaceCard tone="ink" className="border border-white/10">
-            <p className="text-sm text-white/65">
-              No commitments yet. Add the first one for this Pact.
-            </p>
-            <Button asChild className="mt-3 rounded-full bg-signal text-white">
-              <Link href={`/app/new?pactId=${pact._id}`}>Add commitment</Link>
-            </Button>
-          </SurfaceCard>
-        ) : (
-          <div className="space-y-3">
-            {commitments.map((commitment) => (
-              <CommitmentCard
-                key={commitment._id}
-                title={commitment.title}
-                tone={commitment.tone ?? "cream"}
-                status={toUiStatus(commitment.status)}
-                meta={
-                  commitment.dueAt
-                    ? `Due ${format(commitment.dueAt, "MMM d")}`
-                    : undefined
-                }
-                href={`/app/commitments/${commitment._id}`}
-              />
-            ))}
-          </div>
-        )}
-      </section>
     </AppShell>
   );
 }

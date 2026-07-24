@@ -45,7 +45,7 @@ export function OnboardingChoice({
         className={cn(
           "rounded-2xl border transition-shadow",
           selected
-            ? "border-volt-500/40 shadow-[0_12px_32px_rgba(255,247,104,0.14)]"
+            ? "border-volt-500/40 shadow-[0_12px_32px_rgba(255,82,38,0.16)]"
             : "border-white/8",
         )}
       >

@@ -16,6 +16,7 @@ import { TodayPromptCard } from "@/components/cards/today-prompt-card";
 import { AppShell } from "@/components/navigation/app-shell";
 import { FilterChips } from "@/components/navigation/filter-chips";
 import { NotificationBell } from "@/components/navigation/notification-bell";
+import { RotatingPactTitle } from "@/components/navigation/rotating-pact-title";
 import { InstallPrompt } from "@/components/pwa/install-prompt";
 import { Button } from "@/components/ui/button";
 import { useCurrentUser } from "@/hooks/use-demo-user";
@@ -93,6 +94,20 @@ export function TodayScreen() {
     return true;
   });
 
+  const firstBlocked = (todayCommitments ?? []).find(
+    (c) => c.status === "blocked" || c.status === "need_help"
+  );
+  const firstOpen = (todayCommitments ?? []).find(
+    (c) => c.status !== "done" && c.status !== "paused"
+  );
+  const promptHref = firstBlocked
+    ? `/app/commitments/${firstBlocked._id}`
+    : (stats?.openCount ?? 0) === 0 && (todayTasks?.filter((t) => t.status === "open").length ?? 0) === 0
+      ? "/app/new"
+      : firstOpen
+        ? `/app/commitments/${firstOpen._id}`
+        : "/app/new";
+
   const filterOptions = filters.map((f) => ({
     ...f,
     count:
@@ -151,16 +166,19 @@ export function TodayScreen() {
 
   return (
     <AppShell>
-      <header className="mb-5 flex items-start justify-between gap-3 pt-2">
-        <div>
-          <p className="text-sm font-medium text-white/70">
-            Hello, {user?.displayName ?? "there"}
+      <header className="mb-6 flex items-start justify-between gap-3 pt-2">
+        <div className="min-w-0">
+          <RotatingPactTitle />
+          <p className="mt-2 text-sm font-medium leading-snug text-white/65">
+            Hello there
+            {user?.displayName ? (
+              <>
+                , <span className="text-white/85">{user.displayName}</span>
+              </>
+            ) : null}
           </p>
-          <h1 className="font-heading text-[2.6rem] leading-none font-extrabold tracking-tight">
-            Pact
-          </h1>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center pt-1.5">
           <NotificationBell />
         </div>
       </header>
@@ -195,7 +213,7 @@ export function TodayScreen() {
                   commitment. Keep it small.
                 </p>
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <Button asChild className="rounded-full bg-volt-500 text-ink-950">
+                  <Button asChild className="rounded-full bg-volt-500 text-white">
                     <Link href="/app/new">Add commitment</Link>
                   </Button>
                   <Button
@@ -215,7 +233,7 @@ export function TodayScreen() {
           (boards?.length ?? 0) > 0 ? (
             <>
           <TodayPromptCard
-            className="mb-4"
+            className="mb-5"
             people={
               boards?.[0]?.members?.slice(0, 1).map((m) => ({
                 name: m.name,
@@ -227,6 +245,7 @@ export function TodayScreen() {
               (todayTasks?.filter((t) => t.status === "open").length ?? 0)
             }
             blockedCount={stats?.blockedCount ?? 0}
+            href={promptHref}
           />
 
           <StatHero
@@ -243,42 +262,6 @@ export function TodayScreen() {
             onChange={setFilter}
             className="mb-5"
           />
-
-          {(todayTasks?.length ?? 0) > 0 ? (
-            <section className="mb-6">
-              <div className="mb-3 flex items-end justify-between">
-                <h2 className="font-heading text-2xl font-bold tracking-tight">
-                  Personal tasks
-                </h2>
-                <span className="text-xs font-semibold text-white/45">
-                  {todayTasks?.length ?? 0}
-                </span>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                {(todayTasks ?? []).map((task, index) => (
-                  <motion.div
-                    key={task._id}
-                    initial={reduceMotion ? false : { opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={reduceMotion ? { duration: 0 } : { delay: 0.04 * index }}
-                    className={
-                      (todayTasks?.length ?? 0) === 1
-                        ? "col-span-2"
-                        : "col-span-1"
-                    }
-                  >
-                    <CommitmentCard
-                      title={task.title}
-                      tone={task.tone ?? "cream"}
-                      status={task.status === "done" ? "done" : "on_track"}
-                      meta={task.description}
-                      href={`/app/tasks/${task._id}`}
-                    />
-                  </motion.div>
-                ))}
-              </div>
-            </section>
-          ) : null}
 
           <section className="mb-6">
             <div className="mb-3 flex items-end justify-between">
@@ -307,7 +290,7 @@ export function TodayScreen() {
                         : "Add a commitment or personal task to fill today’s focus."}
                   </p>
                   <div className="mt-4 flex flex-wrap gap-2">
-                    <Button asChild className="rounded-full bg-signal text-white">
+                    <Button asChild className="rounded-full bg-signal text-ink-950">
                       <Link href="/app/new">Add commitment</Link>
                     </Button>
                     <Button
@@ -361,6 +344,42 @@ export function TodayScreen() {
               )}
             </div>
           </section>
+
+          {filter === "all" && (todayTasks?.length ?? 0) > 0 ? (
+            <section className="mb-6">
+              <div className="mb-3 flex items-end justify-between">
+                <h2 className="font-heading text-2xl font-bold tracking-tight">
+                  Personal tasks
+                </h2>
+                <span className="text-xs font-semibold text-white/45">
+                  {todayTasks?.length ?? 0}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {(todayTasks ?? []).map((task, index) => (
+                  <motion.div
+                    key={task._id}
+                    initial={reduceMotion ? false : { opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={reduceMotion ? { duration: 0 } : { delay: 0.04 * index }}
+                    className={
+                      (todayTasks?.length ?? 0) === 1
+                        ? "col-span-2"
+                        : "col-span-1"
+                    }
+                  >
+                    <CommitmentCard
+                      title={task.title}
+                      tone={task.tone ?? "cream"}
+                      status={task.status === "done" ? "done" : "on_track"}
+                      meta={task.description}
+                      href={`/app/tasks/${task._id}`}
+                    />
+                  </motion.div>
+                ))}
+              </div>
+            </section>
+          ) : null}
 
           <section className="mb-4">
             <div className="mb-3 flex items-end justify-between">

@@ -6,7 +6,8 @@
     "dev": "next dev",
     "dev:app": "next dev",
     "dev:convex": "convex dev",
-    "build": "next build",
+    "build": "node scripts/stamp-sw.mjs && next build",
+    "stamp-sw": "node scripts/stamp-sw.mjs",
     "start": "next start",
     "lint": "eslint",
     "seed": "convex run seed:seedDemo"

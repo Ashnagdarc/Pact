@@ -312,7 +312,7 @@ function RescueScreenConnected({ commitmentId }: RescueScreenProps) {
                     className={cn(
                       "min-h-10 rounded-full border px-4 text-sm font-semibold",
                       duePreset === id
-                        ? "border-volt-500 bg-volt-500 text-ink-950"
+                        ? "border-volt-500 bg-volt-500 text-white"
                         : "border-white/15 text-white/70"
                     )}
                   >
@@ -328,13 +328,19 @@ function RescueScreenConnected({ commitmentId }: RescueScreenProps) {
 
           <SurfaceCard tone="ink" className="border border-white/10">
             <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-white/45">
-              Note for your partner (optional)
+              {commitment.pactId
+                ? "Note for your partner (optional)"
+                : "Optional note"}
             </label>
             <Textarea
               value={note}
               onChange={(e) => setNote(e.target.value)}
               rows={3}
-              placeholder="What should they know?"
+              placeholder={
+                commitment.pactId
+                  ? "What should they know?"
+                  : "Anything to remember about this recovery"
+              }
               className="rounded-2xl border-white/10 bg-white/5 text-white placeholder:text-white/35"
             />
           </SurfaceCard>
@@ -347,7 +353,7 @@ function RescueScreenConnected({ commitmentId }: RescueScreenProps) {
             type="button"
             disabled={isPending}
             onClick={submitPlan}
-            className="h-14 w-full rounded-full bg-volt-500 text-base font-bold text-ink-950 hover:bg-volt-500/90"
+            className="h-14 w-full rounded-full bg-volt-500 text-base font-bold text-white hover:bg-volt-500/90"
           >
             {isPending ? (
               <Loader2 className="size-4 animate-spin" />

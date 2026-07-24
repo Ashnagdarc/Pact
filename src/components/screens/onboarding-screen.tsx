@@ -121,7 +121,7 @@ export function OnboardingScreen() {
           }
         }
         clearOnboardingDraft();
-        router.replace("/app");
+        router.replace("/app/pacts/new");
       } catch (err) {
         pendingApplyStarted.current = false;
         setFinishing(false);
@@ -199,7 +199,7 @@ export function OnboardingScreen() {
         }
         clearOnboardingDraft();
         // Pending stays until useCurrentUser sees onboardingCompleted.
-        router.push("/app");
+        router.push("/app/pacts/new");
         router.refresh();
         return;
       }
@@ -213,7 +213,7 @@ export function OnboardingScreen() {
       });
       clearOnboardingDraft();
       router.push(
-        `/sign-in?mode=sign-up&next=${encodeURIComponent("/app")}`
+        `/sign-in?mode=sign-up&next=${encodeURIComponent("/app/pacts/new")}`
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not finish onboarding");
@@ -286,7 +286,7 @@ export function OnboardingScreen() {
               type="button"
               disabled={!canContinue || finishing || (isLastStep && loading)}
               onClick={isLastStep ? finish : goNext}
-              className="h-12 w-full rounded-full bg-volt-500 text-base font-semibold text-ink-950 hover:bg-volt-500/90"
+              className="h-12 w-full rounded-full bg-volt-500 text-base font-semibold text-white hover:bg-volt-500/90"
             >
               {finishing ? (
                 <Loader2 className="size-4 animate-spin" />

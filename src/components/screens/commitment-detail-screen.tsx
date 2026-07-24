@@ -104,7 +104,6 @@ function CommitmentDetailConnected({
   const submitCheckIn = useMutation(api.checkIns.submit);
   const respond = useMutation(api.checkIns.respond);
   const toggleChecklist = useMutation(api.commitments.toggleChecklistItem);
-  const updateStatus = useMutation(api.commitments.updateStatus);
   const reviewPlan = useMutation(api.rescue.reviewPlan);
   const attachEvidence = useMutation(api.evidence.attach);
   const evidence = useQuery(
@@ -192,33 +191,33 @@ function CommitmentDetailConnected({
 
   function sendSignal(signal: CheckInSignal) {
     if (!userId) return;
+    if (
+      signal === "done" &&
+      commitment.evidenceRequired &&
+      evidence.length === 0
+    ) {
+      setUploadError("Upload evidence before marking this done");
+      return;
+    }
     setPendingSignal(signal);
-    startTransition(async () => {
-      await submitCheckIn({
-        commitmentId: commitment._id,
-        signal,
-        note: note.trim() || undefined,
-      });
-      playFeedback({ sound: "success", haptic: "success" });
-      setNote("");
-      setPendingSignal(null);
-      setDraftHint(null);
-      await clearCheckInDraft(commitmentId);
-    });
-  }
-
-  function markDone() {
+    setUploadError(null);
     startTransition(async () => {
       try {
-        await updateStatus({
+        await submitCheckIn({
           commitmentId: commitment._id,
-          status: "done",
+          signal,
+          note: note.trim() || undefined,
         });
-        setUploadError(null);
+        playFeedback({ sound: "success", haptic: "success" });
+        setNote("");
+        setDraftHint(null);
+        await clearCheckInDraft(commitmentId);
       } catch (err) {
         setUploadError(
-          err instanceof Error ? err.message : "Could not mark done"
+          err instanceof Error ? err.message : "Could not send check-in"
         );
+      } finally {
+        setPendingSignal(null);
       }
     });
   }
@@ -304,7 +303,10 @@ function CommitmentDetailConnected({
           variant="ghost"
           className="size-11 rounded-full border border-white/10 bg-white/5"
         >
-          <Link href="/app" aria-label="Back">
+          <Link
+            href={pact ? `/app/pacts/${pact._id}` : "/app"}
+            aria-label="Back"
+          >
             <ArrowLeft className="size-5" />
           </Link>
         </Button>
@@ -415,6 +417,70 @@ function CommitmentDetailConnected({
       ) : null}
 
       <section className="mt-5">
+        <h2 className="font-heading text-2xl font-bold tracking-tight">
+          Check in
+        </h2>
+        <p className="mt-1 text-sm text-white/55">
+          Five-second progress signal for your partner.
+        </p>
+
+        <Textarea
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          placeholder="Optional note"
+          rows={2}
+          className="mt-3 rounded-2xl border-white/10 bg-white/5 text-white placeholder:text-white/35"
+        />
+        {draftHint ? (
+          <p className="mt-1.5 text-xs text-white/40">{draftHint}</p>
+        ) : null}
+        {uploadError ? (
+          <p className="mt-2 text-sm text-coral-400">{uploadError}</p>
+        ) : null}
+
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          {checkInSignals.map((signal) => {
+            const doneNeedsEvidence =
+              signal === "done" &&
+              commitment.evidenceRequired &&
+              evidence.length === 0;
+            return (
+              <button
+                key={signal}
+                type="button"
+                disabled={isPending || doneNeedsEvidence}
+                title={
+                  doneNeedsEvidence
+                    ? "Upload evidence before marking done"
+                    : undefined
+                }
+                onClick={() => sendSignal(signal)}
+                className={cn(
+                  "min-h-12 rounded-2xl border px-3 text-sm font-semibold transition-colors",
+                  signal === "done" && "border-mint-300/40 bg-mint-300/15 text-mint-300",
+                  signal === "on_track" && "border-signal/40 bg-signal/15 text-signal",
+                  signal === "slipping" && "border-volt-500/40 bg-volt-500/15 text-volt-500",
+                  signal === "blocked" && "border-coral-400/40 bg-coral-400/15 text-coral-400",
+                  signal === "need_help" && "border-coral-400/50 bg-coral-400/20 text-coral-400",
+                  pendingSignal === signal && "ring-2 ring-white/40",
+                  doneNeedsEvidence && "opacity-40"
+                )}
+              >
+                {pendingSignal === signal
+                  ? "Sending…"
+                  : checkInSignalLabel[signal]}
+              </button>
+            );
+          })}
+        </div>
+        {commitment.evidenceRequired && evidence.length === 0 ? (
+          <p className="mt-2 text-xs text-white/50">
+            Upload evidence below before you can mark this done.
+          </p>
+        ) : null}
+      </section>
+
+      <section className="mt-5">
         <div className="mb-2 flex items-end justify-between gap-3">
           <div>
             <h2 className="font-heading text-2xl font-bold tracking-tight">
@@ -443,9 +509,6 @@ function CommitmentDetailConnected({
             onChange={(e) => onPickEvidence(e.target.files)}
           />
         </div>
-        {uploadError ? (
-          <p className="mb-2 text-sm text-coral-400">{uploadError}</p>
-        ) : null}
         <div className="space-y-2">
           {evidence.length === 0 ? (
             <SurfaceCard tone="ink" className="border border-white/10">
@@ -493,60 +556,6 @@ function CommitmentDetailConnected({
         </div>
       </section>
 
-      <section className="mt-5">
-        <h2 className="font-heading text-2xl font-bold tracking-tight">
-          Check in
-        </h2>
-        <p className="mt-1 text-sm text-white/55">
-          Five-second progress signal for your partner.
-        </p>
-
-        <Textarea
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          placeholder="Optional note"
-          rows={2}
-          className="mt-3 rounded-2xl border-white/10 bg-white/5 text-white placeholder:text-white/35"
-        />
-        {draftHint ? (
-          <p className="mt-1.5 text-xs text-white/40">{draftHint}</p>
-        ) : null}
-
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          {checkInSignals.map((signal) => (
-            <button
-              key={signal}
-              type="button"
-              disabled={isPending}
-              onClick={() => sendSignal(signal)}
-              className={cn(
-                "min-h-12 rounded-2xl border px-3 text-sm font-semibold transition-colors",
-                signal === "done" && "border-mint-300/40 bg-mint-300/15 text-mint-300",
-                signal === "on_track" && "border-signal/40 bg-signal/15 text-signal",
-                signal === "slipping" && "border-volt-500/40 bg-volt-500/15 text-volt-500",
-                signal === "blocked" && "border-coral-400/40 bg-coral-400/15 text-coral-400",
-                signal === "need_help" && "border-coral-400/50 bg-coral-400/20 text-coral-400",
-                pendingSignal === signal && "ring-2 ring-white/40"
-              )}
-            >
-              {pendingSignal === signal ? "Sending…" : checkInSignalLabel[signal]}
-            </button>
-          ))}
-        </div>
-      </section>
-
-      <Button
-        type="button"
-        disabled={isPending || commitment.status === "done"}
-        onClick={markDone}
-        className="mt-5 h-14 w-full rounded-full bg-ink-800 text-base font-bold text-white hover:bg-ink-800/90"
-      >
-        <span className="mr-2 inline-flex size-8 items-center justify-center rounded-full bg-white text-ink-950">
-          <Check className="size-4" />
-        </span>
-        {commitment.status === "done" ? "Already done" : "Set as done"}
-      </Button>
-
       {recoveryPlans.length > 0 ? (
         <section className="mt-8">
           <h2 className="font-heading text-2xl font-bold tracking-tight">
@@ -572,7 +581,9 @@ function CommitmentDetailConnected({
                 <p className="mt-2 text-xs font-semibold capitalize text-white/45">
                   {plan.approvalStatus.replaceAll("_", " ")}
                 </p>
-                {plan.approvalStatus === "pending" && userId ? (
+                {plan.approvalStatus === "pending" &&
+                userId &&
+                plan.createdBy !== userId ? (
                   <Button
                     type="button"
                     disabled={isPending}
@@ -659,24 +670,26 @@ function CommitmentDetailConnected({
                   </ul>
                 ) : null}
 
-                <div className="mt-3">
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-white/40">
-                    Partner response
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {partnerResponseTypes.slice(0, 4).map((type) => (
-                      <button
-                        key={type}
-                        type="button"
-                        disabled={isPending}
-                        onClick={() => sendPartnerResponse(checkIn._id, type)}
-                        className="rounded-full border border-white/15 px-3 py-1.5 text-xs font-semibold text-white/75 hover:border-white/40 hover:text-white"
-                      >
-                        {partnerResponseLabel[type]}
-                      </button>
-                    ))}
+                {checkIn.userId !== userId ? (
+                  <div className="mt-3">
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-white/40">
+                      Partner response
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {partnerResponseTypes.slice(0, 4).map((type) => (
+                        <button
+                          key={type}
+                          type="button"
+                          disabled={isPending}
+                          onClick={() => sendPartnerResponse(checkIn._id, type)}
+                          className="rounded-full border border-white/15 px-3 py-1.5 text-xs font-semibold text-white/75 hover:border-white/40 hover:text-white"
+                        >
+                          {partnerResponseLabel[type]}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                ) : null}
               </SurfaceCard>
             ))
           )}

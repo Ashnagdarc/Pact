@@ -140,7 +140,7 @@ export default function ProfilePage() {
                 </p>
                 <Button
                   asChild
-                  className="mt-3 rounded-full bg-signal text-white"
+                  className="mt-3 rounded-full bg-signal text-ink-950"
                 >
                   <Link href="/app/pacts/new">Create Pact</Link>
                 </Button>
@@ -225,13 +225,13 @@ export default function ProfilePage() {
           asChild
           className="h-12 justify-start rounded-2xl border border-white/10 bg-white/5 text-white hover:bg-white/10"
         >
-          <Link href="/privacy">Privacy</Link>
+          <Link href="/privacy?from=/app/profile">Privacy</Link>
         </Button>
         <Button
           asChild
           className="h-12 justify-start rounded-2xl border border-white/10 bg-white/5 text-white hover:bg-white/10"
         >
-          <Link href="/terms">Terms</Link>
+          <Link href="/terms?from=/app/profile">Terms</Link>
         </Button>
       </div>
 

@@ -2,31 +2,40 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
+import { legalBackHref, legalBackLabel } from "@/lib/legal-back";
 
 export const metadata: Metadata = {
   title: "Privacy · Pact",
   description: "How Pact handles your account, commitments, and evidence.",
 };
 
-export default function PrivacyPage() {
+type PrivacyPageProps = {
+  searchParams: Promise<{ from?: string }>;
+};
+
+export default async function PrivacyPage({ searchParams }: PrivacyPageProps) {
+  const { from } = await searchParams;
+  const backHref = legalBackHref(from);
+  const backLabel = legalBackLabel(backHref);
+
   return (
     <div className="relative min-h-dvh overflow-x-hidden bg-ink-950 text-paper-100">
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-[40vh] bg-[radial-gradient(ellipse_at_20%_0%,_rgba(255,247,104,0.12),_transparent_55%),linear-gradient(180deg,_#050505_0%,_#0a101c_70%,_#050505_100%)]"
+        className="pointer-events-none absolute inset-x-0 top-0 h-[40vh] bg-[radial-gradient(ellipse_at_20%_0%,_rgba(255,82,38,0.14),_transparent_55%),linear-gradient(180deg,_#121212_0%,_#1a1a1a_70%,_#121212_100%)]"
       />
       <header className="relative z-10 mx-auto flex w-full max-w-3xl items-center justify-between gap-4 px-5 pt-5 safe-pt sm:px-8">
         <Link
-          href="/"
+          href={backHref}
           className="font-heading text-xl font-extrabold tracking-tight text-volt-500"
         >
           Pact
         </Link>
         <Link
-          href="/"
+          href={backHref}
           className="text-sm font-semibold text-white/70 hover:text-white"
         >
-          Back to home
+          {backLabel}
         </Link>
       </header>
 
@@ -59,7 +68,7 @@ export default function PrivacyPage() {
         </div>
 
         <Button asChild className="mt-6 rounded-full">
-          <Link href="/">Back to home</Link>
+          <Link href={backHref}>{backLabel}</Link>
         </Button>
       </main>
     </div>

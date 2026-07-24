@@ -121,7 +121,7 @@ function ResetPasswordForm() {
             <Button
               type="submit"
               disabled={busy || !token}
-              className="h-12 rounded-full bg-volt-500 font-semibold text-ink-950 hover:bg-volt-500/90"
+              className="h-12 rounded-full bg-volt-500 font-semibold text-white hover:bg-volt-500/90"
             >
               {busy ? (
                 <Loader2 className="size-4 animate-spin" />

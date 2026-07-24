@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "convex/react";
-import { Loader2 } from "lucide-react";
+import { ChevronDown, Loader2 } from "lucide-react";
 
 import { api } from "@convex/_generated/api";
 import { SurfaceCard } from "@/components/cards/surface-card";
@@ -48,6 +48,7 @@ function CreatePactForm() {
   const { userId, loading, error } = useCurrentUser();
   const createPact = useMutation(api.pacts.create);
   const [submitting, setSubmitting] = useState(false);
+  const [showMore, setShowMore] = useState(false);
 
   const form = useForm<CreatePactValues>({
     resolver: zodResolver(createPactSchema),
@@ -119,7 +120,7 @@ function CreatePactForm() {
         New Pact
       </h1>
       <p className="mt-2 text-sm text-white/55">
-        Set the agreement, then share an invite link.
+        Name it, create it, then invite a partner.
       </p>
 
       <form onSubmit={form.handleSubmit(onSubmit)} className="mt-6 space-y-4">
@@ -149,90 +150,6 @@ function CreatePactForm() {
           />
         </SurfaceCard>
 
-        <ChoiceCard
-          label="Type"
-          options={Object.entries(goalTypeLabel).map(([id, label]) => ({
-            id: id as CreatePactValues["goalType"],
-            label,
-          }))}
-          value={selectedGoal}
-          onChange={(id) => form.setValue("goalType", id)}
-        />
-
-        <ChoiceCard
-          label="Accountability style"
-          options={Object.entries(styleLabel).map(([id, label]) => ({
-            id: id as CreatePactValues["accountabilityStyle"],
-            label,
-          }))}
-          value={selectedStyle}
-          onChange={(id) => form.setValue("accountabilityStyle", id)}
-        />
-
-        <ChoiceCard
-          label="Check-ins"
-          options={Object.entries(frequencyLabel).map(([id, label]) => ({
-            id: id as CreatePactValues["checkInFrequency"],
-            label,
-          }))}
-          value={selectedFrequency}
-          onChange={(id) => form.setValue("checkInFrequency", id)}
-        />
-
-        <SurfaceCard tone="ink" className="border border-white/10">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-white/45">
-            Privacy
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {(
-              Object.keys(privacyLabel) as CreatePactValues["privacyLevel"][]
-            ).map((id) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => form.setValue("privacyLevel", id)}
-                className={cn(
-                  "min-h-10 rounded-full border px-4 text-sm font-semibold transition-colors",
-                  selectedPrivacy === id
-                    ? "border-volt-500 bg-volt-500 text-ink-950"
-                    : "border-white/15 text-white/70 hover:border-white/35"
-                )}
-              >
-                {privacyLabel[id]}
-              </button>
-            ))}
-          </div>
-          <p className="mt-3 text-xs text-white/45">
-            {privacyHint[selectedPrivacy]}
-          </p>
-        </SurfaceCard>
-
-        <SurfaceCard tone="ink" className="border border-white/10">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-white/45">
-            Board color
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {tones.map((tone) => (
-              <button
-                key={tone}
-                type="button"
-                aria-label={tone}
-                onClick={() => form.setValue("tone", tone)}
-                className={cn(
-                  "size-10 rounded-full border-2",
-                  tone === "volt" && "bg-volt-500",
-                  tone === "coral" && "bg-coral-400",
-                  tone === "cream" && "bg-cream-200",
-                  tone === "mint" && "bg-mint-300",
-                  tone === "signal" && "bg-signal",
-                  tone === "paper" && "bg-paper-100",
-                  selectedTone === tone ? "scale-110 border-white" : "border-transparent"
-                )}
-              />
-            ))}
-          </div>
-        </SurfaceCard>
-
         <Button
           type="submit"
           disabled={submitting}
@@ -247,6 +164,111 @@ function CreatePactForm() {
             "Create Pact + invite link"
           )}
         </Button>
+
+        <button
+          type="button"
+          onClick={() => setShowMore((v) => !v)}
+          className="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left text-sm font-semibold text-white/85"
+          aria-expanded={showMore}
+        >
+          More options
+          <ChevronDown
+            className={cn(
+              "size-4 text-white/65 transition-transform",
+              showMore && "rotate-180"
+            )}
+          />
+        </button>
+
+        {showMore ? (
+          <>
+            <ChoiceCard
+              label="Type"
+              options={Object.entries(goalTypeLabel).map(([id, label]) => ({
+                id: id as CreatePactValues["goalType"],
+                label,
+              }))}
+              value={selectedGoal}
+              onChange={(id) => form.setValue("goalType", id)}
+            />
+
+            <ChoiceCard
+              label="Accountability style"
+              options={Object.entries(styleLabel).map(([id, label]) => ({
+                id: id as CreatePactValues["accountabilityStyle"],
+                label,
+              }))}
+              value={selectedStyle}
+              onChange={(id) => form.setValue("accountabilityStyle", id)}
+            />
+
+            <ChoiceCard
+              label="Check-ins"
+              options={Object.entries(frequencyLabel).map(([id, label]) => ({
+                id: id as CreatePactValues["checkInFrequency"],
+                label,
+              }))}
+              value={selectedFrequency}
+              onChange={(id) => form.setValue("checkInFrequency", id)}
+            />
+
+            <SurfaceCard tone="ink" className="border border-white/10">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-white/45">
+                Privacy
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {(
+                  Object.keys(privacyLabel) as CreatePactValues["privacyLevel"][]
+                ).map((id) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => form.setValue("privacyLevel", id)}
+                    className={cn(
+                      "min-h-10 rounded-full border px-4 text-sm font-semibold transition-colors",
+                      selectedPrivacy === id
+                        ? "border-volt-500 bg-volt-500 text-white"
+                        : "border-white/15 text-white/70 hover:border-white/35"
+                    )}
+                  >
+                    {privacyLabel[id]}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-3 text-xs text-white/45">
+                {privacyHint[selectedPrivacy]}
+              </p>
+            </SurfaceCard>
+
+            <SurfaceCard tone="ink" className="border border-white/10">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-white/45">
+                Board color
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {tones.map((tone) => (
+                  <button
+                    key={tone}
+                    type="button"
+                    aria-label={tone}
+                    onClick={() => form.setValue("tone", tone)}
+                    className={cn(
+                      "size-10 rounded-full border-2",
+                      tone === "volt" && "bg-volt-500",
+                      tone === "coral" && "bg-coral-400",
+                      tone === "cream" && "bg-cream-200",
+                      tone === "mint" && "bg-mint-300",
+                      tone === "signal" && "bg-signal",
+                      tone === "paper" && "bg-paper-100",
+                      selectedTone === tone
+                        ? "scale-110 border-white"
+                        : "border-transparent"
+                    )}
+                  />
+                ))}
+              </div>
+            </SurfaceCard>
+          </>
+        ) : null}
       </form>
     </AppShell>
   );
@@ -277,7 +299,7 @@ function ChoiceCard<T extends string>({
             className={cn(
               "min-h-10 rounded-full border px-4 text-sm font-semibold transition-colors",
               value === option.id
-                ? "border-volt-500 bg-volt-500 text-ink-950"
+                ? "border-volt-500 bg-volt-500 text-white"
                 : "border-white/15 text-white/70 hover:border-white/35"
             )}
           >

@@ -35,46 +35,50 @@ export function PactBoardCard({
       padding="lg"
       className={cn("min-h-[10.5rem] rounded-[2rem]", className)}
     >
-      <div className="mb-8 flex items-start justify-between">
-        <div className="flex items-center gap-2">
-          {addHref ? (
-            <Button
-              asChild
-              size="icon"
-              variant="ghost"
-              className="size-11 rounded-full border border-current/20 bg-black/5 hover:bg-black/10"
-            >
-              <Link href={addHref} aria-label={`Add commitment to ${title}`}>
-                <Plus className="size-5" />
-              </Link>
-            </Button>
-          ) : (
-            <span className="inline-flex size-11 items-center justify-center rounded-full border border-current/20 bg-black/5">
-              <Plus className="size-5" />
-            </span>
-          )}
-          {inviteHref ? (
-            <Button
-              asChild
-              className="h-11 rounded-full border border-current/20 bg-black/5 px-4 text-sm font-bold hover:bg-black/10"
-            >
-              <Link href={inviteHref}>Invite</Link>
-            </Button>
-          ) : null}
-        </div>
-      </div>
+      <div className="flex items-start justify-between gap-3">
+        {href ? (
+          <Link href={href} className="min-w-0 flex-1 block">
+            <BoardBody
+              title={title}
+              activeTasks={activeTasks}
+              members={members}
+            />
+          </Link>
+        ) : (
+          <div className="min-w-0 flex-1">
+            <BoardBody
+              title={title}
+              activeTasks={activeTasks}
+              members={members}
+            />
+          </div>
+        )}
 
-      {href ? (
-        <Link href={href} className="block">
-          <BoardBody
-            title={title}
-            activeTasks={activeTasks}
-            members={members}
-          />
-        </Link>
-      ) : (
-        <BoardBody title={title} activeTasks={activeTasks} members={members} />
-      )}
+        {addHref || inviteHref ? (
+          <div className="flex shrink-0 flex-col items-end gap-2">
+            {addHref ? (
+              <Button
+                asChild
+                size="icon"
+                variant="ghost"
+                className="size-11 rounded-full border border-current/20 bg-black/5 hover:bg-black/10"
+              >
+                <Link href={addHref} aria-label={`Add commitment to ${title}`}>
+                  <Plus className="size-5" />
+                </Link>
+              </Button>
+            ) : null}
+            {inviteHref ? (
+              <Button
+                asChild
+                className="h-10 rounded-full border border-current/20 bg-black/5 px-4 text-sm font-bold hover:bg-black/10"
+              >
+                <Link href={inviteHref}>Invite</Link>
+              </Button>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
     </SurfaceCard>
   );
 }
@@ -89,16 +93,14 @@ function BoardBody({
   members: AvatarPerson[];
 }) {
   return (
-    <div className="flex items-end justify-between gap-3">
-      <div>
-        <AvatarStack people={members} size="sm" className="mb-3" />
-        <p className="text-sm font-medium opacity-70">
-          {activeTasks} Active Tasks
-        </p>
-        <h3 className="font-heading text-3xl font-bold tracking-tight">
-          {title}
-        </h3>
-      </div>
-    </div>
+    <>
+      <AvatarStack people={members} size="sm" className="mb-3" />
+      <p className="text-sm font-medium opacity-70">
+        {activeTasks} Active Tasks
+      </p>
+      <h3 className="font-heading text-3xl font-bold tracking-tight">
+        {title}
+      </h3>
+    </>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -60,7 +60,8 @@ function NewCommitmentForm({ initialPactId }: { initialPactId?: string }) {
   const createCommitment = useMutation(api.commitments.create);
   const createTask = useMutation(api.tasks.create);
   const [submitting, setSubmitting] = useState(false);
-  const [showMore, setShowMore] = useState(Boolean(initialPactId));
+  const [showMore, setShowMore] = useState(false);
+  const defaultedPactRef = useRef(false);
 
   const form = useForm<CreateCommitmentValues>({
     resolver: zodResolver(createCommitmentSchema),
@@ -83,6 +84,11 @@ function NewCommitmentForm({ initialPactId }: { initialPactId?: string }) {
   const evidenceRequired = form.watch("evidenceRequired");
   const asPersonalTask = form.watch("asPersonalTask");
 
+  const availableBoards = useMemo(
+    () => (boards ?? []).filter((board): board is NonNullable<typeof board> => Boolean(board)),
+    [boards]
+  );
+
   const pactDetail = useQuery(
     api.pacts.getById,
     userId && selectedPact
@@ -90,12 +96,42 @@ function NewCommitmentForm({ initialPactId }: { initialPactId?: string }) {
       : "skip"
   );
 
+  const contextPactTitle = useMemo(() => {
+    if (!initialPactId) return null;
+    const fromBoards = availableBoards.find((b) => b.pact._id === initialPactId);
+    if (fromBoards) return fromBoards.pact.title;
+    if (
+      pactDetail &&
+      !pactDetail.forbidden &&
+      pactDetail.pact &&
+      pactDetail.pact._id === initialPactId
+    ) {
+      return pactDetail.pact.title;
+    }
+    return null;
+  }, [availableBoards, initialPactId, pactDetail]);
+
   const assignees = useMemo(() => {
     if (!pactDetail || pactDetail.forbidden || !pactDetail.members) return [];
     return pactDetail.members
       .filter((m) => m?.membership.invitationStatus === "accepted" && m.user)
       .map((m) => m!.user);
   }, [pactDetail]);
+
+  // When opening New with no pactId, prefer the user's most recent Pact.
+  useEffect(() => {
+    if (initialPactId || defaultedPactRef.current) return;
+    if (boards === undefined) return;
+    defaultedPactRef.current = true;
+    if (availableBoards.length === 0) {
+      form.setValue("asPersonalTask", true);
+      form.setValue("pactId", "");
+      return;
+    }
+    const preferred = availableBoards[0].pact._id;
+    form.setValue("pactId", preferred);
+    form.setValue("asPersonalTask", false);
+  }, [availableBoards, boards, form, initialPactId]);
 
   useEffect(() => {
     if (!userId) return;
@@ -145,6 +181,11 @@ function NewCommitmentForm({ initialPactId }: { initialPactId?: string }) {
         evidenceRequired: values.evidenceRequired,
       });
 
+      if (values.pactId) {
+        router.push(`/app/pacts/${values.pactId}`);
+        return;
+      }
+
       router.push(`/app/commitments/${commitmentId}`);
     } catch (err) {
       form.setError("title", {
@@ -176,19 +217,48 @@ function NewCommitmentForm({ initialPactId }: { initialPactId?: string }) {
     );
   }
 
+  const fromPact = Boolean(initialPactId);
+  const boardsLoading = !fromPact && boards === undefined;
+  const hasPacts = availableBoards.length > 0;
+  const destinationReady = fromPact || boards !== undefined;
+
   return (
     <AppShell>
       <h1 className="font-heading pt-2 text-4xl font-extrabold tracking-tight">
-        New
+        {fromPact ? "Add commitment" : "New commitment"}
       </h1>
       <p className="mt-2 text-sm text-white/70">
-        Title + due date, under 10 seconds.{" "}
-        <Link
-          href="/app/pacts/new"
-          className="text-signal underline-offset-2 hover:underline"
-        >
-          Create a Pact instead
-        </Link>
+        {fromPact ? (
+          <>
+            Adding to{" "}
+            <span className="font-semibold text-white">
+              {contextPactTitle ?? "this Pact"}
+            </span>
+            .
+          </>
+        ) : hasPacts ? (
+          <>
+            Pick a Pact below, or keep it personal.{" "}
+            <Link
+              href="/app/pacts/new"
+              className="text-signal underline-offset-2 hover:underline"
+            >
+              Create a Pact instead
+            </Link>
+          </>
+        ) : boardsLoading ? (
+          "Loading your Pacts…"
+        ) : (
+          <>
+            Title + due date, under 10 seconds.{" "}
+            <Link
+              href="/app/pacts/new"
+              className="text-signal underline-offset-2 hover:underline"
+            >
+              Create a Pact instead
+            </Link>
+          </>
+        )}
       </p>
 
       <form onSubmit={form.handleSubmit(onSubmit)} className="mt-6 space-y-4">
@@ -210,6 +280,70 @@ function NewCommitmentForm({ initialPactId }: { initialPactId?: string }) {
 
         <SurfaceCard tone="ink" className="border border-white/10">
           <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-white/65">
+            Where
+          </p>
+          {boardsLoading ? (
+            <p className="text-sm text-white/55">Loading destinations…</p>
+          ) : (
+            <>
+              <div className="flex flex-wrap gap-2">
+                {!fromPact ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      form.setValue("pactId", "");
+                      form.setValue("asPersonalTask", true);
+                    }}
+                    className={cn(
+                      "min-h-10 rounded-full border px-4 text-sm font-semibold transition-colors",
+                      !selectedPact
+                        ? "border-signal bg-signal text-ink-950"
+                        : "border-white/15 text-white/70"
+                    )}
+                  >
+                    Personal task
+                  </button>
+                ) : null}
+                {availableBoards.map((board) => (
+                  <button
+                    key={board.pact._id}
+                    type="button"
+                    onClick={() => {
+                      form.setValue("pactId", board.pact._id);
+                      form.setValue("asPersonalTask", false);
+                    }}
+                    className={cn(
+                      "min-h-10 rounded-full border px-4 text-sm font-semibold transition-colors",
+                      selectedPact === board.pact._id
+                        ? "border-signal bg-signal text-ink-950"
+                        : "border-white/15 text-white/70"
+                    )}
+                  >
+                    {board.pact.title}
+                  </button>
+                ))}
+              </div>
+              {!selectedPact ? (
+                <p className="mt-3 text-xs text-white/65">
+                  Personal tasks stay private. Pick a Pact to make it a shared
+                  commitment.
+                </p>
+              ) : fromPact ? (
+                <p className="mt-3 text-xs text-white/65">
+                  This will show up on the Pact for you and your partners.
+                </p>
+              ) : (
+                <p className="mt-3 text-xs text-white/65">
+                  Shared with partners on this Pact. Switch to Personal task to
+                  keep it private.
+                </p>
+              )}
+            </>
+          )}
+        </SurfaceCard>
+
+        <SurfaceCard tone="ink" className="border border-white/10">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-white/65">
             Due
           </p>
           <div className="flex flex-wrap gap-2">
@@ -221,7 +355,7 @@ function NewCommitmentForm({ initialPactId }: { initialPactId?: string }) {
                 className={cn(
                   "min-h-10 rounded-full border px-4 text-sm font-semibold transition-colors",
                   selectedDue === option.id
-                    ? "border-volt-500 bg-volt-500 text-ink-950"
+                    ? "border-volt-500 bg-volt-500 text-white"
                     : "border-white/15 text-white/70 hover:border-white/35"
                 )}
               >
@@ -230,6 +364,31 @@ function NewCommitmentForm({ initialPactId }: { initialPactId?: string }) {
             ))}
           </div>
         </SurfaceCard>
+
+        {selectedPact ? (
+          <SurfaceCard tone="ink" className="border border-white/10">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-white/65">
+              Assign to
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {assignees.map((member) => (
+                <button
+                  key={member._id}
+                  type="button"
+                  onClick={() => form.setValue("assigneeId", member._id)}
+                  className={cn(
+                    "min-h-10 rounded-full border px-4 text-sm font-semibold transition-colors",
+                    selectedAssignee === member._id
+                      ? "border-volt-500 bg-volt-500 text-white"
+                      : "border-white/15 text-white/70"
+                  )}
+                >
+                  {member._id === userId ? "You" : member.displayName}
+                </button>
+              ))}
+            </div>
+          </SurfaceCard>
+        ) : null}
 
         <button
           type="button"
@@ -259,80 +418,6 @@ function NewCommitmentForm({ initialPactId }: { initialPactId?: string }) {
                 className="rounded-2xl border-white/10 bg-white/5 text-sm text-white placeholder:text-white/35"
               />
             </SurfaceCard>
-
-            <SurfaceCard tone="ink" className="border border-white/10">
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-white/65">
-                Where
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    form.setValue("pactId", "");
-                    form.setValue("asPersonalTask", true);
-                  }}
-                  className={cn(
-                    "min-h-10 rounded-full border px-4 text-sm font-semibold transition-colors",
-                    !selectedPact
-                      ? "border-signal bg-signal text-white"
-                      : "border-white/15 text-white/70"
-                  )}
-                >
-                  Personal task
-                </button>
-                {(boards ?? []).map((board) =>
-                  board ? (
-                    <button
-                      key={board.pact._id}
-                      type="button"
-                      onClick={() => {
-                        form.setValue("pactId", board.pact._id);
-                        form.setValue("asPersonalTask", false);
-                      }}
-                      className={cn(
-                        "min-h-10 rounded-full border px-4 text-sm font-semibold transition-colors",
-                        selectedPact === board.pact._id
-                          ? "border-signal bg-signal text-white"
-                          : "border-white/15 text-white/70"
-                      )}
-                    >
-                      {board.pact.title}
-                    </button>
-                  ) : null
-                )}
-              </div>
-              {!selectedPact ? (
-                <p className="mt-3 text-xs text-white/65">
-                  Personal tasks stay private. Switch to a Pact to assign a
-                  partner.
-                </p>
-              ) : null}
-            </SurfaceCard>
-
-            {selectedPact ? (
-              <SurfaceCard tone="ink" className="border border-white/10">
-                <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-white/65">
-                  Assign to
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {assignees.map((member) => (
-                    <button
-                      key={member._id}
-                      type="button"
-                      onClick={() => form.setValue("assigneeId", member._id)}
-                      className={cn(
-                        "min-h-10 rounded-full border px-4 text-sm font-semibold transition-colors",
-                        selectedAssignee === member._id
-                          ? "border-volt-500 bg-volt-500 text-ink-950"
-                          : "border-white/15 text-white/70"
-                      )}
-                    >
-                      {member._id === userId ? "You" : member.displayName}
-                    </button>
-                  ))}
-                </div>
-              </SurfaceCard>
-            ) : null}
 
             {selectedPact ? (
               <SurfaceCard tone="ink" className="border border-white/10">
@@ -400,14 +485,16 @@ function NewCommitmentForm({ initialPactId }: { initialPactId?: string }) {
 
         <Button
           type="submit"
-          disabled={submitting}
-          className="h-14 w-full rounded-full bg-volt-500 text-base font-bold text-ink-950 hover:bg-volt-500/90"
+          disabled={submitting || !destinationReady}
+          className="h-14 w-full rounded-full bg-volt-500 text-base font-bold text-white hover:bg-volt-500/90"
         >
           {submitting ? (
             <>
               <Loader2 className="size-4 animate-spin" />
               Creating…
             </>
+          ) : fromPact && selectedPact ? (
+            "Add to this Pact"
           ) : asPersonalTask && !selectedPact ? (
             "Create personal task"
           ) : (

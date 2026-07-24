@@ -86,7 +86,7 @@ function JoinedPanel({
   return (
     <div className="mx-auto w-full max-w-md space-y-4 text-left">
       <div className="rounded-[1.75rem] border border-volt-500/25 bg-volt-500/10 px-5 py-6 sm:px-6">
-        <div className="flex size-10 items-center justify-center rounded-full bg-volt-500 text-ink-950">
+        <div className="flex size-10 items-center justify-center rounded-full bg-volt-500 text-white">
           <Check className="size-5" strokeWidth={2.5} />
         </div>
         <p className="font-heading mt-4 text-2xl font-bold tracking-tight">
@@ -114,7 +114,7 @@ function JoinedPanel({
               className={cn(
                 "rounded-full px-3 py-1.5 text-xs font-semibold transition-colors",
                 tab === id
-                  ? "bg-volt-500 text-ink-950"
+                  ? "bg-volt-500 text-white"
                   : "bg-white/5 text-white/65 hover:text-white/85",
               )}
             >
@@ -245,7 +245,7 @@ export function LandingBetaForm() {
       <Button
         type="submit"
         disabled={busy}
-        className="h-12 rounded-full bg-volt-500 px-6 text-base font-semibold text-ink-950 hover:bg-volt-500/90"
+        className="h-12 rounded-full bg-volt-500 px-6 text-base font-semibold text-white hover:bg-volt-500/90"
       >
         {busy ? <Loader2 className="size-4 animate-spin" /> : "Join the waitlist"}
       </Button>

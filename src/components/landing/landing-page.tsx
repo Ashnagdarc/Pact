@@ -70,7 +70,7 @@ export function LandingPage() {
     <div className="relative min-h-dvh overflow-x-hidden bg-ink-950 text-paper-100">
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-[100dvh] bg-[radial-gradient(ellipse_at_20%_0%,_rgba(255,247,104,0.18),_transparent_50%),radial-gradient(ellipse_at_90%_20%,_rgba(22,133,248,0.16),_transparent_45%),linear-gradient(180deg,_#050505_0%,_#0a101c_55%,_#050505_100%)]"
+        className="pointer-events-none absolute inset-x-0 top-0 h-[100dvh] bg-[radial-gradient(ellipse_at_20%_0%,_rgba(255,82,38,0.2),_transparent_50%),radial-gradient(ellipse_at_90%_20%,_rgba(158,181,255,0.18),_transparent_45%),linear-gradient(180deg,_#121212_0%,_#1a1a1a_55%,_#121212_100%)]"
       />
 
       <header className="relative z-20 mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-5 pt-5 safe-pt sm:px-8">
@@ -89,7 +89,7 @@ export function LandingPage() {
           </Link>
           <Button
             asChild
-            className="h-10 rounded-full bg-volt-500 px-4 font-semibold text-ink-950 hover:bg-volt-500/90"
+            className="h-10 rounded-full bg-volt-500 px-4 font-semibold text-white hover:bg-volt-500/90"
           >
             <Link href="#waitlist">Join beta</Link>
           </Button>
@@ -134,7 +134,7 @@ export function LandingPage() {
             >
               <Button
                 asChild
-                className="h-12 rounded-full bg-volt-500 px-6 text-base font-semibold text-ink-950 hover:bg-volt-500/90"
+                className="h-12 rounded-full bg-volt-500 px-6 text-base font-semibold text-white hover:bg-volt-500/90"
               >
                 <Link href="#waitlist">Join the private beta</Link>
               </Button>

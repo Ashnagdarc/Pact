@@ -83,16 +83,28 @@ function NotificationsConnected() {
 
       <div className="mt-6 space-y-3">
         {notifications.length === 0 ? (
-          <SurfaceCard tone="ink" className="border border-white/10">
+          <SurfaceCard tone="ink" padding="lg" className="border border-white/10">
             <div className="flex items-start gap-3">
               <span className="inline-flex size-10 items-center justify-center rounded-full bg-white/5">
                 <Bell className="size-5 text-white/50" />
               </span>
-              <div>
+              <div className="min-w-0 flex-1">
                 <p className="font-heading text-lg font-bold">No alerts yet</p>
                 <p className="mt-1 text-sm text-white/60">
                   Check-ins, help requests, and rescue prompts will show up here.
                 </p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Button asChild className="rounded-full bg-signal text-ink-950">
+                    <Link href="/app">Go to Today</Link>
+                  </Button>
+                  <Button
+                    asChild
+                    variant="ghost"
+                    className="rounded-full border border-white/15"
+                  >
+                    <Link href="/app/pacts/new">Create a Pact</Link>
+                  </Button>
+                </div>
               </div>
             </div>
           </SurfaceCard>

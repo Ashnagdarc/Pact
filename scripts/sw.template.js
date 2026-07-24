@@ -1,6 +1,6 @@
 /* global self, caches, clients, fetch */
 // Generated from scripts/sw.template.js — do not edit by hand; run `node scripts/stamp-sw.mjs`.
-const BUILD_ID = "dev";
+const BUILD_ID = "__PACT_BUILD_ID__";
 const CACHE = `pact-shell-${BUILD_ID}`;
 const SHELL = ["/", "/offline", "/manifest.webmanifest", "/icons/icon-192.png"];
 

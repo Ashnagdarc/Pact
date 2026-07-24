@@ -21,7 +21,7 @@ export function PactsScreen() {
 }
 
 function PactsScreenConnected() {
-  const { userId, user, loading, isAuthenticated } = useCurrentUser();
+  const { userId, loading, isAuthenticated } = useCurrentUser();
   const boards = useQuery(
     api.pacts.listForUser,
     userId ? {} : "skip"
@@ -61,13 +61,13 @@ function PactsScreenConnected() {
             Pacts
           </h1>
           <p className="mt-2 text-sm text-white/55">
-            Signed in as {user?.displayName ?? "you"}
+            Shared boards with people who keep you honest.
           </p>
         </div>
         <Button
           asChild
           size="icon"
-          className="size-11 rounded-full bg-signal text-white hover:bg-signal/90"
+          className="size-11 rounded-full bg-signal text-ink-950 hover:bg-signal/90"
         >
           <Link href="/app/pacts/new" aria-label="Create Pact">
             <Plus className="size-5" />
@@ -77,12 +77,22 @@ function PactsScreenConnected() {
 
       <div className="mt-6 space-y-3">
         {(boards ?? []).length === 0 ? (
-          <SurfaceCard tone="ink" className="border border-white/10">
-            <p className="text-sm text-white/70">
-              No pacts yet. Create one and share an invite link.
+          <SurfaceCard tone="ink" padding="lg" className="border border-white/10">
+            <p className="font-heading text-2xl font-bold tracking-tight">
+              Start your first Pact
             </p>
-            <Button asChild className="mt-3 rounded-full bg-signal text-white">
-              <Link href="/app/pacts/new">Create Pact</Link>
+            <p className="mt-2 text-sm text-white/70">
+              Create a board, add commitments, and invite a partner to keep you
+              accountable.
+            </p>
+            <Button
+              asChild
+              className="mt-5 h-12 w-full rounded-full bg-signal text-base font-bold text-white"
+            >
+              <Link href="/app/pacts/new">
+                <Plus className="size-4" />
+                Create Pact
+              </Link>
             </Button>
           </SurfaceCard>
         ) : (
