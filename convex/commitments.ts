@@ -304,7 +304,7 @@ export const remove = mutation({
       if (row.storageId) {
         await ctx.storage.delete(row.storageId);
       }
-      // R2 blobs (r2Key) are not deleted here — see docs/audits/r2-evidence-setup.md
+      // R2 blobs (r2Key) are not deleted here - see docs/audits/r2-evidence-setup.md
       await ctx.db.delete(row._id);
     }
 

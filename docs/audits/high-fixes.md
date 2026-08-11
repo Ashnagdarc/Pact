@@ -1,18 +1,18 @@
 # High audit fixes
 
 Date: 2026-07-23  
-Scope: High findings only (B4–B9, F2–F7, C4–C8).
+Scope: High findings only (B4-B9, F2-F7, C4-C8).
 
 ## Verification summary
 
 | Check | Result |
 | --- | --- |
 | `npx tsc --noEmit` | **Pass** |
-| E2E invite email / delete account / rescue approve / waitlist unsubscribe | **Not run** — needs live Convex + Neon + Brevo + session |
+| E2E invite email / delete account / rescue approve / waitlist unsubscribe | **Not run** - needs live Convex + Neon + Brevo + session |
 | Manual UI empty-state / filter chips | Code review only |
 
 Docs consulted:
-- [Convex OCC](https://docs.convex.dev/database/advanced/occ) — no unique indexes; read-then-write + merge on collect
+- [Convex OCC](https://docs.convex.dev/database/advanced/occ) - no unique indexes; read-then-write + merge on collect
 - [Better Auth deleteUser / beforeDelete](https://www.better-auth.com/docs/concepts/users-accounts#delete-user)
 - [Next.js sitemap](https://nextjs.org/docs/app/api-reference/file-conventions/metadata/sitemap) / [robots](https://nextjs.org/docs/app/api-reference/file-conventions/metadata/robots) / [viewport](https://nextjs.org/docs/app/api-reference/functions/generate-viewport) (`node_modules/next/dist/docs/…`)
 - [Neon connection pooling](https://neon.com/docs/connect/connection-pooling) + repo neon skill (`max` pool + pooled URL; `attachDatabasePool`)
@@ -20,14 +20,14 @@ Docs consulted:
 
 ---
 
-## B4 — No unique constraints on logical keys
+## B4 - No unique constraints on logical keys
 
 **Problem:** Convex indexes (`users.authUserId`, `pactMembers` by pact+user, waitlist email/token/code) are not uniqueness constraints. Concurrent inserts can create duplicates; `.unique()` then throws.
 
 **Evidence:** `convex/schema.ts`; former `.unique()` paths in `convex/users.ts`, `convex/waitlist.ts`, `convex/lib/auth.ts`, invite accept membership.
 
 **Fix:**
-- `convex/lib/dedupe.ts` — collect + prefer-oldest helpers.
+- `convex/lib/dedupe.ts` - collect + prefer-oldest helpers.
 - `ensureAppUser`, waitlist `join`, invite accept membership, `getAppUserOrNull` / `requireAppUser` / `requirePactMember` use collect/oldest instead of `.unique()`.
 - Documented: Convex still cannot enforce DB-level unique indexes.
 
@@ -37,28 +37,28 @@ Docs consulted:
 
 ---
 
-## B5 — Shared pact invites stay pending / last-writer-wins
+## B5 - Shared pact invites stay pending / last-writer-wins
 
 **Problem:** Accept kept invite `status: "pending"` and overwrote `inviteeUserId`. Decline only logged activity.
 
 **Evidence:** `convex/invitations.ts` accept/decline.
 
-**Fix:** Single-use model — accept sets `status: "accepted"`; decline sets `status: "declined"` + `declinedAt`. Owner creates a new invite via `createInvite` / `ensureInvite` for another partner.
+**Fix:** Single-use model - accept sets `status: "accepted"`; decline sets `status: "declined"` + `declinedAt`. Owner creates a new invite via `createInvite` / `ensureInvite` for another partner.
 
 **Verified:** Typecheck pass; control-flow review.
 
-**Residual risk:** Product change — one link can no longer onboard multiple partners. Owners must mint a fresh invite per partner.
+**Residual risk:** Product change - one link can no longer onboard multiple partners. Owners must mint a fresh invite per partner.
 
 ---
 
-## B6 — Account delete: Convex wiped before Auth; incomplete cascade
+## B6 - Account delete: Convex wiped before Auth; incomplete cascade
 
 **Problem:** Profile deleted Convex first, then Auth. Auth failure left Auth user with no Convex profile. Partner-assigned commitments kept deleted `assigneeId`.
 
 **Evidence:** `src/app/app/profile/page.tsx`; `convex/users.ts` `deleteAccountData`.
 
 **Fix:**
-- Better Auth `deleteUser.beforeDelete` calls secret-gated `users.deleteAccountDataByAuthUserId` (Auth validation first; Convex wipe before Neon row removal — [Better Auth callbacks](https://www.better-auth.com/docs/concepts/users-accounts#callbacks)).
+- Better Auth `deleteUser.beforeDelete` calls secret-gated `users.deleteAccountDataByAuthUserId` (Auth validation first; Convex wipe before Neon row removal - [Better Auth callbacks](https://www.better-auth.com/docs/concepts/users-accounts#callbacks)).
 - Profile only calls `authClient.deleteUser`.
 - Cascade reassigns remaining assignee commitments to `creatorId`.
 
@@ -68,7 +68,7 @@ Docs consulted:
 
 ---
 
-## B7 — Invite email API: any signed-in user + any token
+## B7 - Invite email API: any signed-in user + any token
 
 **Problem:** `/api/invite-email` accepted any token + client `pactTitle`; no ownership check or rate limit.
 
@@ -85,7 +85,7 @@ Docs consulted:
 
 ---
 
-## B8 — Check-in / rescue / status: no idempotency; rescue applies before approve
+## B8 - Check-in / rescue / status: no idempotency; rescue applies before approve
 
 **Problem:** Double submit duplicated check-ins; rescue applied immediately while approval stayed pending.
 
@@ -101,7 +101,7 @@ Docs consulted:
 
 ---
 
-## B9 — Neon `pg.Pool` without limits + TLS weaken
+## B9 - Neon `pg.Pool` without limits + TLS weaken
 
 **Problem:** Unlimited pool; `rejectUnauthorized: false` for non-local.
 
@@ -111,11 +111,11 @@ Docs consulted:
 
 **Verified:** Typecheck pass.
 
-**Residual risk:** If a custom CA / unusual Postgres host fails verification, set local URL or fix certs — we no longer disable verification.
+**Residual risk:** If a custom CA / unusual Postgres host fails verification, set local URL or fix certs - we no longer disable verification.
 
 ---
 
-## F2 — No sitemap or robots
+## F2 - No sitemap or robots
 
 **Problem:** Missing search engine guidance.
 
@@ -127,7 +127,7 @@ Docs consulted:
 
 ---
 
-## F3 — Viewport blocks pinch-zoom
+## F3 - Viewport blocks pinch-zoom
 
 **Problem:** `maximumScale: 1` in root viewport.
 
@@ -139,7 +139,7 @@ Docs consulted:
 
 ---
 
-## F4 — Auth/waitlist forms: placeholders, no labels
+## F4 - Auth/waitlist forms: placeholders, no labels
 
 **Problem:** Sign-in and waitlist inputs used placeholder-as-label.
 
@@ -151,7 +151,7 @@ Docs consulted:
 
 ---
 
-## F5 — Dead / non-functional chrome
+## F5 - Dead / non-functional chrome
 
 **Problem:** Today Layout button, commitment More, decorative board More, unused `FabCluster`.
 
@@ -161,7 +161,7 @@ Docs consulted:
 
 ---
 
-## F6 — Today no empty state for zero focus items
+## F6 - Today no empty state for zero focus items
 
 **Problem:** Empty filtered list rendered blank grid.
 
@@ -173,7 +173,7 @@ Docs consulted:
 
 ---
 
-## F7 — Today filters misleading (`due === all`)
+## F7 - Today filters misleading (`due === all`)
 
 **Problem:** “Due today” chip counted/filtered like All (`listForToday` already day-scoped).
 
@@ -183,7 +183,7 @@ Docs consulted:
 
 ---
 
-## C4 — No unsubscribe / List-Unsubscribe footers
+## C4 - No unsubscribe / List-Unsubscribe footers
 
 **Problem:** Product and waitlist emails lacked unsubscribe.
 
@@ -198,7 +198,7 @@ Docs consulted:
 
 ---
 
-## C5 — Unescaped HTML in email bodies
+## C5 - Unescaped HTML in email bodies
 
 **Problem:** Names / titles / bodies interpolated raw into HTML.
 
@@ -208,7 +208,7 @@ Docs consulted:
 
 ---
 
-## C6 — Bare-bones email templates
+## C6 - Bare-bones email templates
 
 **Problem:** Minimal `<p>` strings, inconsistent branding.
 
@@ -220,7 +220,7 @@ Docs consulted:
 
 ---
 
-## C7 — Spec notification types never fired
+## C7 - Spec notification types never fired
 
 **Problem:** `pact_at_risk`, `weekly_review`, evidence-style types defined but unused.
 
@@ -237,7 +237,7 @@ Docs consulted:
 
 ---
 
-## C8 — Dual runtime Brevo env; Convex silent skip
+## C8 - Dual runtime Brevo env; Convex silent skip
 
 **Problem:** Next threw in production without `BREVO_API_KEY`; Convex only `console.warn` and returned `{ sent: false }`.
 
@@ -262,4 +262,4 @@ Docs consulted:
 
 ## Status
 
-**High complete — ready for Medium**
+**High complete - ready for Medium**

@@ -19,7 +19,7 @@ Avoid recruiting strangers who have no shared goal.
 
 ### Short DM
 
-Hey — I'm running a private beta of **Pact**, an accountability app for two people who already trust each other.
+Hey - I'm running a private beta of **Pact**, an accountability app for two people who already trust each other.
 
 Would you and [partner] try it together for a week? You create one real commitment, check in, and see if Rescue Mode helps when plans slip.
 
@@ -30,11 +30,11 @@ Takes ~10 minutes to start. I'd love honest feedback after day 7.
 
 ### Email
 
-Subject: Private beta invite — Pact (bring a partner)
+Subject: Private beta invite - Pact (bring a partner)
 
 Hi [Name],
 
-I'm inviting a small group to test **Pact** — structured accountability with someone you already trust.
+I'm inviting a small group to test **Pact** - structured accountability with someone you already trust.
 
 What I need from you and a partner:
 
@@ -45,7 +45,7 @@ What I need from you and a partner:
 
 Start here: https://www.joinpact.tech/sign-in?mode=sign-up
 
-Thanks — [Your name]
+Thanks - [Your name]
 
 ## Ask each pair to complete
 

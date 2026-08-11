@@ -3,7 +3,7 @@ import type { MutationCtx } from "../_generated/server";
 import { internal } from "../_generated/api";
 
 type NotifyChannels = {
-  /** Insert in-app row only — skip email and push fan-out. */
+  /** Insert in-app row only - skip email and push fan-out. */
   inAppOnly?: boolean;
 };
 

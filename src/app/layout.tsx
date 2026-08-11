@@ -6,7 +6,7 @@ import { ServiceWorkerRegister } from "@/components/pwa/service-worker-register"
 import "./globals.css";
 
 // Soft geometric sans (same family for headings + body), close to the
-// rounded modern UI look in product references — not sharp AI display faces.
+// rounded modern UI look in product references - not sharp AI display faces.
 const display = Plus_Jakarta_Sans({
   variable: "--font-display",
   subsets: ["latin"],

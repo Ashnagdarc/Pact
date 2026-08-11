@@ -213,7 +213,7 @@ export async function POST(request: Request) {
       unsubscribeUrl,
     });
 
-    // Email first — this is what unlocks early access.
+    // Email first - this is what unlocks early access.
     await sendEmail({
       to: email,
       subject: mail.subject,

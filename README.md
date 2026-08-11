@@ -1,6 +1,6 @@
 # Pact
 
-Personal accountability app — mobile-first Next.js PWA.
+Personal accountability app - mobile-first Next.js PWA.
 
 > Make commitments. Show your progress. Recover together.
 

@@ -23,7 +23,7 @@ export const unreadCount = query({
   args: {},
   handler: async (ctx) => {
     const user = await requireAppUser(ctx);
-    // Unread rows have readAt undefined — indexed under by_user_readAt.
+    // Unread rows have readAt undefined - indexed under by_user_readAt.
     const unread = await ctx.db
       .query("notifications")
       .withIndex("by_user_readAt", (q) =>
@@ -68,7 +68,7 @@ export const markAllRead = mutation({
   },
 });
 
-/** Soft overdue prompts for the assignee — idempotent per commitment/day */
+/** Soft overdue prompts for the assignee - idempotent per commitment/day */
 export const syncRescuePrompts = mutation({
   args: {},
   handler: async (ctx) => {

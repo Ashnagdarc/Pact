@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Check, Loader2 } from "lucide-react";
 import { motion } from "motion/react";
 
@@ -64,9 +65,11 @@ function CountdownGrid({ parts }: { parts: CountdownParts }) {
 function JoinedPanel({
   email,
   name,
+  alreadyJoined,
 }: {
   email: string;
   name?: string | null;
+  alreadyJoined?: boolean;
 }) {
   const reduceMotion = usePrefersReducedMotion();
   const [parts, setParts] = useState(() => getCountdownParts());
@@ -90,16 +93,37 @@ function JoinedPanel({
           <Check className="size-5" strokeWidth={2.5} />
         </div>
         <p className="font-heading mt-4 text-2xl font-bold tracking-tight">
-          {name ? `You're in, ${name}` : "You're on the list"}
+          {name ? `You're in, ${name}` : "Your access code is on the way"}
         </p>
         <p className="mt-2 text-sm leading-relaxed text-white/70">
-          We emailed <span className="text-white/90">{email}</span>{" "}
-          a welcome note with your personal access link and one-time code.
-          Check your inbox (and spam). We don&apos;t show the code here.
+          {alreadyJoined
+            ? "We just re-sent your free access code"
+            : "Your free access code was just sent"}{" "}
+          to <span className="text-white/90">{email}</span>. Check your inbox
+          and spam folder - it arrives right away, not later.
         </p>
+        <ol className="mt-4 list-decimal space-y-1.5 pl-4 text-sm leading-relaxed text-white/70">
+          <li>Open the email titled with your early beta access.</li>
+          <li>
+            Use the personal link, or enter the one-time 6-digit code on sign-up.
+          </li>
+          <li>Create your account and start your first Pact with a partner.</li>
+        </ol>
+        <p className="mt-3 text-xs text-white/55">
+          We don&apos;t show the code on this page for security.
+        </p>
+        <Button
+          asChild
+          className="mt-5 h-11 w-full rounded-full bg-volt-500 px-5 text-sm font-semibold text-white hover:bg-volt-500/90 sm:w-auto"
+        >
+          <Link href="/sign-in?mode=sign-up">Enter PACT with your code</Link>
+        </Button>
       </div>
 
       <div className="rounded-[1.75rem] border border-white/10 bg-white/[0.03] p-4">
+        <p className="mb-3 text-xs font-semibold tracking-wide text-white/55 uppercase">
+          Public launch countdown
+        </p>
         <div className="mb-4 flex gap-2">
           {(
             [
@@ -158,6 +182,7 @@ export function LandingBetaForm() {
   const [joined, setJoined] = useState<{
     email: string;
     name?: string | null;
+    alreadyJoined?: boolean;
   } | null>(null);
 
   async function onSubmit(e: React.FormEvent) {
@@ -179,10 +204,13 @@ export function LandingBetaForm() {
         ok?: boolean;
         email?: string;
         name?: string | null;
+        alreadyJoined?: boolean;
       } | null;
 
       if (!response.ok || !payload?.ok) {
-        throw new Error(payload?.error || "Could not join the waitlist");
+        throw new Error(
+          payload?.error || "Could not request private beta access",
+        );
       }
 
       const normalized = (payload.email || email).trim().toLowerCase();
@@ -190,9 +218,14 @@ export function LandingBetaForm() {
       setJoined({
         email: normalized,
         name: payload.name ?? (name.trim() || null),
+        alreadyJoined: Boolean(payload.alreadyJoined),
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not join the waitlist");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Could not request private beta access",
+      );
     } finally {
       setBusy(false);
     }
@@ -247,11 +280,15 @@ export function LandingBetaForm() {
         disabled={busy}
         className="h-12 rounded-full bg-volt-500 px-6 text-base font-semibold text-white hover:bg-volt-500/90"
       >
-        {busy ? <Loader2 className="size-4 animate-spin" /> : "Join the waitlist"}
+        {busy ? (
+          <Loader2 className="size-4 animate-spin" />
+        ) : (
+          "Get Your Free Access Code"
+        )}
       </Button>
       <p className="text-center text-xs text-white/65">
-        You&apos;ll get a welcome email with a one-time 6-digit code and personal
-        link to open the early beta.
+        Join the private beta, receive your access code, and use PACT free during
+        testing.
       </p>
     </form>
   );

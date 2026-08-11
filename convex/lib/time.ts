@@ -1,6 +1,6 @@
 /**
  * Calendar day bounds for `now` in an IANA timezone (e.g. Africa/Lagos).
- * Uses Intl only — no extra date libs in Convex.
+ * Uses Intl only - no extra date libs in Convex.
  */
 export function dayBoundsInTimeZone(
   timeZone: string,

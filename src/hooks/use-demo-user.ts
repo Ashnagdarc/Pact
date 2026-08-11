@@ -109,7 +109,7 @@ export function useCurrentUser() {
         return;
       }
 
-      // Session exists but Convex JWT not ready — stay loading.
+      // Session exists but Convex JWT not ready - stay loading.
       if (!convexAuthenticated) {
         setReady(false);
         return;
@@ -197,7 +197,7 @@ export function useCurrentUser() {
   }, []);
 
   const isAuthenticated = Boolean(session?.user) && convexAuthenticated;
-  // Only wait while Convex auth is in-flight — not forever if JWT mint fails (B11).
+  // Only wait while Convex auth is in-flight - not forever if JWT mint fails (B11).
   const waitingForConvex =
     Boolean(session?.user) && convexAuthLoading;
   const waitingForUserRow = isAuthenticated && (!ready || appUser == null);

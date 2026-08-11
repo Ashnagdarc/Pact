@@ -33,7 +33,7 @@ const SOLUTION_MS = 5200;
 
 type Phase = "issue" | "solution";
 
-/** Rotating supporting line under the static brand H1 — not a heading. */
+/** Rotating supporting line under the static brand H1 - not a heading. */
 export function LandingDynamicHeadline() {
   const reduceMotion = usePrefersReducedMotion();
   const [index, setIndex] = useState(0);

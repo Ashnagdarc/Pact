@@ -37,12 +37,12 @@ export function ServiceWorkerRegister() {
       worker.addEventListener("statechange", () => {
         if (cancelled) return;
         if (worker.state !== "installed") return;
-        // First install: no active controller yet — activate quietly.
+        // First install: no active controller yet - activate quietly.
         if (!navigator.serviceWorker.controller) {
           worker.postMessage({ type: "SKIP_WAITING" });
           return;
         }
-        // Update while the app is already controlled — ask the user.
+        // Update while the app is already controlled - ask the user.
         promptUpdate();
       });
     }
@@ -76,7 +76,7 @@ export function ServiceWorkerRegister() {
         }, 15 * 60 * 1000);
       })
       .catch(() => {
-        // Silent — SW is progressive enhancement
+        // Silent - SW is progressive enhancement
       });
 
     const onControllerChange = () => {

@@ -161,7 +161,7 @@ export default defineSchema({
     commitmentId: v.id("commitments"),
     checkInId: v.optional(v.id("checkIns")),
     uploadedBy: v.id("users"),
-    /** Legacy Convex file storage — kept for rows uploaded before R2. */
+    /** Legacy Convex file storage - kept for rows uploaded before R2. */
     storageId: v.optional(v.id("_storage")),
     /** Cloudflare R2 object key for new uploads. */
     r2Key: v.optional(v.string()),

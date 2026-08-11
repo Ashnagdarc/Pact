@@ -174,7 +174,7 @@ export default function SignInForm() {
               />
               {fromBetaLink ? (
                 <span className="text-xs font-normal text-white/45">
-                  Your link already unlocked access — only enter the code from
+                  Your link already unlocked access - only enter the code from
                   your welcome email if account creation fails.
                 </span>
               ) : null}
@@ -273,7 +273,7 @@ export default function SignInForm() {
             href="/#waitlist"
             className="mt-4 text-center text-xs text-white/40 underline-offset-2 hover:underline"
           >
-            Don&apos;t have a code? Join the waitlist
+            Don&apos;t have a code? Get private beta access
           </Link>
         ) : null}
 

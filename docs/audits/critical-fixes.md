@@ -9,13 +9,13 @@ Scope: Critical findings only (B1, B2, B3, C1, C2, C3, F1).
 | --- | --- |
 | `npx tsc --noEmit` | **Pass** |
 | ESLint on touched files | Pre-existing `react-hooks/set-state-in-effect` on onboarding screen; no new blocking errors on Convex/auth/API files |
-| E2E waitlist mint / beta signup race / push permission | **Not run** — no local env (`NEXT_PUBLIC_CONVEX_URL`, `PACT_SERVER_SECRET` / Convex dashboard secret, Brevo, VAPID) |
+| E2E waitlist mint / beta signup race / push permission | **Not run** - no local env (`NEXT_PUBLIC_CONVEX_URL`, `PACT_SERVER_SECRET` / Convex dashboard secret, Brevo, VAPID) |
 
 Docs consulted: [Convex internal functions](https://docs.convex.dev/functions/internal-functions), [Convex custom JWT / `email_verified`](https://docs.convex.dev/auth/advanced/custom-jwt) + `UserIdentity.emailVerified`, [Better Auth email verification](https://www.better-auth.com/docs/concepts/email), [Next.js `metadataBase` / Open Graph / Twitter](https://nextjs.org/docs/app/api-reference/functions/generate-metadata).
 
 ---
 
-## B1 — Public waitlist mint + consume
+## B1 - Public waitlist mint + consume
 
 **Problem:** `convex/waitlist.ts` exposed `join` and `consumeInvite` as public Convex mutations. Anyone with the deployment URL could mint codes or burn invites without going through Next.
 
@@ -24,7 +24,7 @@ Docs consulted: [Convex internal functions](https://docs.convex.dev/functions/in
 **Fix:**
 - `join` now requires `secret` and calls `assertServerSecret` (`convex/lib/serverSecret.ts`).
 - Removed public `consumeInvite` (replaced by `claimInvite` for B2, also secret-gated).
-- Next helpers pass `getPactServerSecret()` (`src/lib/server-secret.ts`) — `PACT_SERVER_SECRET` or fallback `BETTER_AUTH_SECRET`.
+- Next helpers pass `getPactServerSecret()` (`src/lib/server-secret.ts`) - `PACT_SERVER_SECRET` or fallback `BETTER_AUTH_SECRET`.
 - `/api/waitlist` adds best-effort IP rate limiting (8 req / 60s per instance).
 
 **Verified:** Typecheck pass; code review that mutations throw without matching secret.
@@ -33,7 +33,7 @@ Docs consulted: [Convex internal functions](https://docs.convex.dev/functions/in
 
 ---
 
-## B2 — Beta invite validate→signup→consume not atomic
+## B2 - Beta invite validate→signup→consume not atomic
 
 **Problem:** Auth hooks validated the invite in `before`, then consumed in `after`. Two parallel signups could both pass validation and both create users before either consume ran.
 
@@ -50,7 +50,7 @@ Docs consulted: [Convex internal functions](https://docs.convex.dev/functions/in
 
 ---
 
-## B3 — Email verification off + Convex link-by-email takeover
+## B3 - Email verification off + Convex link-by-email takeover
 
 **Problem:** `requireEmailVerification: false` and `ensureAppUser` linked any JWT email to an existing `users` row via `by_email`, so an attacker who signed up with a victim’s email could take over that Convex profile.
 
@@ -69,7 +69,7 @@ Docs consulted: [Convex internal functions](https://docs.convex.dev/functions/in
 
 ---
 
-## C1 — No channel prefs; every `notify()` emails + pushes
+## C1 - No channel prefs; every `notify()` emails + pushes
 
 **Problem:** `notify()` always scheduled push + email with no user preference.
 
@@ -86,7 +86,7 @@ Docs consulted: [Convex internal functions](https://docs.convex.dev/functions/in
 
 ---
 
-## C2 — Rescue sync on UI mount fans out email + push
+## C2 - Rescue sync on UI mount fans out email + push
 
 **Problem:** `syncRescuePrompts` (NotificationBell / NotificationsScreen mount) called `notify()` which emailed and pushed on every new rescue row.
 
@@ -100,7 +100,7 @@ Docs consulted: [Convex internal functions](https://docs.convex.dev/functions/in
 
 ---
 
-## C3 — Onboarding notification opt-in dead end
+## C3 - Onboarding notification opt-in dead end
 
 **Problem:** Finish requested Notification permission but never called `enablePush` or persisted prefs, so opt-in did nothing durable.
 
@@ -117,9 +117,9 @@ Docs consulted: [Convex internal functions](https://docs.convex.dev/functions/in
 
 ---
 
-## F1 — Missing Open Graph / Twitter / metadataBase
+## F1 - Missing Open Graph / Twitter / metadataBase
 
-**Problem:** Root layout had title/description only — no `metadataBase`, `openGraph`, or `twitter`.
+**Problem:** Root layout had title/description only - no `metadataBase`, `openGraph`, or `twitter`.
 
 **Evidence:** `src/app/layout.tsx`.
 
@@ -140,4 +140,4 @@ Docs consulted: [Convex internal functions](https://docs.convex.dev/functions/in
 
 ## Status
 
-**Critical complete — ready for High**
+**Critical complete - ready for High**

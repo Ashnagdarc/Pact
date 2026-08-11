@@ -10,7 +10,7 @@ const surfaceVariants = cva(
       tone: {
         ink: "bg-ink-800 text-white",
         volt: "bg-volt-500 text-white",
-        // Soft periwinkle — dark body copy for contrast (matches reference cards).
+        // Soft periwinkle - dark body copy for contrast (matches reference cards).
         signal: "bg-signal text-ink-950",
         coral: "bg-coral-400 text-white",
         cream: "bg-cream-200 text-ink-950",

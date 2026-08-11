@@ -127,7 +127,7 @@ const POPUP_CYCLE_MS = 6000;
 const POPUP_VISIBLE_MS = 4000;
 const FIRST_POPUP_MS = 1600;
 
-/** Smooth decelerating ease — soft land, no snap. */
+/** Smooth decelerating ease - soft land, no snap. */
 const easeSoft = [0.22, 1, 0.36, 1] as const;
 const easeExit = [0.4, 0, 0.2, 1] as const;
 
@@ -190,7 +190,25 @@ export function LandingHeroDevice() {
       className="relative mx-auto w-full max-w-[22rem]"
       aria-hidden
     >
-      <div className="absolute -inset-10 rounded-full bg-[radial-gradient(circle,_rgba(255,82,38,0.24),_transparent_65%)] blur-2xl" />
+      {/* Layered brand atmosphere behind the device */}
+      <div className="pointer-events-none absolute inset-0 -z-0 overflow-visible">
+        <motion.div
+          className="absolute top-[8%] left-1/2 h-[78%] w-[92%] -translate-x-1/2 rounded-[50%] bg-[radial-gradient(ellipse_at_center,rgba(255,82,38,0.38)_0%,rgba(255,82,38,0.14)_38%,transparent_68%)] blur-3xl"
+          animate={
+            reduceMotion
+              ? undefined
+              : { opacity: [0.55, 0.9, 0.55], scale: [0.98, 1.05, 0.98] }
+          }
+          transition={{
+            duration: 9,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+        <div className="absolute top-[28%] -left-[8%] h-[48%] w-[58%] rounded-full bg-[radial-gradient(circle,rgba(158,181,255,0.22)_0%,transparent_70%)] blur-2xl" />
+        <div className="absolute right-[-6%] bottom-[6%] h-[42%] w-[52%] rounded-full bg-[radial-gradient(circle,rgba(255,107,69,0.2)_0%,transparent_72%)] blur-3xl" />
+        <div className="absolute inset-x-[12%] top-[12%] h-[18%] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.14)_0%,transparent_70%)] blur-xl" />
+      </div>
 
       {/* Floating status popups */}
       <div
@@ -254,10 +272,11 @@ export function LandingHeroDevice() {
       </div>
 
       <div
-        className="relative overflow-hidden rounded-[2.4rem] border border-white/12 bg-ink-900 shadow-[0_40px_100px_rgba(0,0,0,0.55)]"
+        className="relative z-10 overflow-hidden rounded-[2.4rem] border border-white/14 bg-ink-900/95 shadow-[0_40px_100px_rgba(0,0,0,0.55),0_0_0_1px_rgba(255,82,38,0.12),0_0_60px_rgba(255,82,38,0.18)] backdrop-blur-sm"
         style={{ perspective: "1000px" }}
       >
-        <div className="flex items-center justify-between px-5 pt-5 pb-3">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-[linear-gradient(180deg,rgba(255,255,255,0.07)_0%,transparent_100%)]" />
+        <div className="relative flex items-center justify-between px-5 pt-5 pb-3">
           <div>
             <p className="text-[0.65rem] font-semibold tracking-[0.14em] text-white/40 uppercase">
               Today

@@ -49,13 +49,13 @@ export const ensureDemoUser = mutation({
 
 /**
  * Upsert the Pact `users` row for the verified Better Auth identity.
- * Identity comes from the JWT — never from client args.
+ * Identity comes from the JWT - never from client args.
  *
  * Email-based linking only when JWT `email_verified` is true (B3). Unverified
  * email/password accounts get a subject-only row so they cannot take over an
  * existing user that shares the same email string.
  *
- * B4: Convex indexes are not unique — use collect + prefer-oldest merge so
+ * B4: Convex indexes are not unique - use collect + prefer-oldest merge so
  * concurrent inserts do not strand the client on a duplicate authUserId row.
  */
 export const ensureAppUser = mutation({
@@ -95,7 +95,7 @@ export const ensureAppUser = mutation({
       }
     }
 
-    // Re-check auth key after email branch — concurrent OCC retries may have
+    // Re-check auth key after email branch - concurrent OCC retries may have
     // inserted while we were reading.
     const raced = await findByAuthUserId(ctx, authUserId);
     if (raced) {
@@ -158,7 +158,7 @@ export const getCurrent = query({
   },
 });
 
-/** @deprecated Prefer getCurrent — authUserId must not come from the client. */
+/** @deprecated Prefer getCurrent - authUserId must not come from the client. */
 export const getByAuthUserId = query({
   args: { authUserId: v.string() },
   handler: async (ctx, args) => {
@@ -388,7 +388,7 @@ async function deleteCommitmentTree(
     if (row.storageId) {
       await ctx.storage.delete(row.storageId);
     }
-    // R2 blobs (r2Key) are not deleted here — see docs/audits/r2-evidence-setup.md
+    // R2 blobs (r2Key) are not deleted here - see docs/audits/r2-evidence-setup.md
     await ctx.db.delete(row._id);
   }
 

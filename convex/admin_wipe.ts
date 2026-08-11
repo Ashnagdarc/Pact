@@ -4,7 +4,7 @@ import type { TableNames } from "./_generated/dataModel";
 import { internalMutation } from "./_generated/server";
 import { assertServerSecret } from "./lib/serverSecret";
 
-/** Every application table in convex/schema.ts — keep in sync with the schema. */
+/** Every application table in convex/schema.ts - keep in sync with the schema. */
 const ALL_TABLES: TableNames[] = [
   "users",
   "tasks",

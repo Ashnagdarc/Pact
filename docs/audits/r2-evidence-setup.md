@@ -9,7 +9,7 @@
 | --- | --- |
 | Who uploaded, commitment, MIME, caption, timestamps | Convex `evidence` table |
 | File bytes (new uploads) | Cloudflare R2 (`r2Key`) |
-| File bytes (legacy) | Convex `_storage` (`storageId`) — still readable |
+| File bytes (legacy) | Convex `_storage` (`storageId`) - still readable |
 | Upload URL minting | Next `POST /api/evidence/upload-url` (presigned PUT) |
 | Private read | Next `GET /api/evidence/[evidenceId]/file` → short-lived presigned GET (or public base URL if set) |
 
@@ -77,7 +77,7 @@ Allowed types: `image/*` and `application/pdf`. Max size: **5 MB**. Video remain
 
 - Existing rows with `storageId` still resolve via `ctx.storage.getUrl`.
 - New rows use `r2Key` only (`storageId` omitted).
-- Cascade deletes (commitment / account) remove Convex storage files and evidence documents; **R2 objects may remain** until you add a cleanup job — acceptable for early beta; prune via Cloudflare dashboard if needed.
+- Cascade deletes (commitment / account) remove Convex storage files and evidence documents; **R2 objects may remain** until you add a cleanup job - acceptable for early beta; prune via Cloudflare dashboard if needed.
 - Deprecated: Convex `evidence.generateUploadUrl` (legacy clients only).
 
 ## 7. Verify locally

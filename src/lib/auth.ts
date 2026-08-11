@@ -47,7 +47,7 @@ function createDatabase() {
 
 const infraApiKey = process.env.BETTER_AUTH_API_KEY;
 
-/** Public origin used as JWT `iss` — must match a Convex customJwt issuer. */
+/** Public origin used as JWT `iss` - must match a Convex customJwt issuer. */
 function normalizeIssuer(raw: string | undefined): string | undefined {
   if (!raw) return undefined;
   try {
@@ -68,7 +68,7 @@ export const authJwtIssuer =
   normalizeIssuer(process.env.NEXT_PUBLIC_SITE_URL) ??
   "https://www.joinpact.tech";
 
-/** Convex customJwt `applicationID` — must match JWT `aud`. */
+/** Convex customJwt `applicationID` - must match JWT `aud`. */
 export const authJwtAudience = "convex";
 
 function infraConnectionOptions() {
@@ -120,7 +120,7 @@ export const auth = betterAuth({
   databaseHooks: {
     user: {
       create: {
-        // Validate only — the atomic claim happens in `after` once the user
+        // Validate only - the atomic claim happens in `after` once the user
         // row exists, so a failed signup can never burn the invite.
         before: async (user) => {
           if (betaAccessOpen()) return;
@@ -129,7 +129,7 @@ export const auth = betterAuth({
           if (!token) {
             throw new APIError("FORBIDDEN", {
               message:
-                "Early beta requires a one-time invite code. Join the waitlist first.",
+                "Early beta requires a one-time invite code. Request private beta access first.",
             });
           }
           const invite = await validateBetaInvite({ token, email: user.email });
@@ -146,14 +146,14 @@ export const auth = betterAuth({
               case "not_found":
                 throw new APIError("FORBIDDEN", {
                   message:
-                    "Invalid beta invite. Request a new code from the waitlist.",
+                    "Invalid beta invite. Request a new access code on the home page.",
                 });
               default: {
                 const exhaustive: never = invite;
                 void exhaustive;
                 throw new APIError("FORBIDDEN", {
                   message:
-                    "Invalid beta invite. Request a new code from the waitlist.",
+                    "Invalid beta invite. Request a new access code on the home page.",
                 });
               }
             }
@@ -178,7 +178,7 @@ export const auth = betterAuth({
           });
           if (!claim.claimed) {
             // Loud: "used" here means another signup consumed the invite
-            // between validate (before) and claim (after) — race indicator.
+            // between validate (before) and claim (after) - race indicator.
             console.error(
               "[pact-auth] beta invite claim failed after user create",
               { reason: claim.reason, email: user.email, userId: user.id },
@@ -265,7 +265,7 @@ export const auth = betterAuth({
   plugins: [
     ...(infraApiKey
       ? [
-          // Only pass apiUrl/kvUrl when set — undefined would overwrite
+          // Only pass apiUrl/kvUrl when set - undefined would overwrite
           // @better-auth/infra defaults and break /dash/validate (JWKS fetch).
           dash({
             apiKey: infraApiKey,

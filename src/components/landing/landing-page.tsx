@@ -3,7 +3,6 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowDown } from "lucide-react";
 import { motion } from "motion/react";
 
 import { LandingBetaForm } from "@/components/landing/landing-beta-form";
@@ -29,6 +28,21 @@ const steps = [
     title: "Recover together",
     description:
       "Turn missed commitments into realistic rescue plans instead of abandoned goals.",
+  },
+] as const;
+
+const accessSteps = [
+  {
+    title: "Request your access code",
+    description: "Share your email to join the private beta.",
+  },
+  {
+    title: "Receive your code by email",
+    description: "We send a one-time 6-digit code and personal link right away.",
+  },
+  {
+    title: "Enter the code and create your first Pact",
+    description: "Open PACT, redeem your code, and start with a partner.",
   },
 ] as const;
 
@@ -91,7 +105,7 @@ export function LandingPage() {
               asChild
               className="h-10 rounded-full bg-volt-500 px-4 font-semibold text-white hover:bg-volt-500/90"
             >
-              <Link href="#waitlist">Join beta</Link>
+              <Link href="#waitlist">Get free access</Link>
             </Button>
           </nav>
         </header>
@@ -129,24 +143,29 @@ export function LandingPage() {
                 delay: 0.15,
                 ease: [0.22, 1, 0.36, 1],
               }}
-              className="mt-7 flex flex-wrap items-center gap-3"
+              className="mt-7 flex flex-col items-start gap-3"
             >
-              <Button
-                asChild
-                className="h-12 rounded-full bg-volt-500 px-6 text-base font-semibold text-white hover:bg-volt-500/90"
-              >
-                <Link href="#waitlist">Join the private beta</Link>
-              </Button>
-              <Button
-                asChild
-                variant="ghost"
-                className="h-12 rounded-full border border-white/20 bg-white/5 px-5 text-base text-white/85 backdrop-blur-md hover:bg-white/10 hover:text-white"
-              >
-                <Link href="#how">
-                  See how it works
-                  <ArrowDown className="size-4" />
-                </Link>
-              </Button>
+              <div className="flex w-full max-w-md flex-col gap-3 sm:max-w-none sm:flex-row sm:flex-wrap sm:items-center">
+                <Button
+                  asChild
+                  className="h-12 w-full rounded-full bg-volt-500 px-6 text-base font-semibold text-white hover:bg-volt-500/90 sm:w-auto"
+                >
+                  <Link href="#waitlist">Get Your Free Access Code</Link>
+                </Button>
+                <Button
+                  asChild
+                  variant="ghost"
+                  className="h-12 w-full rounded-full border border-white/20 bg-transparent px-5 text-base font-medium text-white/80 backdrop-blur-md hover:bg-white/10 hover:text-white sm:w-auto"
+                >
+                  <Link href="/sign-in?mode=sign-up">
+                    Already have a code? Enter PACT
+                  </Link>
+                </Button>
+              </div>
+              <p className="max-w-md text-sm leading-relaxed text-white/70 sm:text-[0.95rem]">
+                Join the private beta, receive your access code, and use PACT
+                free during testing.
+              </p>
             </motion.div>
           </div>
 
@@ -201,7 +220,7 @@ export function LandingPage() {
         <section className="relative border-t border-white/8 px-5 py-20 sm:px-8 sm:py-24">
           <div className="mx-auto max-w-5xl">
             <h2 className="font-heading text-[clamp(1.6rem,3.5vw,2.25rem)] font-bold tracking-tight">
-              Built for follow-through
+              Built so you follow through
             </h2>
             <ul className="mt-10 grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
               {differentiators.map((item) => (
@@ -219,20 +238,84 @@ export function LandingPage() {
         </section>
 
         <section
+          id="access"
+          className="relative scroll-mt-20 border-t border-white/8 px-5 py-20 sm:px-8 sm:py-28"
+        >
+          <div className="mx-auto max-w-5xl">
+            <p className="text-sm font-semibold tracking-[0.14em] text-volt-500/80 uppercase">
+              Private beta access
+            </p>
+            <h2 className="font-heading mt-3 max-w-xl text-[clamp(1.75rem,4vw,2.6rem)] leading-[1.1] font-bold tracking-tight">
+              Free access in three steps
+            </h2>
+            <ol className="mt-14 grid gap-10 sm:grid-cols-3 sm:gap-8">
+              {accessSteps.map((step, index) => (
+                <li key={step.title} className="min-w-0">
+                  <p className="font-heading text-4xl font-extrabold tracking-tight text-white/15">
+                    {String(index + 1).padStart(2, "0")}
+                  </p>
+                  <h3 className="font-heading mt-3 text-xl font-bold tracking-tight">
+                    {step.title}
+                  </h3>
+                  <p className="mt-2 text-sm leading-relaxed text-white/70 sm:text-[0.95rem]">
+                    {step.description}
+                  </p>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+
+        <section
+          id="founding-20"
+          className="relative scroll-mt-20 border-t border-white/8 px-5 py-20 sm:px-8 sm:py-28"
+        >
+          <div className="mx-auto max-w-3xl text-center">
+            <p className="text-sm font-semibold tracking-[0.14em] text-volt-500/80 uppercase">
+              Founding 20 Beta
+            </p>
+            <h2 className="font-heading mt-3 text-[clamp(1.75rem,4vw,2.75rem)] leading-[1.1] font-bold tracking-tight">
+              Join the Founding 20
+            </h2>
+            <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-white/70 sm:text-lg">
+              We are inviting 10 accountability pairs to use PACT for 14 days,
+              complete regular check-ins, and help us improve the product.
+            </p>
+            <div className="mt-8">
+              <Button
+                asChild
+                className="h-12 rounded-full bg-volt-500 px-6 text-base font-semibold text-white hover:bg-volt-500/90"
+              >
+                <Link href="#waitlist">Get Free Beta Access</Link>
+              </Button>
+            </div>
+          </div>
+        </section>
+
+        <section
           id="waitlist"
           className="relative scroll-mt-20 border-t border-white/8 px-5 py-24 sm:px-8 sm:py-32"
         >
           <div className="mx-auto max-w-3xl text-center">
             <h2 className="font-heading text-[clamp(1.75rem,4vw,2.75rem)] leading-[1.1] font-bold tracking-tight">
-              Join the private beta waitlist
+              Get private beta access
             </h2>
             <p className="mx-auto mt-5 max-w-xl text-base text-white/70 sm:text-lg">
               Leave your email. We&apos;ll send a welcome note with a one-time
-              6-digit code and personal link to open the early beta.
+              6-digit code and personal link so you can use PACT free during
+              testing.
             </p>
             <div className="mt-8">
               <LandingBetaForm />
             </div>
+            <p className="mt-6 text-sm text-white/60">
+              <Link
+                href="/sign-in?mode=sign-up"
+                className="underline-offset-2 hover:text-white/85 hover:underline"
+              >
+                Already have a code? Enter PACT
+              </Link>
+            </p>
           </div>
         </section>
       </main>

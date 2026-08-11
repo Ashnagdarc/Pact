@@ -214,7 +214,7 @@ export const validateInvite = query({
 
 /**
  * Atomically claim a one-time invite (sets usedAt iff unset).
- * Server-only — called from Better Auth `user.create.after` once the user row
+ * Server-only - called from Better Auth `user.create.after` once the user row
  * exists, so a failed signup can never burn the invite. Invites are personal:
  * the claiming email must match the invite's email.
  */

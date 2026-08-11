@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 
-/** Old /waitlist route — send people to the landing waitlist form. */
+/** Old /waitlist route - send people to the landing waitlist form. */
 export default function WaitlistRedirectPage() {
   useEffect(() => {
     window.location.replace("/#waitlist");
@@ -10,7 +10,7 @@ export default function WaitlistRedirectPage() {
 
   return (
     <main className="flex min-h-dvh items-center justify-center bg-ink-950 text-sm text-white/50">
-      Taking you to the beta waitlist…
+      Taking you to private beta access…
     </main>
   );
 }

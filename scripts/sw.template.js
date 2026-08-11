@@ -1,5 +1,5 @@
 /* global self, caches, clients, fetch */
-// Generated from scripts/sw.template.js — do not edit by hand; run `node scripts/stamp-sw.mjs`.
+// Generated from scripts/sw.template.js - do not edit by hand; run `node scripts/stamp-sw.mjs`.
 const BUILD_ID = "__PACT_BUILD_ID__";
 const CACHE = `pact-shell-${BUILD_ID}`;
 const SHELL = ["/", "/offline", "/manifest.webmanifest", "/icons/icon-192.png"];
@@ -8,7 +8,7 @@ self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE).then((cache) => cache.addAll(SHELL))
   );
-  // Do not skipWaiting here — the page prompts the user on updates.
+  // Do not skipWaiting here - the page prompts the user on updates.
 });
 
 self.addEventListener("activate", (event) => {

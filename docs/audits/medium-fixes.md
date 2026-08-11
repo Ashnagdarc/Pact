@@ -1,20 +1,20 @@
 # Medium audit fixes
 
 Date: 2026-07-23  
-Scope: Medium findings only (F8–F14, B10–B16, C9–C11).
+Scope: Medium findings only (F8-F14, B10-B16, C9-C11).
 
 ## Verification summary
 
 | Check | Result |
 | --- | --- |
 | `npx tsc --noEmit` | **Pass** |
-| E2E waitlist / Today empty / New flow / legal pages / mute | **Not run** — needs browser + live Convex/Brevo |
+| E2E waitlist / Today empty / New flow / legal pages / mute | **Not run** - needs browser + live Convex/Brevo |
 | Manual reduced-motion / proxy session | Code review only |
 
 Docs consulted:
-- [Next.js JSON-LD](https://nextjs.org/docs/app/guides/json-ld) — native `<script type="application/ld+json">`
-- [Better Auth Next.js proxy](https://www.better-auth.com/docs/integrations/next#auth-protection) — `auth.api.getSession` on Next 16 proxy
-- [Convex indexes](https://docs.convex.dev/database/indexes) — range queries / `take` / optional fields
+- [Next.js JSON-LD](https://nextjs.org/docs/app/guides/json-ld) - native `<script type="application/ld+json">`
+- [Better Auth Next.js proxy](https://www.better-auth.com/docs/integrations/next#auth-protection) - `auth.api.getSession` on Next 16 proxy
+- [Convex indexes](https://docs.convex.dev/database/indexes) - range queries / `take` / optional fields
 - Brevo `PUT /v3/contacts/{identifier}` with `listIds` (MCP `contacts_update_contact`)
 - `Intl.DateTimeFormat` for IANA timezone day bounds (no new deps)
 
@@ -22,7 +22,7 @@ Critical/High not regresssed intentionally (waitlist secret gate + IP rate limit
 
 ---
 
-## F8 — Landing SEO heading semantics
+## F8 - Landing SEO heading semantics
 
 **Problem:** Rotating line was the sole `<h1>`; brand “Pact” was a `<p>`.
 
@@ -36,7 +36,7 @@ Critical/High not regresssed intentionally (waitlist secret gate + IP rate limit
 
 ---
 
-## F9 — Feature list labels-only
+## F9 - Feature list labels-only
 
 **Problem:** Differentiators were title-only chips.
 
@@ -48,7 +48,7 @@ Critical/High not regresssed intentionally (waitlist secret gate + IP rate limit
 
 ---
 
-## F10 — Privacy/Terms framed as in-app screens
+## F10 - Privacy/Terms framed as in-app screens
 
 **Problem:** Legal pages used `AppShell` + “Back to profile”.
 
@@ -60,33 +60,33 @@ Critical/High not regresssed intentionally (waitlist secret gate + IP rate limit
 
 ---
 
-## F11 — Low-contrast / tiny UI text
+## F11 - Low-contrast / tiny UI text
 
-**Problem:** Secondary copy often `white/40–55`; bottom tabs `text-[10px]`.
+**Problem:** Secondary copy often `white/40-55`; bottom tabs `text-[10px]`.
 
 **Evidence:** Landing, tabs, Today loading copy.
 
-**Fix:** Raised secondary floors toward `white/65–70` on landing/Today/profile; bottom tab labels `text-xs` (≥12px).
+**Fix:** Raised secondary floors toward `white/65-70` on landing/Today/profile; bottom tab labels `text-xs` (≥12px).
 
 **Verified:** Typecheck pass.
 
-**Residual risk:** Not every `white/45` in deep app screens was rewritten — floor applied to highest-traffic chrome.
+**Residual risk:** Not every `white/45` in deep app screens was rewritten - floor applied to highest-traffic chrome.
 
 ---
 
-## F12 — Today home cognitively heavy
+## F12 - Today home cognitively heavy
 
 **Problem:** Empty/new users still saw prompt + stats + filters + boards chrome.
 
 **Evidence:** `today-screen.tsx`.
 
-**Fix:** When zero commitments, tasks, and boards — show a single start card (prompt + CTAs). Full chrome only when there is content.
+**Fix:** When zero commitments, tasks, and boards - show a single start card (prompt + CTAs). Full chrome only when there is content.
 
 **Verified:** Typecheck pass.
 
 ---
 
-## F13 — New flow too complex
+## F13 - New flow too complex
 
 **Problem:** Title, note, due, where, assignee, evidence, color all visible vs “under 10 seconds”.
 
@@ -98,7 +98,7 @@ Critical/High not regresssed intentionally (waitlist secret gate + IP rate limit
 
 ---
 
-## F14 — prefers-reduced-motion incomplete
+## F14 - prefers-reduced-motion incomplete
 
 **Problem:** Intervals / AnimatePresence still ran with reduced motion.
 
@@ -112,7 +112,7 @@ Critical/High not regresssed intentionally (waitlist secret gate + IP rate limit
 
 ---
 
-## B10 — Waitlist HTTP returns invite secrets
+## B10 - Waitlist HTTP returns invite secrets
 
 **Problem:** JSON returned `code` + `accessUrl`.
 
@@ -122,11 +122,11 @@ Critical/High not regresssed intentionally (waitlist secret gate + IP rate limit
 
 **Verified:** Typecheck pass; JoinedPanel no longer shows code/link.
 
-**Residual risk:** No CAPTCHA — shared serverless rate-limit memory.
+**Residual risk:** No CAPTCHA - shared serverless rate-limit memory.
 
 ---
 
-## B11 — Proxy gate cookie-presence only
+## B11 - Proxy gate cookie-presence only
 
 **Problem:** `getSessionCookie` only checked presence.
 
@@ -140,7 +140,7 @@ Critical/High not regresssed intentionally (waitlist secret gate + IP rate limit
 
 ---
 
-## B12 — Dual auth clocks / JWT cache
+## B12 - Dual auth clocks / JWT cache
 
 **Problem:** Module JWT cache not keyed by user; survived sign-out/user switch.
 
@@ -152,9 +152,9 @@ Critical/High not regresssed intentionally (waitlist secret gate + IP rate limit
 
 ---
 
-## B13 — weeklyReviews keyed by pact+week not user
+## B13 - weeklyReviews keyed by pact+week not user
 
-**Problem:** Pact weekly review lookup used `by_pact_week` — last writer won across users.
+**Problem:** Pact weekly review lookup used `by_pact_week` - last writer won across users.
 
 **Evidence:** `convex/insights.ts`, `schema.ts`.
 
@@ -166,7 +166,7 @@ Critical/High not regresssed intentionally (waitlist secret gate + IP rate limit
 
 ---
 
-## B14 — Reminder cron full-table scans
+## B14 - Reminder cron full-table scans
 
 **Problem:** `deliverDue` collected all commitments/tasks.
 
@@ -180,7 +180,7 @@ Critical/High not regresssed intentionally (waitlist secret gate + IP rate limit
 
 ---
 
-## B15 — Notification queries load-all-then-filter
+## B15 - Notification queries load-all-then-filter
 
 **Problem:** `listForUser` / `unreadCount` / `markAllRead` collected all user notifications.
 
@@ -194,7 +194,7 @@ Critical/High not regresssed intentionally (waitlist secret gate + IP rate limit
 
 ---
 
-## B16 — Timezone field unused
+## B16 - Timezone field unused
 
 **Problem:** Today bounds used server local `setHours`.
 
@@ -208,7 +208,7 @@ Critical/High not regresssed intentionally (waitlist secret gate + IP rate limit
 
 ---
 
-## C9 — Brevo contacts sync early-return
+## C9 - Brevo contacts sync early-return
 
 **Problem:** On “Contact already exist”, sync returned without adding to list.
 
@@ -222,13 +222,13 @@ Critical/High not regresssed intentionally (waitlist secret gate + IP rate limit
 
 ---
 
-## C10 / C11 — Haptics / sound mute + reduced motion
+## C10 / C11 - Haptics / sound mute + reduced motion
 
 **Problem:** Vibration/sound ignored a11y mute and reduced motion; no persistent mute.
 
 **Evidence:** `haptics.ts`, `ui-sounds.ts`, `feedback.ts`.
 
-**Fix:** `feedback-prefs.ts` — `shouldMuteFeedback()` checks localStorage mute + `prefers-reduced-motion`. Profile toggle “Mute sounds & haptics”. Feedback/haptics/sounds all gate through it.
+**Fix:** `feedback-prefs.ts` - `shouldMuteFeedback()` checks localStorage mute + `prefers-reduced-motion`. Profile toggle “Mute sounds & haptics”. Feedback/haptics/sounds all gate through it.
 
 **Verified:** Typecheck pass.
 
@@ -243,4 +243,4 @@ Critical/High not regresssed intentionally (waitlist secret gate + IP rate limit
 
 ## Status
 
-**Medium complete — ready for Low**
+**Medium complete - ready for Low**

@@ -1,7 +1,7 @@
 # Low audit fixes
 
 Date: 2026-07-23  
-Scope: Low findings (F15–F17, C12, B17 + quick extras).
+Scope: Low findings (F15-F17, C12, B17 + quick extras).
 
 ## Verification summary
 
@@ -15,13 +15,13 @@ Critical / High / Medium not intentionally regressed.
 
 ---
 
-## F15 — “How it works” nav hidden on small screens
+## F15 - “How it works” nav hidden on small screens
 
 **Problem:** Header “How it works” used `hidden … sm:inline`, so small screens lost the nav link.
 
 **Evidence:** `landing-page.tsx` header nav.
 
-**Fix:** Left as intentional mobile pattern. Hero already exposes a primary secondary CTA **“See how it works”** (`#how`) on all breakpoints; header stays Join-beta–first to avoid crowding.
+**Fix:** Left as intentional mobile pattern. Hero already exposes a primary secondary CTA **“See how it works”** (`#how`) on all breakpoints; header stays Join-beta-first to avoid crowding.
 
 **Verified:** Code review.
 
@@ -29,7 +29,7 @@ Critical / High / Medium not intentionally regressed.
 
 ---
 
-## F16 — Decorative heart looks interactive
+## F16 - Decorative heart looks interactive
 
 **Problem:** Commitment cards showed a Heart in a round hit-target styling without a favorite toggle.
 
@@ -43,7 +43,7 @@ Critical / High / Medium not intentionally regressed.
 
 ---
 
-## F17 — No skip link / main landmark
+## F17 - No skip link / main landmark
 
 **Problem:** Root layout had no skip-to-content; AppShell wrapped content in a generic `div`.
 
@@ -56,17 +56,17 @@ Critical / High / Medium not intentionally regressed.
 
 **Verified:** Typecheck.
 
-**Residual risk:** Auth/marketing pages outside AppShell that lack `#content` still get a skip link that may no-op until focusable content exists — landing and app shells covered.
+**Residual risk:** Auth/marketing pages outside AppShell that lack `#content` still get a skip link that may no-op until focusable content exists - landing and app shells covered.
 
 ---
 
-## C12 — Feedback thin in core loop
+## C12 - Feedback thin in core loop
 
 **Problem:** Onboarding used rich haptics/sounds; check-in success was silent.
 
 **Evidence:** `commitment-detail-screen.tsx` `sendSignal`; Medium mute/reduced-motion gate in `shouldMuteFeedback`.
 
-**Fix:** After successful `submitCheckIn`, `playFeedback({ sound: "success", haptic: "success" })` — respects mute + `prefers-reduced-motion`.
+**Fix:** After successful `submitCheckIn`, `playFeedback({ sound: "success", haptic: "success" })` - respects mute + `prefers-reduced-motion`.
 
 **Verified:** Typecheck.
 
@@ -74,7 +74,7 @@ Critical / High / Medium not intentionally regressed.
 
 ---
 
-## B17 — Rescue `remove` only pauses
+## B17 - Rescue `remove` only pauses
 
 **Problem:** Recovery action labeled “Remove” but only set `status: "paused"` (commitments have no `cancelled` status).
 
@@ -135,4 +135,4 @@ Critical / High / Medium not intentionally regressed.
 | Medium | `docs/audits/medium-fixes.md` |
 | Low | `docs/audits/low-fixes.md` |
 
-**Low complete — full severity ladder done**
+**Low complete - full severity ladder done**

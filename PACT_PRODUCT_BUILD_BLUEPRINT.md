@@ -1,5 +1,5 @@
 ---
-title: "Pact — Product & Build Blueprint"
+title: "Pact - Product & Build Blueprint"
 version: "0.2"
 status: "Active build"
 owner: "Daniel"
@@ -7,7 +7,7 @@ platform: "Installable Web App / PWA"
 last_updated: "2026-07-21"
 ---
 
-# Pact — Product & Build Blueprint
+# Pact - Product & Build Blueprint
 
 > **Working name:** Pact  
 > **Product type:** Personal task and accountability app  
@@ -45,7 +45,7 @@ Update this document whenever a major product or technical decision changes.
 
 ---
 
-# PART A — PRODUCT STRATEGY
+# PART A - PRODUCT STRATEGY
 
 ## 2. Product summary
 
@@ -97,7 +97,7 @@ Pact will address these gaps with a structured accountability loop.
 
 ### 4.1 Primary audience
 
-Young professionals and students aged approximately 18–35 who are working toward meaningful personal goals and already know someone they trust enough to invite as an accountability partner.
+Young professionals and students aged approximately 18-35 who are working toward meaningful personal goals and already know someone they trust enough to invite as an accountability partner.
 
 ### 4.2 Initial user segments
 
@@ -285,7 +285,7 @@ Each active Pact receives a weekly review containing:
 
 ---
 
-# PART B — PRODUCT REQUIREMENTS
+# PART B - PRODUCT REQUIREMENTS
 
 ## 8. User roles
 
@@ -392,9 +392,9 @@ A generated summary of progress and participation.
 
 ### 10.1 Must-have features
 
-- [x] Account creation and login — Better Auth (email/password; Google optional)
-- [x] Profile setup — basic display name / email via Convex user bridge
-- [x] Create personal task — `tasks` CRUD + Today + `/tasks/[id]`
+- [x] Account creation and login - Better Auth (email/password; Google optional)
+- [x] Profile setup - basic display name / email via Convex user bridge
+- [x] Create personal task - `tasks` CRUD + Today + `/tasks/[id]`
 - [x] Edit and delete personal task
 - [x] Create a Pact
 - [x] Invite partner using a secure link
@@ -402,20 +402,20 @@ A generated summary of progress and participation.
 - [x] Select participant role
 - [x] Select accountability style
 - [x] Create shared commitment
-- [x] Assign commitment — pact member assignee picker + notify assignee
-- [x] Add due date and reminder — due dates + `reminderAt` + cron/push delivery
+- [x] Assign commitment - pact member assignee picker + notify assignee
+- [x] Add due date and reminder - due dates + `reminderAt` + cron/push delivery
 - [x] Submit five-second progress signal
-- [x] Add optional evidence — Convex storage uploads on commitment detail
+- [x] Add optional evidence - Convex storage uploads on commitment detail
 - [x] Send structured partner response
 - [x] View Pact progress
 - [x] Trigger Rescue Mode
 - [x] Create recovery plan
-- [x] Generate weekly review — Insights screen + Convex weekly review data
+- [x] Generate weekly review - Insights screen + Convex weekly review data
 - [x] View notifications inside the app
-- [x] Enable Web Push notifications — notify → push bridge + opt-in/out
-- [x] Install the app as a PWA — manifest, icons, service worker, `/install`, `/offline`
-- [x] Configure privacy permissions — create + owner settings UI
-- [x] Delete account — Convex cascade + Better Auth `deleteUser`
+- [x] Enable Web Push notifications - notify → push bridge + opt-in/out
+- [x] Install the app as a PWA - manifest, icons, service worker, `/install`, `/offline`
+- [x] Configure privacy permissions - create + owner settings UI
+- [x] Delete account - Convex cascade + Better Auth `deleteUser`
 
 ### 10.2 Should-have features
 
@@ -628,7 +628,7 @@ Review period ends
 
 ---
 
-# PART C — INFORMATION ARCHITECTURE
+# PART C - INFORMATION ARCHITECTURE
 
 ## 14. Main navigation
 
@@ -757,7 +757,7 @@ Recommended content:
 
 ---
 
-# PART D — DESIGN SYSTEM
+# PART D - DESIGN SYSTEM
 
 ## 17. Visual direction
 
@@ -854,14 +854,14 @@ Suggested hierarchy:
 
 | Style | Mobile size |
 |---|---:|
-| Display number | 72–96 px |
-| Hero title | 48–64 px |
-| Page title | 40–48 px |
-| Section title | 28–34 px |
-| Card title | 22–28 px |
-| Body | 16–18 px |
-| Supporting text | 14–15 px |
-| Metadata | 12–13 px |
+| Display number | 72-96 px |
+| Hero title | 48-64 px |
+| Page title | 40-48 px |
+| Section title | 28-34 px |
+| Card title | 22-28 px |
+| Body | 16-18 px |
+| Supporting text | 14-15 px |
+| Metadata | 12-13 px |
 
 Rules:
 
@@ -878,22 +878,22 @@ Rules:
 
 ```text
 Chip: 14 px
-Button: 20–24 px
-Standard card: 24–28 px
-Feature card: 32–40 px
-Circular control: 52–64 px
+Button: 20-24 px
+Standard card: 24-28 px
+Feature card: 32-40 px
+Circular control: 52-64 px
 ```
 
 ### 20.2 Spacing scale
 
 ```text
-4 px   — micro spacing
-8 px   — icon spacing
-12 px  — compact spacing
-16 px  — standard spacing
-24 px  — card padding
-32 px  — section spacing
-40 px  — major separation
+4 px   - micro spacing
+8 px   - icon spacing
+12 px  - compact spacing
+16 px  - standard spacing
+24 px  - card padding
+32 px  - section spacing
+40 px  - major separation
 ```
 
 ### 20.3 Touch targets
@@ -942,7 +942,7 @@ Build reusable components for:
 
 ---
 
-# PART E — TECHNICAL PLAN
+# PART E - TECHNICAL PLAN
 
 ## 23. Approved MVP technology stack
 
@@ -963,7 +963,7 @@ Build reusable components for:
 | Client state | React state / Convex subscriptions (no Zustand yet) |
 | Server data | Convex React client |
 | Auth client | Better Auth React client + `@better-auth/infra` (dash, sentinel) |
-| Offline drafts | IndexedDB / Dexie — **planned, not shipped** |
+| Offline drafts | IndexedDB / Dexie - **planned, not shipped** |
 | PWA | Web App Manifest + Service Worker + branded icons |
 
 ### 23.2 Backend and data
@@ -973,14 +973,14 @@ Build reusable components for:
 | Product database | **Convex** (commitments, pacts, check-ins, notifications, etc.) |
 | Backend functions | Convex queries, mutations, and actions |
 | Real-time updates | Convex reactive subscriptions |
-| Scheduled work | Convex scheduled functions / cron jobs — **partial / planned** |
-| File storage | Convex file storage — **planned for evidence** |
+| Scheduled work | Convex scheduled functions / cron jobs - **partial / planned** |
+| File storage | Convex file storage - **planned for evidence** |
 | Authentication | **Better Auth** on Next.js (`/api/auth/[...all]`) |
-| Auth database | **Neon Postgres** (`DATABASE_URL` + `pg` Pool) — sessions/users for Better Auth only |
+| Auth database | **Neon Postgres** (`DATABASE_URL` + `pg` Pool) - sessions/users for Better Auth only |
 | Auth infrastructure | Better Auth Infrastructure: `dash()` + `sentinel()` |
 | App user bridge | Better Auth session → Convex `users.ensureAppUser({ authUserId, ... })` |
-| Push subscriptions | Stored in Convex — **planned** |
-| Push delivery | Standards-based Web Push — **planned** |
+| Push subscriptions | Stored in Convex - **planned** |
+| Push delivery | Standards-based Web Push - **planned** |
 
 ### 23.3 Why two databases
 
@@ -1328,7 +1328,7 @@ activityEvents
 
 ## 28. Authentication plan
 
-### 28.1 Status — selected and running
+### 28.1 Status - selected and running
 
 | Item | Decision |
 |---|---|
@@ -1348,7 +1348,7 @@ activityEvents
 - [x] Account deletion
 - [x] Invite-link continuation after login (`/sign-in?next=/invite/...`)
 - [x] Convex authorization from verified Better Auth session (JWT → `requireAppUser`)
-- [x] Next.js middleware route protection — `src/proxy.ts` cookie gate (Convex JWT is source of truth)
+- [x] Next.js middleware route protection - `src/proxy.ts` cookie gate (Convex JWT is source of truth)
 
 ### 28.3 Authentication decision checklist
 
@@ -1358,15 +1358,15 @@ activityEvents
 - [x] Supports production deployment.
 - [x] Account deletion end-to-end (auth DB + Convex data).
 - [x] Does not require paid SMS for MVP.
-- [ ] Email delivery (verification / reset) — deferred; verification currently off.
+- [ ] Email delivery (verification / reset) - deferred; verification currently off.
 
 ### 28.4 Recommended next auth work
 
-1. ~~Stop trusting client-passed `userId` in Convex mutations.~~ Done — `requireAppUser` from JWT.
-2. ~~Add route middleware for authenticated app pages.~~ Done — `src/proxy.ts`.
+1. ~~Stop trusting client-passed `userId` in Convex mutations.~~ Done - `requireAppUser` from JWT.
+2. ~~Add route middleware for authenticated app pages.~~ Done - `src/proxy.ts`.
 3. ~~Account deletion (Better Auth + Convex cleanup).~~ Done.
 4. Optional: enable email verification once transactional email is fully trusted in prod.
-5. Harden: make `push.sendToUser` internal-only (currently public action). — **Done:** public `sendToUser` removed; only `internal.push.deliverToUser`.
+5. Harden: make `push.sendToUser` internal-only (currently public action). - **Done:** public `sendToUser` removed; only `internal.push.deliverToUser`.
 
 ---
 
@@ -1376,7 +1376,7 @@ activityEvents
 
 - [x] Valid Web App Manifest
 - [x] App name and short name
-- [x] 192 × 192 icon — branded handshake “P”
+- [x] 192 × 192 icon - branded handshake “P”
 - [x] 512 × 512 icon
 - [x] Maskable icon
 - [x] Standalone display mode
@@ -1384,7 +1384,7 @@ activityEvents
 - [x] Background colour
 - [x] Start URL
 - [x] Mobile viewport configuration
-- [x] HTTPS deployment — Vercel
+- [x] HTTPS deployment - Vercel
 
 ### 29.2 Service worker
 
@@ -1562,7 +1562,7 @@ Recovery actions:
 
 ---
 
-# PART F — ANALYTICS AND VALIDATION
+# PART F - ANALYTICS AND VALIDATION
 
 ## 33. North Star metric
 
@@ -1673,7 +1673,7 @@ Only collect information needed to answer a defined product question.
 
 ### 36.1 Interview participants
 
-Target at least 15–20 early interviews across:
+Target at least 15-20 early interviews across:
 
 - Students
 - Young professionals
@@ -1729,12 +1729,12 @@ Measure:
 
 ---
 
-# PART G — ROADMAP
+# PART G - ROADMAP
 
 ## 37. Phase 0: Validation
 
 - [ ] Finalise working name
-- [ ] Interview 15–20 target users
+- [ ] Interview 15-20 target users
 - [ ] Create competitor comparison
 - [ ] Validate top three problems
 - [ ] Test accountability agreement concept
@@ -1779,9 +1779,9 @@ Key screens:
 - [x] Configure Next.js and TypeScript
 - [x] Configure Tailwind CSS
 - [x] Configure Convex
-- [x] Select authentication provider — Better Auth + Neon
-- [x] Define schema — core Convex tables live
-- [ ] Implement permissions — Convex still trusts client `userId`
+- [x] Select authentication provider - Better Auth + Neon
+- [x] Define schema - core Convex tables live
+- [ ] Implement permissions - Convex still trusts client `userId`
 - [x] Create app shell
 - [x] Add reusable UI components
 
@@ -1790,19 +1790,19 @@ Key screens:
 ## 40. Phase 3: Core MVP
 
 - [x] Authentication
-- [x] User profile — basic
-- [ ] Personal tasks — deferred / use solo commitments
+- [x] User profile - basic
+- [ ] Personal tasks - deferred / use solo commitments
 - [x] Pact creation
 - [x] Invitation links
 - [x] Pact acceptance
 - [x] Commitments
 - [x] Check-ins
 - [x] Partner responses
-- [x] Real-time updates — Convex
+- [x] Real-time updates - Convex
 
 Exit criteria:
 
-Two users can create, accept, and use a Pact from separate devices. — **Ready to validate in private beta once Convex auth is secured.**
+Two users can create, accept, and use a Pact from separate devices. - **Ready to validate in private beta once Convex auth is secured.**
 
 ---
 
@@ -1810,23 +1810,23 @@ Two users can create, accept, and use a Pact from separate devices. — **Ready 
 
 - [x] Rescue Mode
 - [x] Pact Health
-- [x] Weekly reviews — Insights
-- [x] Notification centre — in-app
+- [x] Weekly reviews - Insights
+- [x] Notification centre - in-app
 - [x] Web Push
 - [ ] Quiet hours
 - [x] Evidence uploads
 
 Exit criteria:
 
-A Pact can survive a missed commitment and return to active progress. — **In-app loop + push/evidence wired.**
+A Pact can survive a missed commitment and return to active progress. - **In-app loop + push/evidence wired.**
 
 ---
 
 ## 42. Phase 5: PWA and beta
 
 - [x] Web App Manifest
-- [x] Icons — branded
-- [x] Service worker — basic
+- [x] Icons - branded
+- [x] Service worker - basic
 - [x] Offline fallback
 - [x] Install guide
 - [x] Mobile safe-area support
@@ -1834,7 +1834,7 @@ A Pact can survive a missed commitment and return to active progress. — **In-a
 - [x] Terms
 - [x] Account deletion
 - [ ] Beta feedback form
-- [x] Private beta deployment — Vercel production URL live
+- [x] Private beta deployment - Vercel production URL live
 
 ---
 
@@ -1853,7 +1853,7 @@ Do not commit to a native app before validating retention and willingness to pay
 
 ---
 
-# PART H — QA AND SECURITY
+# PART H - QA AND SECURITY
 
 ## 44. Functional QA checklist
 
@@ -1964,7 +1964,7 @@ Product requirements:
 
 ---
 
-# PART I — LANDING PAGE
+# PART I - LANDING PAGE
 
 ## 48. Landing-page objective
 
@@ -2039,20 +2039,20 @@ Join the private beta and test Pact with someone you trust.
 
 ---
 
-# PART J — PITCH DECK
+# PART J - PITCH DECK
 
 ## 50. Pitch-deck outline
 
-### Slide 1 — Title
+### Slide 1 - Title
 
 Pact  
 Make commitments. Show your progress. Recover together.
 
-### Slide 2 — Problem
+### Slide 2 - Problem
 
 People create plans but fail to follow through because accountability is informal, inconsistent, and poorly structured.
 
-### Slide 3 — Current alternatives
+### Slide 3 - Current alternatives
 
 - Task managers
 - Habit trackers
@@ -2062,11 +2062,11 @@ People create plans but fail to follow through because accountability is informa
 
 Explain what each alternative does not solve.
 
-### Slide 4 — Solution
+### Slide 4 - Solution
 
 A commitment-management platform for structured accountability relationships.
 
-### Slide 5 — Product
+### Slide 5 - Product
 
 Show:
 
@@ -2076,15 +2076,15 @@ Show:
 - Rescue Mode
 - Weekly review
 
-### Slide 6 — Unique insight
+### Slide 6 - Unique insight
 
 Accountability partnerships fail when expectations are unclear, participation becomes one-sided, and missed commitments have no recovery process.
 
-### Slide 7 — Target audience
+### Slide 7 - Target audience
 
 Start with students, young professionals, creators, and ambitious friends.
 
-### Slide 8 — Business model
+### Slide 8 - Business model
 
 Possible future model:
 
@@ -2094,11 +2094,11 @@ Possible future model:
 
 Do not finalise pricing before user validation.
 
-### Slide 9 — Competition
+### Slide 9 - Competition
 
 Compare Pact against task managers, habit apps, accountability apps, and coaching services.
 
-### Slide 10 — Go-to-market
+### Slide 10 - Go-to-market
 
 Possible channels:
 
@@ -2108,7 +2108,7 @@ Possible channels:
 - Creator communities
 - Referral loops through partner invitations
 
-### Slide 11 — Validation
+### Slide 11 - Validation
 
 Include only real evidence:
 
@@ -2118,7 +2118,7 @@ Include only real evidence:
 - Retention
 - Commitment completion
 
-### Slide 12 — Team and ask
+### Slide 12 - Team and ask
 
 State:
 
@@ -2129,7 +2129,7 @@ State:
 
 ---
 
-# PART K — TEAM DOCUMENT
+# PART K - TEAM DOCUMENT
 
 ## 51. Initial team roles
 
@@ -2177,7 +2177,7 @@ A feature is complete only when:
 
 ---
 
-# PART L — RISKS AND OPEN QUESTIONS
+# PART L - RISKS AND OPEN QUESTIONS
 
 ## 54. Main risks
 
@@ -2222,7 +2222,7 @@ A feature is complete only when:
 
 ---
 
-# PART M — DECISION LOG
+# PART M - DECISION LOG
 
 ## 57. Current decisions
 
@@ -2279,7 +2279,7 @@ Name
 
 ---
 
-# PART N — IMMEDIATE NEXT ACTIONS
+# PART N - IMMEDIATE NEXT ACTIONS
 
 ## 59. Build status snapshot (2026-07-21)
 
@@ -2289,18 +2289,18 @@ Name
 
 ## 59.1 Next ten actions (build order)
 
-1. [x] **Secure Convex bridge** — JWT → `requireAppUser`; no client-trusted “current user.”
-2. [x] **Route middleware** — `src/proxy.ts` protects app routes; invite/sign-in/install stay public.
-3. [ ] **Two-device beta smoke test** — create pact, invite, accept, check-in, rescue on separate accounts.
-4. [x] **Partner assignment** — assign commitments to pact members (not only creator).
-5. [x] **Web Push** — `pushSubscriptions` table, SW push handler, permission UX.
-6. [x] **Reminders** — schedule/store `reminderAt` and deliver via push or in-app.
-7. [x] **Evidence uploads** — Convex file storage on commitment detail.
-8. [x] **Account deletion + privacy/terms pages** — required for serious beta.
-9. [x] **Personal tasks** — `tasks` CRUD + Today + `/tasks/[id]`.
-10. [ ] **Recruit first five beta pairs** — kit ready in `BETA_RECRUITMENT.md`; welcome CTA opens signup. Fill tracker as pairs accept.
+1. [x] **Secure Convex bridge** - JWT → `requireAppUser`; no client-trusted “current user.”
+2. [x] **Route middleware** - `src/proxy.ts` protects app routes; invite/sign-in/install stay public.
+3. [ ] **Two-device beta smoke test** - create pact, invite, accept, check-in, rescue on separate accounts.
+4. [x] **Partner assignment** - assign commitments to pact members (not only creator).
+5. [x] **Web Push** - `pushSubscriptions` table, SW push handler, permission UX.
+6. [x] **Reminders** - schedule/store `reminderAt` and deliver via push or in-app.
+7. [x] **Evidence uploads** - Convex file storage on commitment detail.
+8. [x] **Account deletion + privacy/terms pages** - required for serious beta.
+9. [x] **Personal tasks** - `tasks` CRUD + Today + `/tasks/[id]`.
+10. [ ] **Recruit first five beta pairs** - kit ready in `BETA_RECRUITMENT.md`; welcome CTA opens signup. Fill tracker as pairs accept.
 11. [x] **Configure VAPID keys** in Vercel + Convex so push actually delivers.
-12. [x] **Harden `push.sendToUser`** — removed public action; `deliverToUser` is internal-only.
+12. [x] **Harden `push.sendToUser`** - removed public action; `deliverToUser` is internal-only.
 
 ## 59.2 Suggested “this week” focus
 

@@ -5,7 +5,7 @@ import { getPactServerSecret } from "@/lib/server-secret";
 
 /**
  * Ops health check for Brevo-backed flows.
- * Returns booleans only — never secrets or key material.
+ * Returns booleans only - never secrets or key material.
  * Requires `Authorization: Bearer <PACT_SERVER_SECRET>` (or BETTER_AUTH_SECRET).
  */
 export async function GET(request: NextRequest) {

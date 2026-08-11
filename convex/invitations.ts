@@ -50,7 +50,7 @@ export const getByToken = query({
 });
 
 /**
- * Server-only: load invite for email send — includes creator auth id + DB title.
+ * Server-only: load invite for email send - includes creator auth id + DB title.
  */
 export const getForInviteEmail = query({
   args: {

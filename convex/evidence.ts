@@ -19,7 +19,7 @@ export const generateUploadUrl = mutation({
   },
 });
 
-/** Auth gate for Next.js presign routes — membership checked in Convex. */
+/** Auth gate for Next.js presign routes - membership checked in Convex. */
 export const assertCanUpload = query({
   args: { commitmentId: v.id("commitments") },
   handler: async (ctx, args) => {

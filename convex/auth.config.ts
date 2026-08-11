@@ -15,7 +15,7 @@ const localIssuerIp = "http://127.0.0.1:3000";
 
 /**
  * Public ES256 JWKS for Pact-issued Convex JWTs (kid pact-convex-es256).
- * Private key lives in Next.js as PACT_CONVEX_JWT_PRIVATE_JWK — not Neon JWKS.
+ * Private key lives in Next.js as PACT_CONVEX_JWT_PRIVATE_JWK - not Neon JWKS.
  */
 const FALLBACK_JWKS_DATA_URI =
   "data:text/plain;charset=utf-8;base64,eyJrZXlzIjpbeyJrdHkiOiJFQyIsIngiOiJMaVFtZnBmN0gyWWhqbng0elphNWd6djdwaUVRbTZmLXR2R0dWM1NpWVJFIiwieSI6IldoR1JueGRBZDVvejZVMXZiVkE5QTFhTGJBLXVqelZKVkhtTVJIcjZUbWsiLCJjcnYiOiJQLTI1NiIsImtpZCI6InBhY3QtY29udmV4LWVzMjU2IiwidXNlIjoic2lnIiwiYWxnIjoiRVMyNTYifV19";
