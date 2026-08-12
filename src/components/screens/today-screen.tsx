@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery } from "convex/react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Search } from "lucide-react";
 import { motion } from "motion/react";
 
 import { api } from "@convex/_generated/api";
@@ -20,6 +20,7 @@ import { RotatingPactTitle } from "@/components/navigation/rotating-pact-title";
 import { InstallPrompt } from "@/components/pwa/install-prompt";
 import { TodayTimeline } from "@/components/today/today-timeline";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useCurrentUser } from "@/hooks/use-demo-user";
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 import { readOnboardingPending } from "@/lib/onboarding";
@@ -61,6 +62,7 @@ export function TodayScreen() {
   const router = useRouter();
   const reduceMotion = usePrefersReducedMotion();
   const [filter, setFilter] = useState("all");
+  const [titleQuery, setTitleQuery] = useState("");
   const {
     user,
     userId,
@@ -107,13 +109,14 @@ export function TodayScreen() {
     router.replace("/app/onboarding");
   }, [isAuthenticated, user, userLoading, router]);
 
+  const titleQ = titleQuery.trim().toLowerCase();
   const filteredCommitments = (todayCommitments ?? []).filter((c) => {
     if (filter === "blocked") {
-      return c.status === "blocked" || c.status === "need_help";
+      if (!(c.status === "blocked" || c.status === "need_help")) return false;
+    } else if (filter === "pacts") {
+      if (!c.pactId) return false;
     }
-    if (filter === "pacts") {
-      return Boolean(c.pactId);
-    }
+    if (titleQ && !c.title.toLowerCase().includes(titleQ)) return false;
     return true;
   });
 
@@ -202,7 +205,17 @@ export function TodayScreen() {
             ) : null}
           </p>
         </div>
-        <div className="flex shrink-0 items-center pt-1.5">
+        <div className="flex shrink-0 items-center gap-1.5 pt-1.5">
+          <Button
+            asChild
+            size="icon"
+            variant="ghost"
+            className="size-11 rounded-full border border-white/10 bg-white/5"
+          >
+            <Link href="/app/search" aria-label="Search">
+              <Search className="size-5" />
+            </Link>
+          </Button>
           <NotificationBell />
         </div>
       </header>
@@ -268,7 +281,15 @@ export function TodayScreen() {
             options={filterOptions}
             value={filter}
             onChange={setFilter}
-            className="mb-5"
+            className="mb-3"
+          />
+
+          <Input
+            value={titleQuery}
+            onChange={(e) => setTitleQuery(e.target.value)}
+            placeholder="Filter by title"
+            className="mb-5 h-11 rounded-2xl border-white/15 bg-white/5 text-white"
+            aria-label="Filter commitments by title"
           />
 
           <section className="mb-6">
@@ -288,11 +309,13 @@ export function TodayScreen() {
                   size="md"
                   title="Nothing in focus"
                   description={
-                    filter === "blocked"
-                      ? "No blocked commitments right now."
-                      : filter === "pacts"
-                        ? "No pact commitments due today."
-                        : "Add a commitment or personal task to fill today’s focus."
+                    titleQ
+                      ? `No commitments match “${titleQuery.trim()}”.`
+                      : filter === "blocked"
+                        ? "No blocked commitments right now."
+                        : filter === "pacts"
+                          ? "No pact commitments due today."
+                          : "Add a commitment or personal task to fill today’s focus."
                   }
                   primaryAction={{ href: "/app/new", label: "Add commitment" }}
                   secondaryAction={{

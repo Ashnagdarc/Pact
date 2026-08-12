@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { format } from "date-fns";
-import { Loader2 } from "lucide-react";
+import { Download, Loader2 } from "lucide-react";
 
 import { api } from "@convex/_generated/api";
 import { SurfaceCard } from "@/components/cards/surface-card";
@@ -21,10 +21,12 @@ import { AppShell } from "@/components/navigation/app-shell";
 import { ConvexSetupScreen } from "@/components/screens/convex-setup-screen";
 import { Button } from "@/components/ui/button";
 import { useCurrentUser } from "@/hooks/use-demo-user";
+import { downloadCsv, downloadJson } from "@/lib/export-progress";
 import {
   pactHealthLabel,
   pactHealthTone,
 } from "@/lib/pact-health-ui";
+import { planLimits } from "@/lib/plan";
 import { blockerLabel, type BlockerType } from "@/lib/rescue";
 import { cn } from "@/lib/utils";
 
@@ -37,7 +39,7 @@ export function InsightsScreen() {
 }
 
 function InsightsScreenConnected() {
-  const { userId, loading: userLoading } = useCurrentUser();
+  const { user, userId, loading: userLoading } = useCurrentUser();
   const [range, setRange] = useState<InsightsRange>(1);
   const overview = useQuery(
     api.insights.weekOverview,
@@ -47,10 +49,15 @@ function InsightsScreenConnected() {
     api.health.forUserPacts,
     userId ? {} : "skip"
   );
+  const commitments = useQuery(
+    api.commitments.listForAssignee,
+    userId ? {} : "skip"
+  );
   const ensureReview = useMutation(api.insights.ensureReview);
   const refreshHealth = useMutation(api.health.refresh);
   const [saved, setSaved] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const canExport = planLimits(user?.plan).calendarExport;
 
   if (userLoading || overview === undefined || pactHealth === undefined) {
     return (
@@ -73,6 +80,56 @@ function InsightsScreenConnected() {
       }
       setSaved(true);
     });
+  }
+
+  function exportPayload() {
+    return {
+      exportedAt: new Date().toISOString(),
+      rangeWeeks: range,
+      overview,
+      commitments: (commitments ?? []).map((c) => ({
+        id: c._id,
+        title: c.title,
+        status: c.status,
+        dueAt: c.dueAt ?? null,
+        completedAt: c.completedAt ?? null,
+        pactId: c.pactId ?? null,
+      })),
+    };
+  }
+
+  function exportJson() {
+    if (!canExport || !overview) return;
+    downloadJson(`pact-insights-${range}w.json`, exportPayload());
+  }
+
+  function exportCsv() {
+    if (!canExport || !overview) return;
+    const rows: Record<string, unknown>[] = [
+      {
+        section: "overview",
+        completedCount: overview.completedCount,
+        openCount: overview.openCount,
+        missedCount: overview.missedCount,
+        recoveredCount: overview.recoveredCount,
+        checkInCount: overview.checkInCount,
+        recoveryRate: overview.recoveryRate,
+        partnerResponseRate: overview.partnerResponseRate,
+        summary: overview.summary,
+        weekStart: overview.weekStart,
+        weekEnd: overview.weekEnd,
+      },
+      ...(commitments ?? []).map((c) => ({
+        section: "commitment",
+        id: c._id,
+        title: c.title,
+        status: c.status,
+        dueAt: c.dueAt ?? "",
+        completedAt: c.completedAt ?? "",
+        pactId: c.pactId ?? "",
+      })),
+    ];
+    downloadCsv(`pact-insights-${range}w.csv`, rows);
   }
 
   const rangeLabel =
@@ -100,7 +157,7 @@ function InsightsScreenConnected() {
             Insights
           </h1>
           <p className="mt-2 text-sm text-white/55">
-            Accountability vitals — completion, recovery, partners.
+            Accountability vitals: completion, recovery, partners.
           </p>
         </div>
         <InsightsRangeControl value={range} onChange={setRange} />
@@ -109,6 +166,38 @@ function InsightsScreenConnected() {
       <p className="mt-3 text-xs font-semibold tracking-wide text-white/45 uppercase">
         {rangeLabel}
       </p>
+
+      {canExport ? (
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={exportJson}
+            className="rounded-full"
+          >
+            <Download className="size-3.5" />
+            Export JSON
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={exportCsv}
+            className="rounded-full"
+          >
+            <Download className="size-3.5" />
+            Export CSV
+          </Button>
+        </div>
+      ) : (
+        <p className="mt-4 text-xs text-white/45">
+          Progress export is a Premium perk.{" "}
+          <Link href="/app/profile" className="underline underline-offset-2">
+            View plan
+          </Link>
+        </p>
+      )}
 
       {!hasActivity ? (
         <EmptyState
@@ -205,7 +294,7 @@ function InsightsScreenConnected() {
           Pact health
         </h2>
         <p className="mt-1 text-sm text-white/55">
-          Status with reasons — never just a mysterious score.
+          Status with reasons. Never just a mysterious score.
         </p>
         <div className="mt-4 space-y-3">
           {pactHealth.length === 0 ? (

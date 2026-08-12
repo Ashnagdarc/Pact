@@ -6,14 +6,13 @@ import { AnimatePresence, motion } from "motion/react";
 import { ArrowRight } from "lucide-react";
 
 import { SurfaceCard } from "@/components/cards/surface-card";
-import {
-  AvatarStack,
-  type AvatarPerson,
-} from "@/components/feedback/avatar-stack";
+import type { AvatarPerson } from "@/components/feedback/avatar-stack";
 import { PactHealthRing } from "@/components/health/pact-health-ring";
+import { BadgeAvatar } from "@/components/ui/avatar-badge";
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 import {
   pactHealthLabel,
+  pactHealthRingColor,
   shouldLeadWithPactHealth,
   type FeaturedPactHealth,
 } from "@/lib/pact-health-ui";
@@ -108,9 +107,22 @@ function metaLine(
       ? "1 commitment needs a hand"
       : `${blockedCount} commitments need a hand`;
   }
-  if (openCount === 0) return "Nothing due — add something small";
+  if (openCount === 0) return "Nothing due. Add something small";
   if (openCount === 1) return "1 open commitment";
   return `${openCount} open commitments`;
+}
+
+function ctaLabel(
+  openCount: number,
+  blockedCount: number,
+  featured?: FeaturedPactHealth | null
+) {
+  if (featured && shouldLeadWithPactHealth(featured.status)) {
+    return featured.status === "at_risk" ? "Open Pact" : "Check Pact";
+  }
+  if (blockedCount > 0) return "Help out";
+  if (openCount === 0) return "Add something";
+  return "Continue";
 }
 
 export function TodayPromptCard({
@@ -135,11 +147,13 @@ export function TodayPromptCard({
   const needsAttention = Boolean(leadHealth) || blockedCount > 0;
   const eyebrow = eyebrowForState(openCount, blockedCount, featuredHealth);
   const meta = metaLine(openCount, blockedCount, featuredHealth);
-  const showRing = Boolean(featuredHealth);
+  const action = ctaLabel(openCount, blockedCount, featuredHealth);
   const showWeek =
-    !showRing &&
     typeof weekCompleted === "number" &&
-    Number.isFinite(weekCompleted);
+    Number.isFinite(weekCompleted) &&
+    !needsAttention;
+  const calmHealth =
+    featuredHealth && !leadHealth ? featuredHealth : null;
 
   useEffect(() => {
     setPromptIndex(0);
@@ -179,117 +193,165 @@ export function TodayPromptCard({
           needsAttention ? "border border-coral-400/20" : "border border-white/10"
         )}
       >
-        <div className="flex items-stretch gap-3 px-5 py-5">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center justify-between gap-3">
-              <p
-                className={cn(
-                  "text-[11px] font-semibold tracking-[0.14em] uppercase",
-                  needsAttention ? "text-ink-950/70" : "text-volt-500"
-                )}
-              >
-                {eyebrow}
-              </p>
-              {people.length > 0 ? (
-                <AvatarStack people={people} size="sm" className="shrink-0" />
-              ) : null}
-            </div>
+        {!needsAttention ? (
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,color-mix(in_srgb,var(--volt-500)_18%,transparent),transparent_55%)]"
+          />
+        ) : null}
 
-            <div className="relative mt-2.5 min-h-[1.6em]">
-              {reduceMotion ? (
-                <p
-                  className={cn(
-                    "font-heading text-2xl font-bold leading-snug tracking-tight",
-                    needsAttention ? "text-ink-950" : "text-white"
-                  )}
-                >
-                  {prompt}
-                </p>
-              ) : (
-                <AnimatePresence mode="wait" initial={false}>
-                  <motion.p
-                    key={prompt}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    transition={{ duration: 0.26, ease: [0.22, 1, 0.36, 1] }}
-                    className={cn(
-                      "font-heading text-2xl font-bold leading-snug tracking-tight",
-                      needsAttention ? "text-ink-950" : "text-white"
-                    )}
-                  >
-                    {prompt}
-                  </motion.p>
-                </AnimatePresence>
+        <div className="relative px-5 pt-5 pb-4">
+          <div className="flex items-center justify-between gap-3">
+            <p
+              className={cn(
+                "text-[11px] font-semibold tracking-[0.14em] uppercase",
+                needsAttention ? "text-ink-950/70" : "text-volt-500"
               )}
-            </div>
-
-            <div className="mt-4 flex items-center justify-between gap-3">
-              <p
-                className={cn(
-                  "line-clamp-2 text-sm font-medium",
-                  needsAttention ? "text-ink-950/70" : "text-white/65"
-                )}
-              >
-                {meta}
-              </p>
-              <span
-                aria-hidden
-                className={cn(
-                  "inline-flex size-10 shrink-0 items-center justify-center rounded-full transition-transform duration-200 group-hover:translate-x-0.5",
-                  needsAttention
-                    ? "bg-ink-950 text-white"
-                    : "bg-volt-500 text-white"
-                )}
-              >
-                <ArrowRight className="size-4" strokeWidth={2.4} />
-              </span>
+            >
+              {eyebrow}
+            </p>
+            <div className="flex shrink-0 items-center gap-2">
+              {calmHealth ? (
+                <span
+                  className="inline-flex items-center gap-1.5 rounded-full border border-white/12 bg-white/6 px-2.5 py-1 text-[10px] font-semibold tracking-[0.08em] text-white/75 uppercase"
+                >
+                  <span
+                    className="size-1.5 rounded-full"
+                    style={{
+                      backgroundColor: pactHealthRingColor(calmHealth.status),
+                    }}
+                  />
+                  {pactHealthLabel[calmHealth.status]}
+                </span>
+              ) : null}
+              {people[0] ? (
+                <BadgeAvatar
+                  name={people[0].name}
+                  src={people[0].src}
+                  size="default"
+                />
+              ) : null}
             </div>
           </div>
 
-          {showRing && featuredHealth ? (
-            <div
-              className={cn(
-                "flex shrink-0 flex-col items-center justify-center self-center rounded-[1.35rem] px-2 py-2",
-                needsAttention ? "bg-ink-950/10" : "bg-white/6"
-              )}
-            >
-              <PactHealthRing
-                status={featuredHealth.status}
-                size={92}
-                showLabel={false}
-                contrast={needsAttention ? "onLight" : "onDark"}
+          {leadHealth ? (
+            <div className="mt-4 flex items-center gap-4">
+              <div className="min-w-0 flex-1">
+                <PromptHeadline
+                  prompt={prompt}
+                  reduceMotion={reduceMotion}
+                  needsAttention={needsAttention}
+                  size="lg"
+                />
+              </div>
+              <div className="shrink-0 rounded-[1.25rem] bg-ink-950/10 p-1.5">
+                <PactHealthRing
+                  status={leadHealth.status}
+                  size={78}
+                  showLabel={false}
+                  contrast="onLight"
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="mt-4">
+              <PromptHeadline
+                prompt={prompt}
+                reduceMotion={reduceMotion}
+                needsAttention={needsAttention}
+                size="xl"
               />
             </div>
-          ) : showWeek ? (
-            <div
-              className={cn(
-                "flex w-[4.75rem] shrink-0 flex-col items-center justify-center rounded-[1.35rem] px-2 py-3",
-                needsAttention ? "bg-ink-950/10" : "bg-white/6"
-              )}
-            >
+          )}
+
+          <p
+            className={cn(
+              "mt-3 line-clamp-2 text-sm font-medium",
+              needsAttention ? "text-ink-950/65" : "text-white/60"
+            )}
+          >
+            {meta}
+          </p>
+        </div>
+
+        <div
+          className={cn(
+            "relative flex items-center justify-between gap-3 border-t px-5 py-3.5",
+            needsAttention ? "border-ink-950/10" : "border-white/8"
+          )}
+        >
+          <div className="min-w-0">
+            {showWeek ? (
+              <p className="text-xs font-medium text-white/45">
+                <span className="font-heading text-base font-bold text-white/85">
+                  {weekCompleted}
+                </span>{" "}
+                kept this week
+              </p>
+            ) : (
               <p
                 className={cn(
-                  "text-display text-[2.75rem] leading-none tracking-[-0.05em]",
-                  needsAttention ? "text-ink-950" : "text-white"
+                  "text-sm font-semibold",
+                  needsAttention ? "text-ink-950/80" : "text-white/80"
                 )}
               >
-                {weekCompleted}
+                {action}
               </p>
-              <p
-                className={cn(
-                  "mt-1 text-center text-[10px] font-semibold leading-tight uppercase tracking-[0.08em]",
-                  needsAttention ? "text-ink-950/60" : "text-white/55"
-                )}
-              >
-                kept
-                <br />
-                this week
-              </p>
-            </div>
-          ) : null}
+            )}
+          </div>
+
+          <span
+            className={cn(
+              "inline-flex h-10 shrink-0 items-center gap-2 rounded-full px-3.5 text-sm font-bold transition-transform duration-200 group-hover:translate-x-0.5",
+              needsAttention
+                ? "bg-ink-950 text-white"
+                : "bg-volt-500 text-white"
+            )}
+          >
+            {showWeek ? action : null}
+            <ArrowRight className="size-4" strokeWidth={2.4} />
+          </span>
         </div>
       </SurfaceCard>
     </Link>
+  );
+}
+
+function PromptHeadline({
+  prompt,
+  reduceMotion,
+  needsAttention,
+  size,
+}: {
+  prompt: string;
+  reduceMotion: boolean;
+  needsAttention: boolean;
+  size: "lg" | "xl";
+}) {
+  const className = cn(
+    "font-heading font-bold leading-[1.12] tracking-tight",
+    size === "xl" ? "text-[1.85rem]" : "text-2xl",
+    needsAttention ? "text-ink-950" : "text-white"
+  );
+
+  if (reduceMotion) {
+    return <p className={className}>{prompt}</p>;
+  }
+
+  return (
+    <div className="relative min-h-[2.4em]">
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.p
+          key={prompt}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+          className={className}
+        >
+          {prompt}
+        </motion.p>
+      </AnimatePresence>
+    </div>
   );
 }

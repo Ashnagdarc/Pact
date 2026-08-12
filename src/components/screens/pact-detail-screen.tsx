@@ -24,6 +24,12 @@ import {
   pactHealthLabel,
   pactHealthTone,
 } from "@/lib/pact-health-ui";
+import {
+  canAddCircleMember,
+  planLimits,
+  PLAN_LABEL,
+  resolvePlan,
+} from "@/lib/plan";
 import type { CommitmentStatus } from "@/lib/status";
 import {
   frequencyLabel,
@@ -79,7 +85,7 @@ export function PactDetailScreen({ pactId }: PactDetailScreenProps) {
 function PactDetailConnected({ pactId }: PactDetailScreenProps) {
   const searchParams = useSearchParams();
   const justCreated = searchParams.get("created") === "1";
-  const { userId, loading: userLoading } = useCurrentUser();
+  const { userId, user, loading: userLoading } = useCurrentUser();
   const detail = useQuery(
     api.pacts.getById,
     userId ? { pactId: pactId as Id<"pacts"> } : "skip"
@@ -91,8 +97,10 @@ function PactDetailConnected({ pactId }: PactDetailScreenProps) {
   const createInvite = useMutation(api.pacts.createInvite);
   const ensureInvite = useMutation(api.pacts.ensureInvite);
   const updateSettings = useMutation(api.pacts.updateSettings);
+  const setPactStatus = useMutation(api.pacts.setStatus);
   const refreshHealth = useMutation(api.health.refresh);
   const [inviteToken, setInviteToken] = useState<string | null>(null);
+  const [inviteError, setInviteError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [ensured, setEnsured] = useState(false);
   // Expand invite after create, or when the owner taps Share.
@@ -112,13 +120,24 @@ function PactDetailConnected({ pactId }: PactDetailScreenProps) {
       setEnsured(true);
       return;
     }
+    const accepted = detail.members.filter(
+      (m) => m?.membership.invitationStatus === "accepted"
+    ).length;
+    if (!canAddCircleMember(user?.plan, accepted)) {
+      setEnsured(true);
+      return;
+    }
     let cancelled = false;
-    void ensureInvite({ pactId: detail.pact._id }).then((token) => {
-      if (!cancelled) {
-        setInviteToken(token);
-        setEnsured(true);
-      }
-    });
+    void ensureInvite({ pactId: detail.pact._id })
+      .then((token) => {
+        if (!cancelled) {
+          setInviteToken(token);
+          setEnsured(true);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setEnsured(true);
+      });
     return () => {
       cancelled = true;
     };
@@ -128,6 +147,7 @@ function PactDetailConnected({ pactId }: PactDetailScreenProps) {
     ensured,
     inviteToken,
     isOwner,
+    user?.plan,
     userId,
   ]);
 
@@ -163,15 +183,25 @@ function PactDetailConnected({ pactId }: PactDetailScreenProps) {
   const acceptedMembers = members.filter(
     (m) => m?.membership.invitationStatus === "accepted"
   );
+  const maxMembers = planLimits(user?.plan).maxCircleMembers;
+  const circleFull = !canAddCircleMember(user?.plan, acceptedMembers.length);
+  const planName = PLAN_LABEL[resolvePlan(user?.plan)];
 
   function refreshInvite() {
-    if (!userId) return;
+    if (!userId || circleFull) return;
+    setInviteError(null);
     startTransition(async () => {
-      const token = await createInvite({
-        pactId: pact._id,
-      });
-      setInviteToken(token);
-      await refreshHealth({ pactId: pact._id });
+      try {
+        const token = await createInvite({
+          pactId: pact._id,
+        });
+        setInviteToken(token);
+        await refreshHealth({ pactId: pact._id });
+      } catch (err) {
+        setInviteError(
+          err instanceof Error ? err.message : "Could not create invite"
+        );
+      }
     });
   }
 
@@ -252,6 +282,37 @@ function PactDetailConnected({ pactId }: PactDetailScreenProps) {
               </li>
             ))}
           </ul>
+        ) : null}
+
+        {isOwner &&
+        (pact.status === "active" ||
+          pact.status === "paused" ||
+          pact.status === "draft") ? (
+          <div className="mt-5 border-t border-white/10 pt-4">
+            <Button
+              type="button"
+              variant={pact.status === "paused" ? "soft" : "outline"}
+              size="lg"
+              disabled={isPending}
+              className="w-full"
+              onClick={() =>
+                startTransition(async () => {
+                  await setPactStatus({
+                    pactId: pact._id,
+                    status: pact.status === "paused" ? "active" : "paused",
+                  });
+                  await refreshHealth({ pactId: pact._id });
+                })
+              }
+            >
+              {pact.status === "paused" ? "Restart Pact" : "Pause Pact"}
+            </Button>
+            <p className="mt-2 text-center text-[11px] text-white/45">
+              {pact.status === "paused"
+                ? "Restarting resumes reminders and health tracking."
+                : "Pausing stops reminders and freezes Pact Health."}
+            </p>
+          </div>
         ) : null}
       </SurfaceCard>
 
@@ -371,7 +432,18 @@ function PactDetailConnected({ pactId }: PactDetailScreenProps) {
 
       {isOwner ? (
         <section id="invite" className="mt-8 scroll-mt-24 space-y-3">
-          {!inviteExpanded ? (
+          {circleFull ? (
+            <SurfaceCard tone="ink" className="border border-white/10">
+              <p className="text-sm font-semibold">Circle is full</p>
+              <p className="mt-1 text-xs text-white/55">
+                {acceptedMembers.length}/{maxMembers} members on {planName}. Premium
+                unlocks up to 12.
+              </p>
+              <Button asChild variant="soft" size="default" className="mt-3">
+                <Link href="/app/profile">View plan</Link>
+              </Button>
+            </SurfaceCard>
+          ) : !inviteExpanded ? (
             <SurfaceCard tone="ink" className="border border-white/10">
               <div className="flex items-center gap-3">
                 <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-signal/15 text-signal">
@@ -380,7 +452,8 @@ function PactDetailConnected({ pactId }: PactDetailScreenProps) {
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold">Invite a partner</p>
                   <p className="mt-0.5 text-xs text-white/55">
-                    Share a link when you want someone keeping you honest.
+                    Circle {acceptedMembers.length}/{maxMembers} · share a link when
+                    ready.
                   </p>
                 </div>
                 <Button
@@ -408,6 +481,10 @@ function PactDetailConnected({ pactId }: PactDetailScreenProps) {
                   Hide
                 </button>
               </div>
+
+              <p className="text-xs text-white/55">
+                Circle {acceptedMembers.length}/{maxMembers} ({planName})
+              </p>
 
               {activeToken ? (
                 <InviteShareCard
@@ -438,6 +515,9 @@ function PactDetailConnected({ pactId }: PactDetailScreenProps) {
                 )}
                 {activeToken ? "Refresh invite link" : "Create invite link"}
               </Button>
+              {inviteError ? (
+                <p className="text-xs text-coral-400">{inviteError}</p>
+              ) : null}
 
               <SurfaceCard tone="ink" className="border border-white/10">
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-white/65">

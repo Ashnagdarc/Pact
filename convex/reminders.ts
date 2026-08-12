@@ -28,6 +28,12 @@ export const deliverDue = internalMutation({
       if (commitment.status === "done" || commitment.status === "paused") {
         continue;
       }
+      if (commitment.pactId) {
+        const pact = await ctx.db.get(commitment.pactId);
+        if (pact?.status === "paused" || pact?.status === "ended") {
+          continue;
+        }
+      }
 
       await notify(ctx, {
         userId: commitment.assigneeId,
@@ -102,6 +108,10 @@ export const deliverOneCommitment = internalMutation({
     if (!commitment?.reminderAt || commitment.reminderSentAt) return;
     if (commitment.reminderAt > Date.now()) return;
     if (commitment.status === "done" || commitment.status === "paused") return;
+    if (commitment.pactId) {
+      const pact = await ctx.db.get(commitment.pactId);
+      if (pact?.status === "paused" || pact?.status === "ended") return;
+    }
 
     await notify(ctx, {
       userId: commitment.assigneeId,

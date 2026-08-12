@@ -17,6 +17,7 @@ import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import { SurfaceCard } from "@/components/cards/surface-card";
 import { PartnerResponseChips } from "@/components/check-in/partner-response-chips";
+import { FocusTimer } from "@/components/focus/focus-timer";
 import { StatusChip } from "@/components/feedback/status-chip";
 import { AppShell } from "@/components/navigation/app-shell";
 import { ConvexSetupScreen } from "@/components/screens/convex-setup-screen";
@@ -33,10 +34,14 @@ import {
 } from "@/lib/check-in";
 import {
   clearCheckInDraft,
+  clearPendingCheckIn,
+  enqueuePendingCheckIn,
+  listPendingCheckIns,
   readCheckInDraft,
   saveCheckInDraft,
 } from "@/lib/offline-drafts";
 import { EVIDENCE_MAX_BYTES, isAllowedEvidenceMime } from "@/lib/evidence-upload";
+import { planLimits } from "@/lib/plan";
 import {
   blockerLabel,
   needsRescue,
@@ -84,7 +89,7 @@ function CommitmentDetailConnected({
 }: CommitmentDetailScreenProps) {
   const searchParams = useSearchParams();
   const focusReply = searchParams.get("reply") === "1";
-  const { userId, loading: userLoading } = useCurrentUser();
+  const { userId, user, loading: userLoading } = useCurrentUser();
   const detail = useQuery(
     api.commitments.getById,
     userId
@@ -154,6 +159,41 @@ function CommitmentDetailConnected({
     }, 400);
     return () => window.clearTimeout(timer);
   }, [commitmentId, note, pendingSignal]);
+
+  useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+
+    async function flushPending() {
+      if (typeof navigator !== "undefined" && !navigator.onLine) return;
+      const pending = await listPendingCheckIns();
+      for (const row of pending) {
+        if (cancelled) return;
+        if (row.commitmentId !== commitmentId || row.id == null) continue;
+        try {
+          await submitCheckIn({
+            commitmentId: commitmentId as Id<"commitments">,
+            signal: row.signal as CheckInSignal,
+            note: row.note.trim() || undefined,
+            blockerType: row.blockerType,
+          });
+          await clearPendingCheckIn(row.id);
+        } catch {
+          // Keep queued for a later retry.
+        }
+      }
+    }
+
+    void flushPending();
+    const onOnline = () => {
+      void flushPending();
+    };
+    window.addEventListener("online", onOnline);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("online", onOnline);
+    };
+  }, [commitmentId, submitCheckIn, userId]);
 
   const isAssignee = Boolean(
     userId && detail?.commitment?.assigneeId === userId
@@ -234,9 +274,21 @@ function CommitmentDetailConnected({
         setDraftHint(null);
         await clearCheckInDraft(commitmentId);
       } catch (err) {
-        setUploadError(
-          err instanceof Error ? err.message : "Could not send check-in"
-        );
+        const message =
+          err instanceof Error ? err.message : "Could not send check-in";
+        try {
+          await enqueuePendingCheckIn({
+            commitmentId,
+            signal,
+            note: note.trim(),
+            lastError: message,
+          });
+          setUploadError("Queued offline — will send when you’re back online");
+          setDraftHint("Check-in queued for retry");
+          await clearCheckInDraft(commitmentId);
+        } catch {
+          setUploadError(message);
+        }
       } finally {
         setPendingSignal(null);
       }
@@ -421,6 +473,15 @@ function CommitmentDetailConnected({
         ) : null}
       </SurfaceCard>
 
+      {isAssignee ? (
+        <FocusTimer
+          className="mt-4"
+          maxMinutes={planLimits(user?.plan).focusMinutesMax}
+          defaultMinutes={Math.min(25, planLimits(user?.plan).focusMinutesMax)}
+          label="Focus on this"
+        />
+      ) : null}
+
       {showRescue ? (
         <SurfaceCard tone="coral" className="mt-4 rounded-[1.75rem]">
           <div className="flex items-start gap-3">
@@ -450,7 +511,7 @@ function CommitmentDetailConnected({
         <SurfaceCard tone="coral" className="mt-4 rounded-[1.75rem]">
           <p className="font-heading text-lg font-bold">Partner needs support</p>
           <p className="mt-1 text-sm font-medium opacity-80">
-            Reply in a few taps — no long thread required.
+            Reply in a few taps. No long thread required.
           </p>
           <Button
             type="button"
@@ -478,7 +539,7 @@ function CommitmentDetailConnected({
             Reply fast
           </h2>
           <p className="mt-1 text-sm text-white/55">
-            Structured partner response — five seconds.
+            Structured partner response. Five seconds.
           </p>
           <SurfaceCard tone="ink" className="mt-3 border border-white/10">
             <div className="flex items-start justify-between gap-3">

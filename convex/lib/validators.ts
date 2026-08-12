@@ -60,6 +60,13 @@ export const checkInFrequency = v.union(
   v.literal("custom")
 );
 
+/** Commitment recurrence (subset of check-in cadence). */
+export const recurrenceRule = v.union(
+  v.literal("daily"),
+  v.literal("weekdays"),
+  v.literal("weekly")
+);
+
 export const memberRole = v.union(
   v.literal("owner"),
   v.literal("partner"),

@@ -2,13 +2,14 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
-import { cardTone, commitmentStatus } from "./lib/validators";
+import { cardTone, commitmentStatus, recurrenceRule } from "./lib/validators";
 import {
   requireAppUser,
   requireCommitmentAccess,
   requirePactMember,
 } from "./lib/auth";
 import { notify } from "./lib/notify";
+import { spawnNextRecurrence } from "./lib/recurrence";
 import { dayBoundsInTimeZone } from "./lib/time";
 
 function startOfWeek(ms = Date.now()) {
@@ -43,6 +44,33 @@ export const listForToday = query({
         if (!c.dueAt) return c.status !== "done" && c.status !== "paused";
         return c.dueAt >= dayStart && c.dueAt <= dayEnd;
       })
+      .sort((a, b) => (a.dueAt ?? 0) - (b.dueAt ?? 0));
+  },
+});
+
+/** Commitments with dueAt in [start, end] for the signed-in assignee (calendar). */
+export const listForDueRange = query({
+  args: {
+    start: v.number(),
+    end: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const user = await requireAppUser(ctx);
+    if (args.end < args.start) {
+      throw new Error("Invalid date range");
+    }
+    const commitments = await ctx.db
+      .query("commitments")
+      .withIndex("by_assignee_dueAt", (q) =>
+        q
+          .eq("assigneeId", user._id)
+          .gte("dueAt", args.start)
+          .lte("dueAt", args.end)
+      )
+      .collect();
+
+    return commitments
+      .filter((c) => c.status !== "paused")
       .sort((a, b) => (a.dueAt ?? 0) - (b.dueAt ?? 0));
   },
 });
@@ -136,6 +164,8 @@ export const create = mutation({
         })
       )
     ),
+    isRecurring: v.optional(v.boolean()),
+    recurrenceRule: v.optional(recurrenceRule),
   },
   handler: async (ctx, args) => {
     const creator = await requireAppUser(ctx);
@@ -143,8 +173,22 @@ export const create = mutation({
     if (args.pactId) {
       await requirePactMember(ctx, args.pactId, creator._id);
       await requirePactMember(ctx, args.pactId, args.assigneeId);
+      const pact = await ctx.db.get(args.pactId);
+      if (pact?.status === "paused") {
+        throw new Error("This Pact is paused. Restart it before adding commitments.");
+      }
+      if (pact?.status === "ended" || pact?.status === "completed") {
+        throw new Error("This Pact has ended");
+      }
     } else if (args.assigneeId !== creator._id) {
       throw new Error("Cannot assign solo commitments to others");
+    }
+
+    if (args.isRecurring && !args.recurrenceRule) {
+      throw new Error("Pick a recurrence: daily, weekdays, or weekly");
+    }
+    if (args.isRecurring && !args.dueAt) {
+      throw new Error("Recurring commitments need a due date");
     }
 
     const reminderAt = args.reminderAt ?? defaultReminderAt(args.dueAt);
@@ -162,7 +206,14 @@ export const create = mutation({
       favorited: args.favorited ?? false,
       checklist: args.checklist,
       tone: args.tone,
+      isRecurring: args.isRecurring || undefined,
+      recurrenceRule: args.isRecurring ? args.recurrenceRule : undefined,
     });
+
+    // Anchor the series on the first instance.
+    if (args.isRecurring) {
+      await ctx.db.patch(commitmentId, { seriesId: commitmentId });
+    }
 
     await ctx.db.insert("activityEvents", {
       userId: creator._id,
@@ -363,6 +414,15 @@ export const updateStatus = mutation({
         args.status === "done" ? "commitment_completed" : "commitment_updated",
       metadata: { commitmentId: args.commitmentId, status: args.status },
     });
+
+    if (args.status === "done") {
+      const assignee = await ctx.db.get(existing.assigneeId);
+      await spawnNextRecurrence(
+        ctx,
+        existing,
+        assignee?.timezone || "UTC"
+      );
+    }
   },
 });
 
@@ -414,6 +474,15 @@ export const toggleChecklistItem = mutation({
           : existing.status,
       completedAt: allDone ? Date.now() : undefined,
     });
+
+    if (allDone && existing.status !== "done") {
+      const assignee = await ctx.db.get(existing.assigneeId);
+      await spawnNextRecurrence(
+        ctx,
+        existing,
+        assignee?.timezone || "UTC"
+      );
+    }
   },
 });
 

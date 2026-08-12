@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import { notify } from "./lib/notify";
 import { requireAppUser } from "./lib/auth";
 import { findPactMembership } from "./lib/dedupe";
+import { assertCircleHasCapacity } from "./lib/plan";
 import { assertServerSecret } from "./lib/serverSecret";
 
 export const getByToken = query({
@@ -149,6 +150,8 @@ export const accept = mutation({
     }
 
     if (existingMembership) {
+      const owner = await ctx.db.get(pact.ownerId);
+      await assertCircleHasCapacity(ctx, invitation.pactId, owner?.plan);
       await ctx.db.patch(existingMembership._id, {
         invitationStatus: "accepted",
         role: invitation.role === "owner" ? "partner" : invitation.role,
@@ -156,6 +159,8 @@ export const accept = mutation({
         lastActiveAt: Date.now(),
       });
     } else {
+      const owner = await ctx.db.get(pact.ownerId);
+      await assertCircleHasCapacity(ctx, invitation.pactId, owner?.plan);
       await ctx.db.insert("pactMembers", {
         pactId: invitation.pactId,
         userId,

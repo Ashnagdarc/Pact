@@ -18,6 +18,23 @@ export const createCommitmentSchema = z.object({
   evidenceRequired: z.boolean(),
   asPersonalTask: z.boolean(),
   tone: z.enum(["coral", "volt", "cream", "mint", "paper", "signal"]),
+  isRecurring: z.boolean(),
+  recurrenceRule: z.enum(["daily", "weekdays", "weekly"]),
+}).superRefine((values, ctx) => {
+  if (values.isRecurring && values.duePreset === "none") {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Recurring items need a due date",
+      path: ["duePreset"],
+    });
+  }
+  if (values.isRecurring && values.asPersonalTask) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Recurring is for pact commitments (not personal tasks yet)",
+      path: ["isRecurring"],
+    });
+  }
 });
 
 export type CreateCommitmentValues = z.infer<typeof createCommitmentSchema>;

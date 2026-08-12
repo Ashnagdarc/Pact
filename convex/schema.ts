@@ -31,6 +31,16 @@ export default defineSchema({
     emailNotifications: v.optional(v.boolean()),
     /** Prefer push delivery for notify(); undefined means on (legacy rows). */
     pushNotifications: v.optional(v.boolean()),
+    /** free | premium — Stripe billing wires later when Vercel integration is installed. */
+    plan: v.optional(v.union(v.literal("free"), v.literal("premium"))),
+    /** Quiet hours — suppress push/email (in-app still delivered). */
+    quietHoursEnabled: v.optional(v.boolean()),
+    quietHoursStart: v.optional(v.string()), // "HH:mm" local
+    quietHoursEnd: v.optional(v.string()),
+    /** When false, quiet hours skip Sat/Sun. Default/undefined = include weekends. */
+    quietHoursIncludeWeekends: v.optional(v.boolean()),
+    /** Allow help_request / rescue-style push during quiet hours. Default/undefined = allow. */
+    quietHoursAllowUrgent: v.optional(v.boolean()),
   })
     .index("by_authUserId", ["authUserId"])
     .index("by_email", ["email"]),
@@ -141,6 +151,12 @@ export default defineSchema({
       )
     ),
     tone: v.optional(cardTone),
+    isRecurring: v.optional(v.boolean()),
+    recurrenceRule: v.optional(
+      v.union(v.literal("daily"), v.literal("weekdays"), v.literal("weekly"))
+    ),
+    /** Shared across spawned instances; defaults to first commitment id. */
+    seriesId: v.optional(v.string()),
   })
     .index("by_assignee", ["assigneeId"])
     .index("by_pact", ["pactId"])

@@ -4,8 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  CalendarDays,
   LayoutGrid,
-  LineChart,
   Plus,
   Sun,
   UserRound,
@@ -25,7 +25,7 @@ const tabs: Tab[] = [
   { href: "/app", label: "Today", icon: Sun },
   { href: "/app/pacts", label: "Pacts", icon: LayoutGrid },
   { href: "/app/new", label: "New", icon: Plus, primary: true },
-  { href: "/app/insights", label: "Insights", icon: LineChart },
+  { href: "/app/calendar", label: "Cal", icon: CalendarDays },
   { href: "/app/profile", label: "You", icon: UserRound },
 ];
 

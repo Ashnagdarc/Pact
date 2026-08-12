@@ -7,6 +7,7 @@ import { Bell } from "lucide-react";
 
 import { api } from "@convex/_generated/api";
 import { Button } from "@/components/ui/button";
+import { useAppBadge } from "@/hooks/use-app-badge";
 import { useCurrentUser } from "@/hooks/use-demo-user";
 import { cn } from "@/lib/utils";
 
@@ -21,6 +22,7 @@ export function NotificationBell({ className }: NotificationBellProps) {
     userId ? {} : "skip"
   );
   const syncRescuePrompts = useMutation(api.notifications.syncRescuePrompts);
+  useAppBadge(unread);
 
   useEffect(() => {
     if (!userId) return;

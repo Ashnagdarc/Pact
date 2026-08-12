@@ -1,7 +1,8 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2, Plus, Search } from "lucide-react";
 import { useQuery } from "convex/react";
 
 import { api } from "@convex/_generated/api";
@@ -9,9 +10,17 @@ import { PactBoardCard } from "@/components/cards/pact-board-card";
 import { SurfaceCard } from "@/components/cards/surface-card";
 import { EmptyState } from "@/components/feedback/empty-state";
 import { AppShell } from "@/components/navigation/app-shell";
+import { FilterChips } from "@/components/navigation/filter-chips";
 import { ConvexSetupScreen } from "@/components/screens/convex-setup-screen";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useCurrentUser } from "@/hooks/use-demo-user";
+
+const statusFilters = [
+  { id: "all", label: "All" },
+  { id: "active", label: "Active" },
+  { id: "paused", label: "Paused" },
+];
 
 export function PactsScreen() {
   if (!process.env.NEXT_PUBLIC_CONVEX_URL) {
@@ -27,6 +36,33 @@ function PactsScreenConnected() {
     api.pacts.listForUser,
     userId ? {} : "skip"
   );
+  const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+
+  const filteredBoards = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return (boards ?? []).filter((board) => {
+      if (!board) return false;
+      if (statusFilter === "active" && board.pact.status !== "active") {
+        return false;
+      }
+      if (statusFilter === "paused" && board.pact.status !== "paused") {
+        return false;
+      }
+      if (q && !board.pact.title.toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }, [boards, query, statusFilter]);
+
+  const filterOptions = statusFilters.map((f) => ({
+    ...f,
+    count:
+      f.id === "all"
+        ? (boards ?? []).filter(Boolean).length
+        : (boards ?? []).filter(
+            (b) => b && b.pact.status === f.id
+          ).length,
+  }));
 
   if (loading || (userId && boards === undefined)) {
     return (
@@ -76,6 +112,26 @@ function PactsScreenConnected() {
         </Button>
       </div>
 
+      {(boards ?? []).length > 0 ? (
+        <div className="mt-5 space-y-3">
+          <div className="relative">
+            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-white/45" />
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search by title"
+              className="h-11 rounded-2xl border-white/15 bg-white/5 pl-10 text-white"
+              aria-label="Search pacts by title"
+            />
+          </div>
+          <FilterChips
+            options={filterOptions}
+            value={statusFilter}
+            onChange={setStatusFilter}
+          />
+        </div>
+      ) : null}
+
       <div className="mt-6 space-y-3">
         {(boards ?? []).length === 0 ? (
           <EmptyState
@@ -83,8 +139,18 @@ function PactsScreenConnected() {
             description="Create a board, add commitments, and invite a partner to keep you accountable."
             primaryAction={{ href: "/app/pacts/new", label: "Create Pact" }}
           />
+        ) : filteredBoards.length === 0 ? (
+          <EmptyState
+            size="md"
+            title="No matching pacts"
+            description={
+              query.trim()
+                ? `Nothing matches “${query.trim()}”.`
+                : "Try another status filter."
+            }
+          />
         ) : (
-          boards!.map((board) =>
+          filteredBoards.map((board) =>
             board ? (
               <PactBoardCard
                 key={board.pact._id}

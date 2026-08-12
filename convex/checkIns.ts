@@ -7,6 +7,7 @@ import {
   requireCommitmentAccess,
   requirePactMember,
 } from "./lib/auth";
+import { spawnNextRecurrence } from "./lib/recurrence";
 
 const CHECK_IN_DEDUP_MS = 15_000;
 
@@ -137,6 +138,10 @@ export const submit = mutation({
         signal: args.signal,
       },
     });
+
+    if (nextStatus === "done" && commitment.status !== "done") {
+      await spawnNextRecurrence(ctx, commitment, user.timezone || "UTC");
+    }
 
     const actorName = user.displayName;
     const href = `/app/commitments/${args.commitmentId}?reply=1`;

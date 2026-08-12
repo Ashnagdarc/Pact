@@ -150,6 +150,77 @@ export const completeOnboarding = mutation({
   },
 });
 
+/** Set plan after billing confirms (or local unlock while Stripe is pending). */
+export const setPlan = mutation({
+  args: {
+    plan: v.union(v.literal("free"), v.literal("premium")),
+    unlockToken: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const user = await requireAppUser(ctx);
+    if (args.plan === "premium") {
+      const expected = process.env.PREMIUM_UNLOCK_TOKEN;
+      if (!expected || args.unlockToken !== expected) {
+        throw new Error(
+          "Premium billing is not connected yet. Install Stripe via Vercel Marketplace, or use a valid unlock token."
+        );
+      }
+    }
+    await ctx.db.patch(user._id, { plan: args.plan });
+    return args.plan;
+  },
+});
+
+/** Post-onboarding notification + quiet-hours prefs. */
+export const updateNotificationPrefs = mutation({
+  args: {
+    emailNotifications: v.optional(v.boolean()),
+    pushNotifications: v.optional(v.boolean()),
+    quietHoursEnabled: v.optional(v.boolean()),
+    quietHoursStart: v.optional(v.string()),
+    quietHoursEnd: v.optional(v.string()),
+    quietHoursIncludeWeekends: v.optional(v.boolean()),
+    quietHoursAllowUrgent: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const user = await requireAppUser(ctx);
+
+    const hm = (value: string | undefined) => {
+      if (value === undefined) return undefined;
+      if (!/^\d{1,2}:\d{2}$/.test(value.trim())) {
+        throw new Error("Quiet hours must use HH:mm");
+      }
+      return value.trim();
+    };
+
+    await ctx.db.patch(user._id, {
+      ...(typeof args.emailNotifications === "boolean"
+        ? { emailNotifications: args.emailNotifications }
+        : {}),
+      ...(typeof args.pushNotifications === "boolean"
+        ? { pushNotifications: args.pushNotifications }
+        : {}),
+      ...(typeof args.quietHoursEnabled === "boolean"
+        ? { quietHoursEnabled: args.quietHoursEnabled }
+        : {}),
+      ...(args.quietHoursStart !== undefined
+        ? { quietHoursStart: hm(args.quietHoursStart) }
+        : {}),
+      ...(args.quietHoursEnd !== undefined
+        ? { quietHoursEnd: hm(args.quietHoursEnd) }
+        : {}),
+      ...(typeof args.quietHoursIncludeWeekends === "boolean"
+        ? { quietHoursIncludeWeekends: args.quietHoursIncludeWeekends }
+        : {}),
+      ...(typeof args.quietHoursAllowUrgent === "boolean"
+        ? { quietHoursAllowUrgent: args.quietHoursAllowUrgent }
+        : {}),
+    });
+
+    return user._id;
+  },
+});
+
 /** Current signed-in app user (from JWT subject → users.authUserId). */
 export const getCurrent = query({
   args: {},

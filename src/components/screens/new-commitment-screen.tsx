@@ -19,6 +19,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { useCurrentUser } from "@/hooks/use-demo-user";
 import { cn } from "@/lib/utils";
 import {
+  clearCreateDraft,
+  readCreateDraft,
+  saveCreateDraft,
+} from "@/lib/offline-drafts";
+import {
   createCommitmentSchema,
   dueAtFromPreset,
   type CreateCommitmentValues,
@@ -40,6 +45,15 @@ const dueOptions: { id: CreateCommitmentValues["duePreset"]; label: string }[] =
     { id: "week", label: "In a week" },
     { id: "none", label: "No due date" },
   ];
+
+const recurrenceOptions: {
+  id: CreateCommitmentValues["recurrenceRule"];
+  label: string;
+}[] = [
+  { id: "daily", label: "Daily" },
+  { id: "weekdays", label: "Weekdays" },
+  { id: "weekly", label: "Weekly" },
+];
 
 export function NewCommitmentScreen({
   initialPactId,
@@ -74,9 +88,16 @@ function NewCommitmentForm({
   const createTask = useMutation(api.tasks.create);
   const [submitting, setSubmitting] = useState(false);
   const [showMore, setShowMore] = useState(false);
+  const [draftHint, setDraftHint] = useState<string | null>(null);
   const defaultedPactRef = useRef(false);
+  const draftHydratedRef = useRef(false);
 
   const preferPersonal = Boolean(initialAsPersonalTask) || !initialPactId;
+  const draftScope = initialAsPersonalTask
+    ? "new-task"
+    : initialPactId
+      ? `pact:${initialPactId}`
+      : "new";
 
   const form = useForm<CreateCommitmentValues>({
     resolver: zodResolver(createCommitmentSchema),
@@ -89,6 +110,8 @@ function NewCommitmentForm({
       evidenceRequired: false,
       asPersonalTask: preferPersonal,
       tone: "volt",
+      isRecurring: false,
+      recurrenceRule: "weekly",
     },
   });
 
@@ -98,6 +121,64 @@ function NewCommitmentForm({
   const selectedAssignee = form.watch("assigneeId");
   const evidenceRequired = form.watch("evidenceRequired");
   const asPersonalTask = form.watch("asPersonalTask");
+  const isRecurring = form.watch("isRecurring");
+  const recurrenceRule = form.watch("recurrenceRule");
+  const watchedTitle = form.watch("title");
+  const watchedDescription = form.watch("description");
+
+  useEffect(() => {
+    if (draftHydratedRef.current) return;
+    draftHydratedRef.current = true;
+    void readCreateDraft(draftScope).then((draft) => {
+      if (!draft) return;
+      form.reset({
+        title: draft.title,
+        description: draft.description,
+        pactId: draft.pactId || (initialAsPersonalTask ? "" : (initialPactId ?? "")),
+        assigneeId: draft.assigneeId,
+        duePreset: (draft.duePreset as CreateCommitmentValues["duePreset"]) || "today",
+        evidenceRequired: draft.evidenceRequired,
+        asPersonalTask: draft.asPersonalTask,
+        tone: (draft.tone as CreateCommitmentValues["tone"]) || "volt",
+        isRecurring: draft.isRecurring,
+        recurrenceRule:
+          (draft.recurrenceRule as CreateCommitmentValues["recurrenceRule"]) ||
+          "weekly",
+      });
+      setDraftHint("Restored offline draft");
+    });
+  }, [draftScope, form, initialAsPersonalTask, initialPactId]);
+
+  useEffect(() => {
+    if (!draftHydratedRef.current) return;
+    const handle = window.setTimeout(() => {
+      void saveCreateDraft(draftScope, {
+        title: watchedTitle,
+        description: watchedDescription ?? "",
+        duePreset: selectedDue,
+        evidenceRequired,
+        asPersonalTask,
+        tone: selectedTone,
+        pactId: selectedPact ?? "",
+        assigneeId: selectedAssignee ?? "",
+        isRecurring,
+        recurrenceRule,
+      });
+    }, 400);
+    return () => window.clearTimeout(handle);
+  }, [
+    asPersonalTask,
+    draftScope,
+    evidenceRequired,
+    isRecurring,
+    recurrenceRule,
+    selectedAssignee,
+    selectedDue,
+    selectedPact,
+    selectedTone,
+    watchedDescription,
+    watchedTitle,
+  ]);
 
   const availableBoards = useMemo(
     () => (boards ?? []).filter((board): board is NonNullable<typeof board> => Boolean(board)),
@@ -188,6 +269,7 @@ function NewCommitmentForm({
             : undefined,
           tone: values.tone,
         });
+        await clearCreateDraft(draftScope);
         router.push(`/app/tasks/${taskId}`);
         return;
       }
@@ -203,7 +285,10 @@ function NewCommitmentForm({
         tone: values.tone,
         favorited: false,
         evidenceRequired: values.evidenceRequired,
+        isRecurring: values.isRecurring || undefined,
+        recurrenceRule: values.isRecurring ? values.recurrenceRule : undefined,
       });
+      await clearCreateDraft(draftScope);
 
       if (values.pactId) {
         router.push(`/app/pacts/${values.pactId}`);
@@ -387,7 +472,72 @@ function NewCommitmentForm({
               </button>
             ))}
           </div>
+          {form.formState.errors.duePreset ? (
+            <p className="mt-2 text-xs text-coral-400">
+              {form.formState.errors.duePreset.message}
+            </p>
+          ) : null}
         </SurfaceCard>
+
+        {!asPersonalTask ? (
+          <SurfaceCard tone="ink" className="border border-white/10">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-white/65">
+                  Repeat
+                </p>
+                <p className="mt-1 text-xs text-white/55">
+                  Spawn the next one when you mark this done.
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={isRecurring}
+                onClick={() => form.setValue("isRecurring", !isRecurring)}
+                className={cn(
+                  "relative h-7 w-12 rounded-full transition-colors",
+                  isRecurring ? "bg-volt-500" : "bg-white/15"
+                )}
+              >
+                <span
+                  className={cn(
+                    "absolute top-0.5 left-0.5 size-6 rounded-full bg-white transition-transform",
+                    isRecurring ? "translate-x-5" : "translate-x-0"
+                  )}
+                />
+              </button>
+            </div>
+            {isRecurring ? (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {recurrenceOptions.map((option) => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => form.setValue("recurrenceRule", option.id)}
+                    className={cn(
+                      "min-h-10 rounded-full border px-4 text-sm font-semibold transition-colors",
+                      recurrenceRule === option.id
+                        ? "border-volt-500 bg-volt-500 text-white"
+                        : "border-white/15 text-white/70"
+                    )}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+            {form.formState.errors.isRecurring ? (
+              <p className="mt-2 text-xs text-coral-400">
+                {form.formState.errors.isRecurring.message}
+              </p>
+            ) : null}
+          </SurfaceCard>
+        ) : null}
+
+        {draftHint ? (
+          <p className="text-center text-[11px] text-white/45">{draftHint}</p>
+        ) : null}
 
         {selectedPact ? (
           <SurfaceCard tone="ink" className="border border-white/10">

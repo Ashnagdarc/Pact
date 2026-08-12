@@ -32,6 +32,8 @@ export const config = {
     "/app/commitments/:path*",
     "/app/tasks/:path*",
     "/app/insights",
+    "/app/calendar",
+    "/app/search",
     "/app/notifications",
     "/app/profile",
     "/app/new",

@@ -7,6 +7,9 @@ import {
   memberRole,
 } from "./lib/validators";
 import { requireAppUser, requirePactMember } from "./lib/auth";
+import { assertCircleHasCapacity } from "./lib/plan";
+import { refreshPactHealth } from "./lib/health";
+import { notifyPactPartners } from "./lib/notify";
 
 const privacyLevel = v.union(
   v.literal("private"),
@@ -263,6 +266,67 @@ export const updateSettings = mutation({
   },
 });
 
+/** Owner pause / restart (active ↔ paused). */
+export const setStatus = mutation({
+  args: {
+    pactId: v.id("pacts"),
+    status: v.union(v.literal("active"), v.literal("paused")),
+  },
+  handler: async (ctx, args) => {
+    const user = await requireAppUser(ctx);
+    const pact = await ctx.db.get(args.pactId);
+    if (!pact) {
+      throw new Error("Pact not found");
+    }
+
+    const membership = await requirePactMember(ctx, args.pactId, user._id);
+    if (membership.role !== "owner" && pact.ownerId !== user._id) {
+      throw new Error("Only the owner can pause or restart this Pact");
+    }
+
+    if (pact.status === "ended" || pact.status === "completed") {
+      throw new Error("This Pact has already ended");
+    }
+
+    if (pact.status === args.status) {
+      return args.status;
+    }
+
+    if (args.status === "paused" && pact.status !== "active" && pact.status !== "draft") {
+      throw new Error("Only an active Pact can be paused");
+    }
+    if (args.status === "active" && pact.status !== "paused" && pact.status !== "draft") {
+      throw new Error("Only a paused Pact can be restarted");
+    }
+
+    await ctx.db.patch(args.pactId, { status: args.status });
+
+    await ctx.db.insert("activityEvents", {
+      userId: user._id,
+      pactId: args.pactId,
+      eventName: args.status === "paused" ? "pact_paused" : "pact_restarted",
+      metadata: { previous: pact.status },
+    });
+
+    await refreshPactHealth(ctx, args.pactId);
+
+    await notifyPactPartners(ctx, {
+      pactId: args.pactId,
+      excludeUserId: user._id,
+      actorId: user._id,
+      type: "partner_update",
+      title: args.status === "paused" ? "Pact paused" : "Pact restarted",
+      body:
+        args.status === "paused"
+          ? `${user.displayName} paused “${pact.title}”.`
+          : `${user.displayName} restarted “${pact.title}”.`,
+      href: `/app/pacts/${args.pactId}`,
+    });
+
+    return args.status;
+  },
+});
+
 export const createInvite = mutation({
   args: {
     pactId: v.id("pacts"),
@@ -280,6 +344,8 @@ export const createInvite = mutation({
     if (membership.role !== "owner") {
       throw new Error("Only the owner can create invites");
     }
+
+    await assertCircleHasCapacity(ctx, args.pactId, user.plan);
 
     // Revoke previous pending invites - invites are single-use (B5).
     const pending = await ctx.db
@@ -335,6 +401,8 @@ export const ensureInvite = mutation({
     if (pending && pending.expiresAt > Date.now()) {
       return pending.token;
     }
+
+    await assertCircleHasCapacity(ctx, args.pactId, user.plan);
 
     if (pending) {
       await ctx.db.patch(pending._id, { status: "expired" });

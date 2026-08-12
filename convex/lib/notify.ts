@@ -1,6 +1,7 @@
 import type { Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { internal } from "../_generated/api";
+import { shouldSuppressExternalNotify } from "./quietHours";
 
 type NotifyChannels = {
   /** Insert in-app row only - skip email and push fan-out. */
@@ -45,8 +46,19 @@ export async function notify(ctx: MutationCtx, args: NotifyArgs) {
   // Undefined prefs default to on so legacy rows keep prior behavior.
   const pushOk = user?.pushNotifications !== false;
   const emailOk = user?.emailNotifications !== false;
+  const quiet = shouldSuppressExternalNotify(
+    {
+      quietHoursEnabled: user?.quietHoursEnabled,
+      quietHoursStart: user?.quietHoursStart,
+      quietHoursEnd: user?.quietHoursEnd,
+      quietHoursIncludeWeekends: user?.quietHoursIncludeWeekends,
+      quietHoursAllowUrgent: user?.quietHoursAllowUrgent,
+      timezone: user?.timezone,
+    },
+    args.type
+  );
 
-  if (pushOk) {
+  if (pushOk && !quiet) {
     await ctx.scheduler.runAfter(0, internal.push.deliverToUser, {
       userId: args.userId,
       title: args.title,
@@ -55,7 +67,7 @@ export async function notify(ctx: MutationCtx, args: NotifyArgs) {
     });
   }
 
-  if (emailOk) {
+  if (emailOk && !quiet) {
     await ctx.scheduler.runAfter(0, internal.email.deliverToUser, {
       userId: args.userId,
       title: args.title,

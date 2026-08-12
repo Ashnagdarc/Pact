@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useCurrentUser } from "@/hooks/use-demo-user";
 import { cn } from "@/lib/utils";
+import { PACT_TEMPLATES } from "@/lib/pact-templates";
 import {
   createPactSchema,
   frequencyLabel,
@@ -49,6 +50,7 @@ function CreatePactForm() {
   const createPact = useMutation(api.pacts.create);
   const [submitting, setSubmitting] = useState(false);
   const [showMore, setShowMore] = useState(false);
+  const [templateId, setTemplateId] = useState<string | null>(null);
 
   const form = useForm<CreatePactValues>({
     resolver: zodResolver(createPactSchema),
@@ -62,6 +64,21 @@ function CreatePactForm() {
       tone: "signal",
     },
   });
+
+  function applyTemplate(id: string) {
+    const template = PACT_TEMPLATES.find((t) => t.id === id);
+    if (!template) return;
+    setTemplateId(id);
+    form.reset({
+      title: template.values.title,
+      description: template.values.description ?? "",
+      goalType: template.values.goalType,
+      accountabilityStyle: template.values.accountabilityStyle,
+      checkInFrequency: template.values.checkInFrequency ?? "daily",
+      privacyLevel: template.values.privacyLevel ?? "invite_only",
+      tone: template.values.tone ?? "signal",
+    });
+  }
 
   const selectedTone = form.watch("tone");
   const selectedGoal = form.watch("goalType");
@@ -122,6 +139,32 @@ function CreatePactForm() {
       <p className="mt-2 text-sm text-white/55">
         Name it, create it, then invite a partner.
       </p>
+
+      <div className="mt-5">
+        <p className="mb-2 text-[11px] font-semibold tracking-[0.14em] text-white/45 uppercase">
+          Templates
+        </p>
+        <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+          {PACT_TEMPLATES.map((template) => (
+            <button
+              key={template.id}
+              type="button"
+              onClick={() => applyTemplate(template.id)}
+              className={cn(
+                "min-w-[9.5rem] shrink-0 rounded-2xl border px-3 py-3 text-left transition-colors",
+                templateId === template.id
+                  ? "border-volt-500 bg-volt-500/15"
+                  : "border-white/10 bg-white/5 hover:bg-white/8"
+              )}
+            >
+              <p className="text-sm font-semibold text-white">{template.label}</p>
+              <p className="mt-1 text-[11px] leading-snug text-white/55">
+                {template.blurb}
+              </p>
+            </button>
+          ))}
+        </div>
+      </div>
 
       <form onSubmit={form.handleSubmit(onSubmit)} className="mt-6 space-y-4">
         <SurfaceCard tone={selectedTone} padding="lg" className="rounded-[2rem]">

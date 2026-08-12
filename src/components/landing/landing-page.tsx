@@ -279,7 +279,7 @@ export function LandingPage() {
             </h2>
             <p className="mx-auto mt-5 max-w-xl text-base text-white/70 sm:text-lg">
               We are inviting 10 accountability pairs for 14 days. Leave your
-              email — we&apos;ll send a welcome note with a one-time 6-digit code
+              email. We&apos;ll send a welcome note with a one-time 6-digit code
               and personal link so you can use PACT free during testing.
             </p>
             <div className="mt-8">
