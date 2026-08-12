@@ -55,19 +55,12 @@ export function EmptyState({
           {primaryAction || secondaryAction ? (
             <div className="mt-5 flex flex-wrap gap-2">
               {primaryAction ? (
-                <Button
-                  asChild
-                  className="rounded-full bg-signal text-ink-950 hover:bg-signal/90"
-                >
+                <Button asChild variant="soft">
                   <Link href={primaryAction.href}>{primaryAction.label}</Link>
                 </Button>
               ) : null}
               {secondaryAction ? (
-                <Button
-                  asChild
-                  variant="ghost"
-                  className="rounded-full border border-white/15"
-                >
+                <Button asChild variant="outline">
                   <Link href={secondaryAction.href}>
                     {secondaryAction.label}
                   </Link>

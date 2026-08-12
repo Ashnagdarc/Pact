@@ -298,7 +298,8 @@ export function OnboardingScreen() {
               type="button"
               disabled={!canContinue || finishing || (isLastStep && loading)}
               onClick={isLastStep ? finish : goNext}
-              className="h-12 w-full rounded-full bg-volt-500 text-base font-semibold text-white hover:bg-volt-500/90"
+              size="lg"
+              className="w-full"
             >
               {finishing ? (
                 <Loader2 className="size-4 animate-spin" />

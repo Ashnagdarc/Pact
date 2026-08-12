@@ -210,7 +210,8 @@ function InviteScreenConnected({ token }: InviteScreenProps) {
                   !(user?.displayName && user.displayName.length >= 2))
               }
               onClick={onAccept}
-              className="h-14 rounded-full bg-volt-500 text-base font-bold text-white hover:bg-volt-500/90"
+              size="xl"
+              className="w-full"
             >
               {isPending ? (
                 <Loader2 className="size-4 animate-spin" />
@@ -221,9 +222,10 @@ function InviteScreenConnected({ token }: InviteScreenProps) {
             <Button
               type="button"
               disabled={isPending}
-              variant="ghost"
+              variant="outline"
+              size="lg"
               onClick={onDecline}
-              className="h-12 rounded-full border border-white/15 text-white/70"
+              className="w-full"
             >
               Decline
             </Button>
@@ -328,7 +330,9 @@ export function InviteShareCard({
         <Button
           type="button"
           onClick={copyLink}
-          className="h-11 flex-1 rounded-full bg-ink-950 text-white hover:bg-ink-950/90"
+          variant="default"
+          size="lg"
+          className="flex-1 bg-ink-950 text-white hover:bg-ink-950/90"
         >
           {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
           {copied ? "Copied" : "Copy link"}
@@ -336,7 +340,9 @@ export function InviteShareCard({
         <Button
           type="button"
           onClick={shareLink}
-          className="h-11 flex-1 rounded-full border border-ink-950/20 bg-transparent text-ink-950 hover:bg-black/5"
+          variant="outline"
+          size="lg"
+          className="flex-1 border-ink-950/20 bg-transparent text-ink-950 hover:bg-black/5"
         >
           <Share2 className="size-4" />
           Share

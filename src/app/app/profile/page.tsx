@@ -106,15 +106,17 @@ export default function ProfilePage() {
             : "Not signed in"}
         </p>
         {isAuthenticated ? (
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="sm"
             onClick={() => void signOut()}
-            className="mt-3 text-xs font-semibold underline-offset-2 hover:underline"
+            className="mt-3"
           >
             Sign out
-          </button>
+          </Button>
         ) : (
-          <Button asChild className="mt-4 rounded-full">
+          <Button asChild size="default" className="mt-4">
             <Link href="/sign-in">Sign in</Link>
           </Button>
         )}
@@ -140,7 +142,8 @@ export default function ProfilePage() {
                 </p>
                 <Button
                   asChild
-                  className="mt-3 rounded-full bg-signal text-ink-950"
+                  variant="soft"
+                  className="mt-3"
                 >
                   <Link href="/app/pacts/new">Create Pact</Link>
                 </Button>
@@ -262,7 +265,9 @@ export default function ProfilePage() {
             type="button"
             disabled={deleting || !password.trim()}
             onClick={() => void onDeleteAccount()}
-            className="mt-3 h-11 w-full rounded-full bg-coral-400 text-ink-950 hover:bg-coral-400/90"
+            variant="destructive"
+            size="lg"
+            className="mt-3 w-full"
           >
             {deleting ? (
               <Loader2 className="size-4 animate-spin" />

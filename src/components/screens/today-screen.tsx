@@ -10,7 +10,6 @@ import { motion } from "motion/react";
 import { api } from "@convex/_generated/api";
 import { CommitmentCard } from "@/components/cards/commitment-card";
 import { PactBoardCard } from "@/components/cards/pact-board-card";
-import { StatHero } from "@/components/cards/stat-hero";
 import { SurfaceCard } from "@/components/cards/surface-card";
 import { TodayPromptCard } from "@/components/cards/today-prompt-card";
 import { EmptyState } from "@/components/feedback/empty-state";
@@ -19,6 +18,7 @@ import { FilterChips } from "@/components/navigation/filter-chips";
 import { NotificationBell } from "@/components/navigation/notification-bell";
 import { RotatingPactTitle } from "@/components/navigation/rotating-pact-title";
 import { InstallPrompt } from "@/components/pwa/install-prompt";
+import { TodayTimeline } from "@/components/today/today-timeline";
 import { Button } from "@/components/ui/button";
 import { useCurrentUser } from "@/hooks/use-demo-user";
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
@@ -30,6 +30,12 @@ const filters = [
   { id: "pacts", label: "Pacts" },
   { id: "blocked", label: "Blocked" },
 ];
+
+function startOfLocalDayMs(now = Date.now()) {
+  const d = new Date(now);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
 
 function toUiStatus(status: string): CommitmentStatus | undefined {
   switch (status) {
@@ -71,6 +77,11 @@ export function TodayScreen() {
   );
   const todayTasks = useQuery(api.tasks.listForToday, userId ? {} : "skip");
   const boards = useQuery(api.pacts.listForUser, userId ? {} : "skip");
+  const [dayStart] = useState(() => startOfLocalDayMs());
+  const timeline = useQuery(
+    api.activity.todayTimeline,
+    userId ? { since: dayStart, limit: 12 } : "skip"
+  );
 
   useEffect(() => {
     if (userLoading) return;
@@ -186,8 +197,7 @@ export function TodayScreen() {
 
       {dataPending ? (
         <div className="mb-5 space-y-4" aria-busy aria-live="polite">
-          <div className="h-24 animate-pulse rounded-[1.5rem] bg-white/6" />
-          <div className="h-28 animate-pulse rounded-[1.5rem] bg-white/6" />
+          <div className="h-36 animate-pulse rounded-[1.5rem] bg-white/6" />
           <div className="grid grid-cols-2 gap-3">
             <div className="h-28 animate-pulse rounded-[1.35rem] bg-white/6" />
             <div className="h-28 animate-pulse rounded-[1.35rem] bg-white/6" />
@@ -235,13 +245,8 @@ export function TodayScreen() {
               (todayTasks?.filter((t) => t.status === "open").length ?? 0)
             }
             blockedCount={stats?.blockedCount ?? 0}
+            weekCompleted={stats?.completedThisWeek ?? 0}
             href={promptHref}
-          />
-
-          <StatHero
-            value={stats?.completedThisWeek ?? 0}
-            label="Commitments kept this week. Keep the streak kind."
-            className="mb-5"
           />
 
           <InstallPrompt className="mb-5" />
@@ -360,6 +365,15 @@ export function TodayScreen() {
               </div>
             </section>
           ) : null}
+
+          {timeline !== undefined ? (
+            <TodayTimeline items={timeline} className="mb-6" />
+          ) : (
+            <div
+              className="mb-6 h-28 animate-pulse rounded-[1.5rem] bg-white/6"
+              aria-hidden
+            />
+          )}
 
           <section className="mb-4">
             <div className="mb-3 flex items-end justify-between">

@@ -11,9 +11,11 @@ const DAY_MS = 1000 * 60 * 60 * 24;
 
 async function buildWeeklySnapshot(
   ctx: QueryCtx | MutationCtx,
-  args: { userId: Id<"users">; pactId?: Id<"pacts"> }
+  args: { userId: Id<"users">; pactId?: Id<"pacts">; weeks?: 1 | 4 | 12 }
 ) {
+  const weeks = args.weeks ?? 1;
   const weekStart = startOfWeek();
+  const rangeStart = weekStart - DAY_MS * 7 * (weeks - 1);
   const weekEnd = endOfWeek();
 
   let commitments = await ctx.db
@@ -29,7 +31,7 @@ async function buildWeeklySnapshot(
     (c) =>
       c.status === "done" &&
       typeof c.completedAt === "number" &&
-      c.completedAt >= weekStart &&
+      c.completedAt >= rangeStart &&
       c.completedAt <= weekEnd
   );
 
@@ -37,7 +39,7 @@ async function buildWeeklySnapshot(
     (c) =>
       c.status === "missed" ||
       (typeof c.dueAt === "number" &&
-        c.dueAt >= weekStart &&
+        c.dueAt >= rangeStart &&
         c.dueAt <= weekEnd &&
         c.status !== "done" &&
         c.dueAt < Date.now())
@@ -66,7 +68,7 @@ async function buildWeeklySnapshot(
       );
 
   const recovered = recoveryPlans.filter(
-    (p) => p._creationTime >= weekStart && p._creationTime <= weekEnd
+    (p) => p._creationTime >= rangeStart && p._creationTime <= weekEnd
   );
 
   const blockerCounts = new Map<string, number>();
@@ -92,7 +94,7 @@ async function buildWeeklySnapshot(
         .collect();
 
   events = events.filter(
-    (e) => e._creationTime >= weekStart && e._creationTime <= weekEnd
+    (e) => e._creationTime >= rangeStart && e._creationTime <= weekEnd
   );
 
   const checkInCount = events.filter(
@@ -104,17 +106,38 @@ async function buildWeeklySnapshot(
   const partnerResponseRate =
     checkInCount === 0 ? 0 : Math.min(1, responseCount / checkInCount);
 
-  const dailyCompletions = DAY_LABELS.map((day, index) => {
-    const dayStart = weekStart + index * DAY_MS;
-    const dayEnd = dayStart + DAY_MS - 1;
-    const count = completed.filter(
-      (c) =>
-        typeof c.completedAt === "number" &&
-        c.completedAt >= dayStart &&
-        c.completedAt <= dayEnd
-    ).length;
-    return { day, count, target: 2 };
-  });
+  const recoveryDenom = missed.length + recovered.length;
+  const recoveryRate =
+    recoveryDenom === 0 ? 0 : Math.min(1, recovered.length / recoveryDenom);
+
+  const dailyCompletions =
+    weeks === 1
+      ? DAY_LABELS.map((day, index) => {
+          const dayStart = weekStart + index * DAY_MS;
+          const dayEnd = dayStart + DAY_MS - 1;
+          const count = completed.filter(
+            (c) =>
+              typeof c.completedAt === "number" &&
+              c.completedAt >= dayStart &&
+              c.completedAt <= dayEnd
+          ).length;
+          return { day, count, target: 2 };
+        })
+      : Array.from({ length: weeks }, (_, index) => {
+          const bucketStart = rangeStart + index * DAY_MS * 7;
+          const bucketEnd = bucketStart + DAY_MS * 7 - 1;
+          const count = completed.filter(
+            (c) =>
+              typeof c.completedAt === "number" &&
+              c.completedAt >= bucketStart &&
+              c.completedAt <= bucketEnd
+          ).length;
+          return {
+            day: `W${index + 1}`,
+            count,
+            target: Math.max(2, weeks === 4 ? 4 : 3),
+          };
+        });
 
   const summary = buildSummary({
     completedCount: completed.length,
@@ -126,12 +149,15 @@ async function buildWeeklySnapshot(
   return {
     weekStart,
     weekEnd,
+    rangeStart,
+    weeks,
     completedCount: completed.length,
     missedCount: missed.length,
     recoveredCount: recovered.length,
     openCount: open.length,
     topBlockers,
     partnerResponseRate,
+    recoveryRate,
     checkInCount,
     summary,
     dailyCompletions,
@@ -159,6 +185,9 @@ function buildSummary(input: {
 export const weekOverview = query({
   args: {
     pactId: v.optional(v.id("pacts")),
+    weeks: v.optional(
+      v.union(v.literal(1), v.literal(4), v.literal(12))
+    ),
   },
   handler: async (ctx, args) => {
     const user = await requireAppUser(ctx);
@@ -168,6 +197,7 @@ export const weekOverview = query({
     return await buildWeeklySnapshot(ctx, {
       userId: user._id,
       pactId: args.pactId,
+      weeks: args.weeks ?? 1,
     });
   },
 });

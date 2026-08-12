@@ -67,8 +67,8 @@ function PactsScreenConnected() {
         </div>
         <Button
           asChild
-          size="icon"
-          className="size-11 rounded-full bg-signal text-ink-950 hover:bg-signal/90"
+          size="icon-lg"
+          variant="soft"
         >
           <Link href="/app/pacts/new" aria-label="Create Pact">
             <Plus className="size-5" />

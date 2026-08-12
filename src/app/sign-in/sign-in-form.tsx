@@ -242,7 +242,8 @@ export default function SignInForm() {
           <Button
             type="submit"
             disabled={busy}
-            className="h-12 rounded-full bg-volt-500 font-semibold text-white hover:bg-volt-500/90"
+            className="w-full"
+            size="lg"
           >
             {busy ? (
               <Loader2 className="size-4 animate-spin" />

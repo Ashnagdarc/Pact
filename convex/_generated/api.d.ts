@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as activity from "../activity.js";
 import type * as admin_wipe from "../admin_wipe.js";
 import type * as checkIns from "../checkIns.js";
 import type * as commitments from "../commitments.js";
@@ -45,6 +46,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  activity: typeof activity;
   admin_wipe: typeof admin_wipe;
   checkIns: typeof checkIns;
   commitments: typeof commitments;

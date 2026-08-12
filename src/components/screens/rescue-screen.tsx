@@ -353,7 +353,8 @@ function RescueScreenConnected({ commitmentId }: RescueScreenProps) {
             type="button"
             disabled={isPending}
             onClick={submitPlan}
-            className="h-14 w-full rounded-full bg-volt-500 text-base font-bold text-white hover:bg-volt-500/90"
+            size="xl"
+            className="w-full"
           >
             {isPending ? (
               <Loader2 className="size-4 animate-spin" />
@@ -378,15 +379,17 @@ function RescueScreenConnected({ commitmentId }: RescueScreenProps) {
             <Button
               type="button"
               onClick={() => router.push(`/app/commitments/${commitment._id}`)}
-              className="h-12 rounded-full bg-ink-950 text-white"
+              size="lg"
+              className="w-full bg-ink-950 text-white hover:bg-ink-950/90"
             >
               View commitment
             </Button>
             <Button
               type="button"
-              variant="ghost"
+              variant="outline"
+              size="lg"
               onClick={() => router.push("/app")}
-              className="h-11 rounded-full border border-ink-950/15 text-ink-950"
+              className="w-full border-ink-950/15 text-ink-950 hover:bg-ink-950/5"
             >
               Back to Today
             </Button>

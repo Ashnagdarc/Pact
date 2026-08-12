@@ -588,6 +588,7 @@ function CommitmentDetailConnected({
                   <Button
                     type="button"
                     disabled={isPending}
+                    variant="soft"
                     onClick={() =>
                       startTransition(async () => {
                         await reviewPlan({
@@ -596,7 +597,7 @@ function CommitmentDetailConnected({
                         });
                       })
                     }
-                    className="mt-3 h-10 rounded-full bg-signal text-sm font-bold text-ink-950"
+                    className="mt-3"
                   >
                     Acknowledge as partner
                   </Button>

@@ -153,7 +153,9 @@ function CreatePactForm() {
         <Button
           type="submit"
           disabled={submitting}
-          className="h-14 w-full rounded-full bg-signal text-base font-bold text-ink-950 hover:bg-signal/90"
+          variant="soft"
+          size="xl"
+          className="w-full"
         >
           {submitting ? (
             <>

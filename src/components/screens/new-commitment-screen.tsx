@@ -43,17 +43,30 @@ const dueOptions: { id: CreateCommitmentValues["duePreset"]; label: string }[] =
 
 export function NewCommitmentScreen({
   initialPactId,
+  initialAsPersonalTask,
 }: {
   initialPactId?: string;
+  initialAsPersonalTask?: boolean;
 }) {
   if (!process.env.NEXT_PUBLIC_CONVEX_URL) {
     return <ConvexSetupScreen />;
   }
 
-  return <NewCommitmentForm initialPactId={initialPactId} />;
+  return (
+    <NewCommitmentForm
+      initialPactId={initialPactId}
+      initialAsPersonalTask={initialAsPersonalTask}
+    />
+  );
 }
 
-function NewCommitmentForm({ initialPactId }: { initialPactId?: string }) {
+function NewCommitmentForm({
+  initialPactId,
+  initialAsPersonalTask,
+}: {
+  initialPactId?: string;
+  initialAsPersonalTask?: boolean;
+}) {
   const router = useRouter();
   const { userId, loading, error } = useCurrentUser();
   const boards = useQuery(api.pacts.listForUser, userId ? {} : "skip");
@@ -63,16 +76,18 @@ function NewCommitmentForm({ initialPactId }: { initialPactId?: string }) {
   const [showMore, setShowMore] = useState(false);
   const defaultedPactRef = useRef(false);
 
+  const preferPersonal = Boolean(initialAsPersonalTask) || !initialPactId;
+
   const form = useForm<CreateCommitmentValues>({
     resolver: zodResolver(createCommitmentSchema),
     defaultValues: {
       title: "",
       description: "",
-      pactId: initialPactId ?? "",
+      pactId: initialAsPersonalTask ? "" : (initialPactId ?? ""),
       assigneeId: "",
       duePreset: "today",
       evidenceRequired: false,
-      asPersonalTask: !initialPactId,
+      asPersonalTask: preferPersonal,
       tone: "volt",
     },
   });
@@ -118,9 +133,12 @@ function NewCommitmentForm({ initialPactId }: { initialPactId?: string }) {
       .map((m) => m!.user);
   }, [pactDetail]);
 
-  // When opening New with no pactId, prefer the user's most recent Pact.
+  // When opening New with no pactId, prefer the user's most recent Pact —
+  // unless the create sheet asked for a personal task explicitly.
   useEffect(() => {
-    if (initialPactId || defaultedPactRef.current) return;
+    if (initialPactId || initialAsPersonalTask || defaultedPactRef.current) {
+      return;
+    }
     if (boards === undefined) return;
     defaultedPactRef.current = true;
     if (availableBoards.length === 0) {
@@ -131,7 +149,13 @@ function NewCommitmentForm({ initialPactId }: { initialPactId?: string }) {
     const preferred = availableBoards[0].pact._id;
     form.setValue("pactId", preferred);
     form.setValue("asPersonalTask", false);
-  }, [availableBoards, boards, form, initialPactId]);
+  }, [
+    availableBoards,
+    boards,
+    form,
+    initialAsPersonalTask,
+    initialPactId,
+  ]);
 
   useEffect(() => {
     if (!userId) return;
@@ -486,7 +510,8 @@ function NewCommitmentForm({ initialPactId }: { initialPactId?: string }) {
         <Button
           type="submit"
           disabled={submitting || !destinationReady}
-          className="h-14 w-full rounded-full bg-volt-500 text-base font-bold text-white hover:bg-volt-500/90"
+          size="xl"
+          className="w-full"
         >
           {submitting ? (
             <>

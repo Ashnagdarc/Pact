@@ -11,6 +11,8 @@ import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import { CommitmentCard } from "@/components/cards/commitment-card";
 import { SurfaceCard } from "@/components/cards/surface-card";
+import { HealthContributorBars } from "@/components/health/health-contributor-bars";
+import { PactHealthRing } from "@/components/health/pact-health-ring";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { StatusChip } from "@/components/feedback/status-chip";
 import { AppShell } from "@/components/navigation/app-shell";
@@ -18,6 +20,10 @@ import { ConvexSetupScreen } from "@/components/screens/convex-setup-screen";
 import { InviteShareCard } from "@/components/screens/invite-screen";
 import { Button } from "@/components/ui/button";
 import { useCurrentUser } from "@/hooks/use-demo-user";
+import {
+  pactHealthLabel,
+  pactHealthTone,
+} from "@/lib/pact-health-ui";
 import type { CommitmentStatus } from "@/lib/status";
 import {
   frequencyLabel,
@@ -174,83 +180,79 @@ function PactDetailConnected({ pactId }: PactDetailScreenProps) {
       <header className="mb-4 flex items-center justify-between pt-2">
         <Button
           asChild
-          size="icon"
-          variant="ghost"
-          className="size-11 rounded-full border border-white/10 bg-white/5"
+          size="icon-lg"
+          variant="outline"
+          aria-label="Back"
         >
-          <Link href="/app/pacts" aria-label="Back">
+          <Link href="/app/pacts">
             <ArrowLeft className="size-5" />
           </Link>
         </Button>
-        <Button
-          asChild
-          size="icon"
-          variant="ghost"
-          className="size-11 rounded-full border border-white/10 bg-white/5"
-        >
-          <Link
-            href={`/app/new?pactId=${pact._id}`}
-            aria-label="Add commitment"
-          >
-            <Plus className="size-5" />
-          </Link>
-        </Button>
+        <span className="text-xs font-semibold tracking-wide text-white/45 uppercase">
+          Pact
+        </span>
+        <span className="size-11" aria-hidden />
       </header>
 
       <SurfaceCard
-        tone={pact.tone ?? "signal"}
+        tone="ink"
         padding="lg"
-        className="rounded-[2rem]"
+        className="rounded-[2rem] border border-white/10"
       >
-        <StatusChip
-          label={healthStatus.replaceAll("_", " ")}
-          tone={
-            healthStatus === "healthy"
-              ? "mint"
-              : healthStatus === "at_risk"
-                ? "coral"
-                : healthStatus === "completed"
-                  ? "signal"
-                  : healthStatus === "paused"
-                    ? "muted"
-                    : "volt"
-          }
-          className="mb-3 capitalize"
-        />
-        <h1 className="font-heading text-4xl leading-none font-extrabold tracking-tight">
-          {pact.title}
-        </h1>
-        {pact.description ? (
-          <p className="mt-3 text-sm font-medium opacity-80">{pact.description}</p>
-        ) : null}
+        <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-start sm:gap-6">
+          <PactHealthRing status={healthStatus} size={156} />
+          <div className="min-w-0 flex-1 text-center sm:pt-2 sm:text-left">
+            <StatusChip
+              label={pactHealthLabel[healthStatus]}
+              tone={pactHealthTone[healthStatus]}
+              className="mb-3 capitalize"
+            />
+            <h1 className="font-heading text-3xl leading-none font-extrabold tracking-tight sm:text-4xl">
+              {pact.title}
+            </h1>
+            {pact.description ? (
+              <p className="mt-3 text-sm font-medium text-white/70">
+                {pact.description}
+              </p>
+            ) : null}
+            <div className="mt-4 text-xs font-semibold text-white/55">
+              <p>
+                {pact.accountabilityStyle
+                  ? styleLabel[
+                      pact.accountabilityStyle as keyof typeof styleLabel
+                    ]
+                  : "Supportive"}
+                {" · "}
+                {pact.checkInFrequency
+                  ? frequencyLabel[
+                      pact.checkInFrequency as keyof typeof frequencyLabel
+                    ]
+                  : "Daily"}{" "}
+                check-ins
+              </p>
+            </div>
+          </div>
+        </div>
 
-        {health?.reasons?.length ? (
-          <ul className="mt-4 space-y-1.5 rounded-[1.25rem] bg-black/10 p-3">
+        {health?.metrics ? (
+          <div className="mt-6 border-t border-white/10 pt-5">
+            <p className="mb-3 text-[11px] font-semibold tracking-[0.14em] text-white/45 uppercase">
+              Why this status
+            </p>
+            <HealthContributorBars
+              metrics={health.metrics}
+              reasons={health.reasons}
+            />
+          </div>
+        ) : health?.reasons?.length ? (
+          <ul className="mt-5 space-y-1.5 rounded-[1.25rem] bg-white/5 p-3">
             {health.reasons.slice(0, 4).map((reason) => (
-              <li key={reason.code} className="text-sm font-medium opacity-85">
+              <li key={reason.code} className="text-sm font-medium text-white/80">
                 · {reason.label}
               </li>
             ))}
           </ul>
         ) : null}
-
-        <div className="mt-5 text-right text-xs font-semibold opacity-70">
-          <p>
-            {pact.accountabilityStyle
-              ? styleLabel[
-                  pact.accountabilityStyle as keyof typeof styleLabel
-                ]
-              : "Supportive"}
-          </p>
-          <p>
-            {pact.checkInFrequency
-              ? frequencyLabel[
-                  pact.checkInFrequency as keyof typeof frequencyLabel
-                ]
-              : "Daily"}{" "}
-            check-ins
-          </p>
-        </div>
       </SurfaceCard>
 
       <section className="mt-5">
@@ -258,18 +260,9 @@ function PactDetailConnected({ pactId }: PactDetailScreenProps) {
           <h2 className="font-heading text-2xl font-bold tracking-tight">
             Commitments
           </h2>
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-white/65">
-              {commitments.length}
-            </span>
-            <Link
-              href={`/app/new?pactId=${pact._id}`}
-              className="inline-flex min-h-8 items-center gap-1 rounded-full border border-white/15 px-3 text-xs font-semibold text-white/75 transition-colors hover:border-white/35 hover:text-white"
-            >
-              <Plus className="size-3.5" />
-              Add
-            </Link>
-          </div>
+          <span className="text-xs font-semibold text-white/65">
+            {commitments.length}
+          </span>
         </div>
 
         {commitments.length === 0 ? (
@@ -279,11 +272,13 @@ function PactDetailConnected({ pactId }: PactDetailScreenProps) {
             </p>
             <p className="mt-2 text-sm text-white/65">
               Add the first one so partners know what you are holding each other
-              to.
+              to. Use the + button below when you&apos;re ready.
             </p>
             <Button
               asChild
-              className="mt-5 h-12 w-full rounded-full bg-signal text-base font-bold text-ink-950"
+              variant="soft"
+              size="lg"
+              className="mt-5 w-full"
             >
               <Link href={`/app/new?pactId=${pact._id}`}>
                 <Plus className="size-4" />
@@ -391,7 +386,9 @@ function PactDetailConnected({ pactId }: PactDetailScreenProps) {
                 <Button
                   type="button"
                   onClick={() => setInviteExpanded(true)}
-                  className="h-10 shrink-0 rounded-full bg-signal px-4 text-sm font-semibold text-ink-950"
+                  variant="soft"
+                  size="default"
+                  className="shrink-0 px-4"
                 >
                   Share
                 </Button>
@@ -430,8 +427,9 @@ function PactDetailConnected({ pactId }: PactDetailScreenProps) {
                 type="button"
                 disabled={isPending}
                 onClick={refreshInvite}
-                variant="ghost"
-                className="h-11 w-full rounded-full border border-white/15 text-white/75"
+                variant="outline"
+                size="lg"
+                className="w-full"
               >
                 {isPending ? (
                   <Loader2 className="size-4 animate-spin" />

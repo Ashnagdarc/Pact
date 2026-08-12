@@ -3,10 +3,13 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowUpRight, Target } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 import { SurfaceCard } from "@/components/cards/surface-card";
-import { AvatarStack, type AvatarPerson } from "@/components/feedback/avatar-stack";
+import {
+  AvatarStack,
+  type AvatarPerson,
+} from "@/components/feedback/avatar-stack";
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 import { cn } from "@/lib/utils";
 
@@ -14,12 +17,14 @@ type TodayPromptCardProps = {
   people: AvatarPerson[];
   openCount: number;
   blockedCount: number;
+  /** Weekly completions — quiet secondary metric inside the single hero. */
+  weekCompleted?: number;
   /** Destination for the prompt CTA (blocked → commitment, clear → new, else focus). */
   href?: string;
   className?: string;
 };
 
-const PROMPT_CYCLE_MS = 2800;
+const PROMPT_CYCLE_MS = 3200;
 
 function promptsForState(openCount: number, blockedCount: number) {
   if (blockedCount > 0) {
@@ -50,10 +55,29 @@ function promptsForState(openCount: number, blockedCount: number) {
   ];
 }
 
+function eyebrowForState(openCount: number, blockedCount: number) {
+  if (blockedCount > 0) return "Needs attention";
+  if (openCount === 0) return "Open board";
+  if (openCount === 1) return "Today’s move";
+  return "Today’s focus";
+}
+
+function metaLine(openCount: number, blockedCount: number) {
+  if (blockedCount > 0) {
+    return blockedCount === 1
+      ? "1 commitment needs a hand"
+      : `${blockedCount} commitments need a hand`;
+  }
+  if (openCount === 0) return "Nothing due — add something small";
+  if (openCount === 1) return "1 open commitment";
+  return `${openCount} open commitments`;
+}
+
 export function TodayPromptCard({
   people,
   openCount,
   blockedCount,
+  weekCompleted,
   href = "/app/new",
   className,
 }: TodayPromptCardProps) {
@@ -64,6 +88,10 @@ export function TodayPromptCard({
   );
   const [promptIndex, setPromptIndex] = useState(0);
   const needsAttention = blockedCount > 0;
+  const eyebrow = eyebrowForState(openCount, blockedCount);
+  const meta = metaLine(openCount, blockedCount);
+  const showWeek =
+    typeof weekCompleted === "number" && Number.isFinite(weekCompleted);
 
   useEffect(() => {
     setPromptIndex(0);
@@ -80,135 +108,120 @@ export function TodayPromptCard({
   const prompt = prompts[promptIndex] ?? prompts[0]!;
 
   return (
-    <div className={cn("prompt-float", className)}>
-      <Link href={href} className="group block outline-none">
-        <SurfaceCard
-          tone="glass"
-          className={cn(
-            "relative mb-0 flex items-center gap-3 overflow-hidden py-3.5",
-            "transition-[border-color,background-color,box-shadow] duration-300",
-            "group-hover:border-white/25 group-hover:bg-white/10",
-            "group-focus-visible:ring-2 group-focus-visible:ring-volt-500/70",
-            needsAttention
-              ? "border-coral-400/40 shadow-[0_0_28px_rgba(231,137,101,0.18)]"
-              : "shadow-[0_0_24px_rgba(255,82,38,0.14)]"
-          )}
-        >
-          <span
-            aria-hidden
-            className={cn(
-              "pointer-events-none absolute top-1/2 left-[-1.5rem] size-28 rounded-full blur-2xl",
-              needsAttention
-                ? "prompt-glow-attention bg-coral-400/50"
-                : "prompt-glow bg-signal/45"
-            )}
-          />
-          <span
-            aria-hidden
-            className="pointer-events-none absolute -top-6 -right-4 size-20 rounded-full bg-volt-500/30 blur-2xl prompt-glow"
-          />
-          <span
-            aria-hidden
-            className="prompt-shimmer pointer-events-none absolute inset-y-0 left-0 w-1/2 bg-linear-to-r from-transparent via-white/25 to-transparent"
-          />
-
-          <div className="relative flex size-11 shrink-0 items-center justify-center">
-            <span
-              aria-hidden
-              className={cn(
-                "prompt-ring absolute inset-0 rounded-full",
-                needsAttention ? "bg-coral-400/40" : "bg-signal/35"
-              )}
-            />
-            <AvatarStack people={people} size="md" />
-          </div>
-
-          <div className="relative min-w-0 flex-1">
-            <div className="flex items-center gap-1.5">
-              <Target
-                className={cn(
-                  "size-3.5 shrink-0",
-                  needsAttention ? "text-coral-400" : "text-volt-500"
-                )}
-              />
-              <div className="relative h-5 min-w-0 flex-1 overflow-hidden">
-                {reduceMotion ? (
-                  <p className="truncate text-sm font-semibold text-white">
-                    {prompt}
-                  </p>
-                ) : (
-                  <AnimatePresence mode="wait" initial={false}>
-                    <motion.p
-                      key={prompt}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-                      className="absolute inset-x-0 truncate text-sm font-semibold"
-                    >
-                      {prompt}
-                    </motion.p>
-                  </AnimatePresence>
-                )}
-              </div>
-            </div>
-
-            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-              <StatPill label="open" value={openCount} tone="volt" />
-              <StatPill
-                label="need attention"
-                value={blockedCount}
-                tone={needsAttention ? "coral" : "muted"}
-                pulse={needsAttention}
-              />
-            </div>
-          </div>
-
-          <span
-            aria-hidden
-            className="relative inline-flex size-8 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/8 text-white/80"
-          >
-            <ArrowUpRight className="prompt-arrow size-3.5" />
-          </span>
-        </SurfaceCard>
-      </Link>
-    </div>
-  );
-}
-
-function StatPill({
-  label,
-  value,
-  tone,
-  pulse = false,
-}: {
-  label: string;
-  value: number;
-  tone: "volt" | "coral" | "muted";
-  pulse?: boolean;
-}) {
-  const toneClass =
-    tone === "volt"
-      ? "border-volt-500/30 bg-volt-500/15 text-volt-500"
-      : tone === "coral"
-        ? "border-coral-400/40 bg-coral-400/15 text-coral-400"
-        : "border-white/10 bg-white/5 text-white/55";
-
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-semibold tracking-wide",
-        toneClass
-      )}
+    <Link
+      href={href}
+      className={cn("group block outline-none", className)}
+      aria-label={`${eyebrow}. ${prompt}. ${meta}${
+        showWeek ? `. ${weekCompleted} kept this week.` : ""
+      }`}
     >
-      {pulse ? (
-        <span
-          aria-hidden
-          className="prompt-dot size-1.5 rounded-full bg-coral-400"
-        />
-      ) : null}
-      <span className="tabular-nums">{value}</span>
-      <span className="opacity-80">{label}</span>
-    </span>
+      <SurfaceCard
+        tone={needsAttention ? "coral" : "ink"}
+        padding="none"
+        className={cn(
+          "relative mb-0 overflow-hidden transition-transform duration-200",
+          "group-hover:scale-[1.01] group-active:scale-[0.99]",
+          "group-focus-visible:ring-2 group-focus-visible:ring-volt-500/70",
+          needsAttention ? "border border-coral-400/20" : "border border-white/10"
+        )}
+      >
+        <div className="flex items-stretch gap-3 px-5 py-5">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center justify-between gap-3">
+              <p
+                className={cn(
+                  "text-[11px] font-semibold tracking-[0.14em] uppercase",
+                  needsAttention ? "text-ink-950/70" : "text-volt-500"
+                )}
+              >
+                {eyebrow}
+              </p>
+              {people.length > 0 ? (
+                <AvatarStack people={people} size="sm" className="shrink-0" />
+              ) : null}
+            </div>
+
+            <div className="relative mt-2.5 min-h-[1.6em]">
+              {reduceMotion ? (
+                <p
+                  className={cn(
+                    "font-heading text-2xl font-bold leading-snug tracking-tight",
+                    needsAttention ? "text-ink-950" : "text-white"
+                  )}
+                >
+                  {prompt}
+                </p>
+              ) : (
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.p
+                    key={prompt}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.26, ease: [0.22, 1, 0.36, 1] }}
+                    className={cn(
+                      "font-heading text-2xl font-bold leading-snug tracking-tight",
+                      needsAttention ? "text-ink-950" : "text-white"
+                    )}
+                  >
+                    {prompt}
+                  </motion.p>
+                </AnimatePresence>
+              )}
+            </div>
+
+            <div className="mt-4 flex items-center justify-between gap-3">
+              <p
+                className={cn(
+                  "text-sm font-medium",
+                  needsAttention ? "text-ink-950/70" : "text-white/65"
+                )}
+              >
+                {meta}
+              </p>
+              <span
+                aria-hidden
+                className={cn(
+                  "inline-flex size-10 shrink-0 items-center justify-center rounded-full transition-transform duration-200 group-hover:translate-x-0.5",
+                  needsAttention
+                    ? "bg-ink-950 text-white"
+                    : "bg-volt-500 text-white"
+                )}
+              >
+                <ArrowRight className="size-4" strokeWidth={2.4} />
+              </span>
+            </div>
+          </div>
+
+          {showWeek ? (
+            <div
+              className={cn(
+                "flex w-[4.75rem] shrink-0 flex-col items-center justify-center rounded-[1.35rem] px-2 py-3",
+                needsAttention ? "bg-ink-950/10" : "bg-white/6"
+              )}
+            >
+              <p
+                className={cn(
+                  "text-display text-[2.75rem] leading-none tracking-[-0.05em]",
+                  needsAttention ? "text-ink-950" : "text-white"
+                )}
+              >
+                {weekCompleted}
+              </p>
+              <p
+                className={cn(
+                  "mt-1 text-center text-[10px] font-semibold leading-tight uppercase tracking-[0.08em]",
+                  needsAttention ? "text-ink-950/60" : "text-white/55"
+                )}
+              >
+                kept
+                <br />
+                this week
+              </p>
+            </div>
+          ) : null}
+        </div>
+      </SurfaceCard>
+    </Link>
   );
 }
