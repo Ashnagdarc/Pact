@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useMutation, useQuery } from "convex/react";
 import { format } from "date-fns";
 import {
@@ -15,6 +16,7 @@ import {
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import { SurfaceCard } from "@/components/cards/surface-card";
+import { PartnerResponseChips } from "@/components/check-in/partner-response-chips";
 import { StatusChip } from "@/components/feedback/status-chip";
 import { AppShell } from "@/components/navigation/app-shell";
 import { ConvexSetupScreen } from "@/components/screens/convex-setup-screen";
@@ -26,7 +28,6 @@ import {
   checkInSignalLabel,
   checkInSignals,
   partnerResponseLabel,
-  partnerResponseTypes,
   type CheckInSignal,
   type PartnerResponseType,
 } from "@/lib/check-in";
@@ -81,6 +82,8 @@ export function CommitmentDetailScreen({
 function CommitmentDetailConnected({
   commitmentId,
 }: CommitmentDetailScreenProps) {
+  const searchParams = useSearchParams();
+  const focusReply = searchParams.get("reply") === "1";
   const { userId, loading: userLoading } = useCurrentUser();
   const detail = useQuery(
     api.commitments.getById,
@@ -117,7 +120,10 @@ function CommitmentDetailConnected({
   const [pendingSignal, setPendingSignal] = useState<CheckInSignal | null>(
     null
   );
+  const [pendingResponse, setPendingResponse] =
+    useState<PartnerResponseType | null>(null);
   const [isPending, startTransition] = useTransition();
+  const replyRef = useRef<HTMLDivElement>(null);
   const [draftHint, setDraftHint] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -148,6 +154,19 @@ function CommitmentDetailConnected({
     }, 400);
     return () => window.clearTimeout(timer);
   }, [commitmentId, note, pendingSignal]);
+
+  const isAssignee = Boolean(
+    userId && detail?.commitment?.assigneeId === userId
+  );
+  const latestReplyTarget = useMemo(() => {
+    if (!userId || !checkIns) return null;
+    return checkIns.find(({ checkIn }) => checkIn.userId !== userId) ?? null;
+  }, [checkIns, userId]);
+
+  useEffect(() => {
+    if (!focusReply || !latestReplyTarget) return;
+    replyRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [focusReply, latestReplyTarget]);
 
   if (
     userLoading ||
@@ -185,10 +204,11 @@ function CommitmentDetailConnected({
   const evidenceItems = evidence;
   const tone = commitment.tone ?? "volt";
   const uiStatus = toUiStatus(commitment.status);
-  const showRescue = needsRescue({
+  const needsRescueNow = needsRescue({
     status: commitment.status,
     dueAt: commitment.dueAt,
   });
+  const showRescue = isAssignee && needsRescueNow;
 
   function sendSignal(signal: CheckInSignal) {
     if (!userId) return;
@@ -287,11 +307,17 @@ function CommitmentDetailConnected({
     responseType: PartnerResponseType
   ) {
     if (!userId) return;
+    setPendingResponse(responseType);
     startTransition(async () => {
-      await respond({
-        checkInId,
-        responseType,
-      });
+      try {
+        await respond({
+          checkInId,
+          responseType,
+        });
+        playFeedback({ sound: "success", haptic: "success" });
+      } finally {
+        setPendingResponse(null);
+      }
     });
   }
 
@@ -408,15 +434,100 @@ function CommitmentDetailConnected({
               </p>
               <Button
                 asChild
-                className="mt-3 h-11 rounded-full bg-ink-950 text-white hover:bg-ink-950/90"
+                size="lg"
+                className="mt-3 bg-ink-950 text-white hover:bg-ink-950/90"
               >
-                <Link href={`/app/rescue/${commitment._id}`}>Open Rescue Mode</Link>
+                <Link href={`/app/rescue/${commitment._id}`}>
+                  Open Rescue Mode
+                </Link>
               </Button>
             </div>
           </div>
         </SurfaceCard>
       ) : null}
 
+      {!isAssignee && needsRescueNow && latestReplyTarget ? (
+        <SurfaceCard tone="coral" className="mt-4 rounded-[1.75rem]">
+          <p className="font-heading text-lg font-bold">Partner needs support</p>
+          <p className="mt-1 text-sm font-medium opacity-80">
+            Reply in a few taps — no long thread required.
+          </p>
+          <Button
+            type="button"
+            size="lg"
+            className="mt-3 bg-ink-950 text-white hover:bg-ink-950/90"
+            onClick={() =>
+              replyRef.current?.scrollIntoView({
+                behavior: "smooth",
+                block: "start",
+              })
+            }
+          >
+            Jump to reply
+          </Button>
+        </SurfaceCard>
+      ) : null}
+
+      {!isAssignee && latestReplyTarget ? (
+        <div
+          id="partner-reply"
+          ref={replyRef}
+          className="mt-5 scroll-mt-6"
+        >
+          <h2 className="font-heading text-2xl font-bold tracking-tight">
+            Reply fast
+          </h2>
+          <p className="mt-1 text-sm text-white/55">
+            Structured partner response — five seconds.
+          </p>
+          <SurfaceCard tone="ink" className="mt-3 border border-white/10">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold">
+                  {latestReplyTarget.user?.displayName ?? "Partner"} ·{" "}
+                  {checkInSignalLabel[latestReplyTarget.checkIn.signal]}
+                </p>
+                <p className="mt-1 text-xs text-white/65">
+                  {format(
+                    latestReplyTarget.checkIn._creationTime,
+                    "MMM d · h:mm a"
+                  )}
+                </p>
+                {latestReplyTarget.checkIn.note ? (
+                  <p className="mt-2 text-sm text-white/75">
+                    {latestReplyTarget.checkIn.note}
+                  </p>
+                ) : null}
+              </div>
+              <StatusChip
+                label={checkInSignalLabel[latestReplyTarget.checkIn.signal]}
+                tone={
+                  latestReplyTarget.checkIn.signal === "done"
+                    ? "mint"
+                    : latestReplyTarget.checkIn.signal === "on_track"
+                      ? "signal"
+                      : latestReplyTarget.checkIn.signal === "slipping"
+                        ? "volt"
+                        : "coral"
+                }
+              />
+            </div>
+            <p className="mt-4 mb-2 text-xs font-semibold tracking-wide text-white/55 uppercase">
+              Tap a response
+            </p>
+            <PartnerResponseChips
+              signal={latestReplyTarget.checkIn.signal}
+              disabled={isPending}
+              pendingType={pendingResponse}
+              onSelect={(type) =>
+                sendPartnerResponse(latestReplyTarget.checkIn._id, type)
+              }
+            />
+          </SurfaceCard>
+        </div>
+      ) : null}
+
+      {isAssignee ? (
       <section className="mt-5">
         <h2 className="font-heading text-2xl font-bold tracking-tight">
           Check in
@@ -480,6 +591,7 @@ function CommitmentDetailConnected({
           </p>
         ) : null}
       </section>
+      ) : null}
 
       <section className="mt-5">
         <div className="mb-2 flex items-end justify-between gap-3">
@@ -677,19 +789,14 @@ function CommitmentDetailConnected({
                     <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-white/60">
                       Partner response
                     </p>
-                    <div className="flex flex-wrap gap-2">
-                      {partnerResponseTypes.slice(0, 4).map((type) => (
-                        <button
-                          key={type}
-                          type="button"
-                          disabled={isPending}
-                          onClick={() => sendPartnerResponse(checkIn._id, type)}
-                          className="rounded-full border border-white/15 px-3 py-1.5 text-xs font-semibold text-white/75 hover:border-white/40 hover:text-white"
-                        >
-                          {partnerResponseLabel[type]}
-                        </button>
-                      ))}
-                    </div>
+                    <PartnerResponseChips
+                      signal={checkIn.signal}
+                      disabled={isPending}
+                      pendingType={pendingResponse}
+                      onSelect={(type) =>
+                        sendPartnerResponse(checkIn._id, type)
+                      }
+                    />
                   </div>
                 ) : null}
               </SurfaceCard>

@@ -7,6 +7,7 @@ import {
   pactHealthLabel,
   pactHealthRingColor,
   pactHealthRingProgress,
+  pactHealthShortLabel,
   type PactHealthStatus,
 } from "@/lib/pact-health-ui";
 import { cn } from "@/lib/utils";
@@ -18,6 +19,11 @@ type PactHealthRingProps = {
   className?: string;
   /** Show status word under the ring title area */
   showLabel?: boolean;
+  /**
+   * onDark — white track + domain hue (default, ink surfaces)
+   * onLight — ink track + ink arc (coral/cream/mint cards where domain hue vanishes)
+   */
+  contrast?: "onDark" | "onLight";
 };
 
 /**
@@ -29,6 +35,7 @@ export function PactHealthRing({
   size = 168,
   className,
   showLabel = true,
+  contrast = "onDark",
 }: PactHealthRingProps) {
   const reduceMotion = usePrefersReducedMotion();
   const target = pactHealthRingProgress(status);
@@ -36,8 +43,17 @@ export function PactHealthRing({
   const stroke = Math.max(10, Math.round(size * 0.07));
   const radius = (size - stroke) / 2;
   const circumference = 2 * Math.PI * radius;
-  const color = pactHealthRingColor(status);
+  const onLight = contrast === "onLight";
+  const trackColor = onLight
+    ? "rgba(18, 18, 18, 0.18)"
+    : "rgba(255, 255, 255, 0.14)";
+  const arcColor = onLight ? "var(--ink-950)" : pactHealthRingColor(status);
+  const labelColor = onLight ? "var(--ink-950)" : pactHealthRingColor(status);
+  const eyebrowColor = onLight
+    ? "rgba(18, 18, 18, 0.55)"
+    : "rgba(255, 255, 255, 0.5)";
   const label = pactHealthLabel[status];
+  const shortLabel = pactHealthShortLabel[status];
 
   useEffect(() => {
     if (reduceMotion) {
@@ -66,7 +82,7 @@ export function PactHealthRing({
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="rgba(255,255,255,0.1)"
+          stroke={trackColor}
           strokeWidth={stroke}
         />
         <circle
@@ -74,7 +90,7 @@ export function PactHealthRing({
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke={color}
+          stroke={arcColor}
           strokeWidth={stroke}
           strokeLinecap="round"
           strokeDasharray={circumference}
@@ -88,12 +104,15 @@ export function PactHealthRing({
       </svg>
       {showLabel ? (
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-4 text-center">
-          <p className="text-[10px] font-semibold tracking-[0.16em] text-white/50 uppercase">
+          <p
+            className="text-[10px] font-semibold tracking-[0.16em] uppercase"
+            style={{ color: eyebrowColor }}
+          >
             Pact health
           </p>
           <p
             className="mt-1 font-heading text-lg leading-tight font-bold tracking-tight"
-            style={{ color }}
+            style={{ color: labelColor }}
           >
             {label}
           </p>
@@ -102,15 +121,13 @@ export function PactHealthRing({
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-2 text-center">
           <p
             className="font-heading text-[11px] leading-tight font-bold tracking-tight"
-            style={{ color }}
+            style={{ color: labelColor }}
           >
-            {label.split(" ")[0]}
+            {shortLabel}
           </p>
         </div>
       )}
-      <span className="sr-only">
-        Pact health: {label}
-      </span>
+      <span className="sr-only">Pact health: {label}</span>
     </div>
   );
 }

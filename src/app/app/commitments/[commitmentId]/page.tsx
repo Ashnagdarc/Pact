@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { CommitmentDetailScreen } from "@/components/screens/commitment-detail-screen";
 
 type CommitmentPageProps = {
@@ -6,5 +7,9 @@ type CommitmentPageProps = {
 
 export default async function CommitmentPage({ params }: CommitmentPageProps) {
   const { commitmentId } = await params;
-  return <CommitmentDetailScreen commitmentId={commitmentId} />;
+  return (
+    <Suspense fallback={null}>
+      <CommitmentDetailScreen commitmentId={commitmentId} />
+    </Suspense>
+  );
 }

@@ -39,6 +39,67 @@ export const pactHealthLabel: Record<PactHealthStatus, string> = {
   completed: "Completed",
 };
 
+/** Compact center label for small rings */
+export const pactHealthShortLabel: Record<PactHealthStatus, string> = {
+  healthy: "OK",
+  needs_attention: "Watch",
+  at_risk: "Risk",
+  paused: "Paused",
+  completed: "Done",
+};
+
+/** Worse status first — used to feature a Pact on Today. */
+const HEALTH_PRIORITY: Record<PactHealthStatus, number> = {
+  at_risk: 0,
+  needs_attention: 1,
+  healthy: 2,
+  paused: 3,
+  completed: 4,
+};
+
+export type FeaturedPactHealth = {
+  pactId: string;
+  title: string;
+  status: PactHealthStatus;
+  topReason?: string;
+};
+
+export function pickFeaturedPactHealth(
+  rows: Array<{
+    pact: { _id: string; title: string };
+    health: { status: PactHealthStatus; reasons: HealthReasonLike[] };
+  } | null>
+): FeaturedPactHealth | null {
+  const live = rows.filter(
+    (row): row is NonNullable<(typeof rows)[number]> =>
+      Boolean(row) &&
+      row!.health.status !== "completed" &&
+      row!.health.status !== "paused"
+  );
+  if (live.length === 0) return null;
+
+  live.sort(
+    (a, b) =>
+      HEALTH_PRIORITY[a.health.status] - HEALTH_PRIORITY[b.health.status]
+  );
+  const top = live[0]!;
+  const reason =
+    top.health.reasons.find((r) => r.severity !== "positive") ??
+    top.health.reasons[0];
+
+  return {
+    pactId: top.pact._id,
+    title: top.pact.title,
+    status: top.health.status,
+    topReason: reason?.label,
+  };
+}
+
+/** True when Today should lead with Pact Health over generic focus. */
+export function shouldLeadWithPactHealth(status: PactHealthStatus): boolean {
+  return status === "at_risk" || status === "needs_attention";
+}
+
 /**
  * Qualitative ring fill — encodes state, not a secret 0–100 score.
  * Center of the ring should show the status label, not this number.

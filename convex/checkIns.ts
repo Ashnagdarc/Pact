@@ -139,7 +139,7 @@ export const submit = mutation({
     });
 
     const actorName = user.displayName;
-    const href = `/app/commitments/${args.commitmentId}`;
+    const href = `/app/commitments/${args.commitmentId}?reply=1`;
 
     if (commitment.pactId) {
       const isHelp =

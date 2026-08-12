@@ -37,3 +37,35 @@ export const partnerResponseLabel: Record<PartnerResponseType, string> = {
   available_to_work: "I can work with you",
   send_update: "Please send an update",
 };
+
+/** Signal-aware chips for a 5-second partner reply (PRD structured responses). */
+export function suggestedPartnerResponses(
+  signal: CheckInSignal
+): PartnerResponseType[] {
+  switch (signal) {
+    case "done":
+      return ["well_done", "proof_accepted", "send_update"];
+    case "on_track":
+      return ["well_done", "send_update", "available_to_work"];
+    case "slipping":
+      return ["what_is_blocking", "how_can_i_help", "adjust_plan", "send_update"];
+    case "blocked":
+      return [
+        "how_can_i_help",
+        "what_is_blocking",
+        "available_to_work",
+        "adjust_plan",
+      ];
+    case "need_help":
+      return [
+        "how_can_i_help",
+        "available_to_work",
+        "what_is_blocking",
+        "adjust_plan",
+      ];
+    default: {
+      const _exhaustive: never = signal;
+      return _exhaustive;
+    }
+  }
+}

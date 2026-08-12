@@ -10,15 +10,23 @@ import {
   AvatarStack,
   type AvatarPerson,
 } from "@/components/feedback/avatar-stack";
+import { PactHealthRing } from "@/components/health/pact-health-ring";
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
+import {
+  pactHealthLabel,
+  shouldLeadWithPactHealth,
+  type FeaturedPactHealth,
+} from "@/lib/pact-health-ui";
 import { cn } from "@/lib/utils";
 
 type TodayPromptCardProps = {
   people: AvatarPerson[];
   openCount: number;
   blockedCount: number;
-  /** Weekly completions — quiet secondary metric inside the single hero. */
+  /** Weekly completions — quiet secondary metric when health is calm. */
   weekCompleted?: number;
+  /** Worst active Pact Health — ring + optional lead CTA. */
+  featuredHealth?: FeaturedPactHealth | null;
   /** Destination for the prompt CTA (blocked → commitment, clear → new, else focus). */
   href?: string;
   className?: string;
@@ -26,7 +34,25 @@ type TodayPromptCardProps = {
 
 const PROMPT_CYCLE_MS = 3200;
 
-function promptsForState(openCount: number, blockedCount: number) {
+function promptsForState(
+  openCount: number,
+  blockedCount: number,
+  featured?: FeaturedPactHealth | null
+) {
+  if (featured && shouldLeadWithPactHealth(featured.status)) {
+    if (featured.status === "at_risk") {
+      return [
+        `${featured.title} needs care.`,
+        "A Pact is at risk.",
+        "Open the Pact and recover together.",
+      ];
+    }
+    return [
+      `${featured.title} needs a look.`,
+      "Something’s slipping on a Pact.",
+      "Check the reasons, then act.",
+    ];
+  }
   if (blockedCount > 0) {
     return [
       "Something needs a hand.",
@@ -55,14 +81,28 @@ function promptsForState(openCount: number, blockedCount: number) {
   ];
 }
 
-function eyebrowForState(openCount: number, blockedCount: number) {
+function eyebrowForState(
+  openCount: number,
+  blockedCount: number,
+  featured?: FeaturedPactHealth | null
+) {
+  if (featured && shouldLeadWithPactHealth(featured.status)) {
+    return pactHealthLabel[featured.status];
+  }
   if (blockedCount > 0) return "Needs attention";
   if (openCount === 0) return "Open board";
   if (openCount === 1) return "Today’s move";
   return "Today’s focus";
 }
 
-function metaLine(openCount: number, blockedCount: number) {
+function metaLine(
+  openCount: number,
+  blockedCount: number,
+  featured?: FeaturedPactHealth | null
+) {
+  if (featured && shouldLeadWithPactHealth(featured.status)) {
+    return featured.topReason ?? featured.title;
+  }
   if (blockedCount > 0) {
     return blockedCount === 1
       ? "1 commitment needs a hand"
@@ -78,20 +118,28 @@ export function TodayPromptCard({
   openCount,
   blockedCount,
   weekCompleted,
+  featuredHealth,
   href = "/app/new",
   className,
 }: TodayPromptCardProps) {
   const reduceMotion = usePrefersReducedMotion();
+  const leadHealth =
+    featuredHealth && shouldLeadWithPactHealth(featuredHealth.status)
+      ? featuredHealth
+      : null;
   const prompts = useMemo(
-    () => promptsForState(openCount, blockedCount),
-    [openCount, blockedCount]
+    () => promptsForState(openCount, blockedCount, featuredHealth),
+    [openCount, blockedCount, featuredHealth]
   );
   const [promptIndex, setPromptIndex] = useState(0);
-  const needsAttention = blockedCount > 0;
-  const eyebrow = eyebrowForState(openCount, blockedCount);
-  const meta = metaLine(openCount, blockedCount);
+  const needsAttention = Boolean(leadHealth) || blockedCount > 0;
+  const eyebrow = eyebrowForState(openCount, blockedCount, featuredHealth);
+  const meta = metaLine(openCount, blockedCount, featuredHealth);
+  const showRing = Boolean(featuredHealth);
   const showWeek =
-    typeof weekCompleted === "number" && Number.isFinite(weekCompleted);
+    !showRing &&
+    typeof weekCompleted === "number" &&
+    Number.isFinite(weekCompleted);
 
   useEffect(() => {
     setPromptIndex(0);
@@ -106,13 +154,19 @@ export function TodayPromptCard({
   }, [prompts, reduceMotion]);
 
   const prompt = prompts[promptIndex] ?? prompts[0]!;
+  const cardHref =
+    leadHealth != null ? `/app/pacts/${leadHealth.pactId}` : href;
 
   return (
     <Link
-      href={href}
+      href={cardHref}
       className={cn("group block outline-none", className)}
       aria-label={`${eyebrow}. ${prompt}. ${meta}${
         showWeek ? `. ${weekCompleted} kept this week.` : ""
+      }${
+        featuredHealth
+          ? `. Pact health ${pactHealthLabel[featuredHealth.status]}.`
+          : ""
       }`}
     >
       <SurfaceCard
@@ -173,7 +227,7 @@ export function TodayPromptCard({
             <div className="mt-4 flex items-center justify-between gap-3">
               <p
                 className={cn(
-                  "text-sm font-medium",
+                  "line-clamp-2 text-sm font-medium",
                   needsAttention ? "text-ink-950/70" : "text-white/65"
                 )}
               >
@@ -193,7 +247,21 @@ export function TodayPromptCard({
             </div>
           </div>
 
-          {showWeek ? (
+          {showRing && featuredHealth ? (
+            <div
+              className={cn(
+                "flex shrink-0 flex-col items-center justify-center self-center rounded-[1.35rem] px-2 py-2",
+                needsAttention ? "bg-ink-950/10" : "bg-white/6"
+              )}
+            >
+              <PactHealthRing
+                status={featuredHealth.status}
+                size={92}
+                showLabel={false}
+                contrast={needsAttention ? "onLight" : "onDark"}
+              />
+            </div>
+          ) : showWeek ? (
             <div
               className={cn(
                 "flex w-[4.75rem] shrink-0 flex-col items-center justify-center rounded-[1.35rem] px-2 py-3",

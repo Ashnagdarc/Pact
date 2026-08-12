@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery } from "convex/react";
@@ -23,6 +23,8 @@ import { Button } from "@/components/ui/button";
 import { useCurrentUser } from "@/hooks/use-demo-user";
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 import { readOnboardingPending } from "@/lib/onboarding";
+import { pickFeaturedPactHealth } from "@/lib/pact-health-ui";
+import { needsRescue } from "@/lib/rescue";
 import type { CommitmentStatus } from "@/lib/status";
 
 const filters = [
@@ -77,10 +79,19 @@ export function TodayScreen() {
   );
   const todayTasks = useQuery(api.tasks.listForToday, userId ? {} : "skip");
   const boards = useQuery(api.pacts.listForUser, userId ? {} : "skip");
+  const pactHealth = useQuery(
+    api.health.forUserPacts,
+    userId ? {} : "skip"
+  );
   const [dayStart] = useState(() => startOfLocalDayMs());
   const timeline = useQuery(
     api.activity.todayTimeline,
     userId ? { since: dayStart, limit: 12 } : "skip"
+  );
+
+  const featuredHealth = useMemo(
+    () => pickFeaturedPactHealth(pactHealth ?? []),
+    [pactHealth]
   );
 
   useEffect(() => {
@@ -106,15 +117,16 @@ export function TodayScreen() {
     return true;
   });
 
-  const firstBlocked = (todayCommitments ?? []).find(
-    (c) => c.status === "blocked" || c.status === "need_help"
+  const firstRescue = (todayCommitments ?? []).find((c) =>
+    needsRescue({ status: c.status, dueAt: c.dueAt })
   );
   const firstOpen = (todayCommitments ?? []).find(
     (c) => c.status !== "done" && c.status !== "paused"
   );
-  const promptHref = firstBlocked
-    ? `/app/commitments/${firstBlocked._id}`
-    : (stats?.openCount ?? 0) === 0 && (todayTasks?.filter((t) => t.status === "open").length ?? 0) === 0
+  const promptHref = firstRescue
+    ? `/app/rescue/${firstRescue._id}`
+    : (stats?.openCount ?? 0) === 0 &&
+        (todayTasks?.filter((t) => t.status === "open").length ?? 0) === 0
       ? "/app/new"
       : firstOpen
         ? `/app/commitments/${firstOpen._id}`
@@ -246,6 +258,7 @@ export function TodayScreen() {
             }
             blockedCount={stats?.blockedCount ?? 0}
             weekCompleted={stats?.completedThisWeek ?? 0}
+            featuredHealth={featuredHealth}
             href={promptHref}
           />
 
@@ -321,7 +334,14 @@ export function TodayScreen() {
                       status={toUiStatus(commitment.status)}
                       meta={commitment.description}
                       items={commitment.checklist}
-                      href={`/app/commitments/${commitment._id}`}
+                      href={
+                        needsRescue({
+                          status: commitment.status,
+                          dueAt: commitment.dueAt,
+                        })
+                          ? `/app/rescue/${commitment._id}`
+                          : `/app/commitments/${commitment._id}`
+                      }
                     />
                   </motion.div>
                 );
