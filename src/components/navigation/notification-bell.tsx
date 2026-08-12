@@ -40,7 +40,7 @@ export function NotificationBell({ className }: NotificationBellProps) {
       <Link href="/app/notifications" aria-label="Notifications">
         <Bell className="size-5" />
         {typeof unread === "number" && unread > 0 ? (
-          <span className="absolute -top-0.5 -right-0.5 inline-flex min-w-5 items-center justify-center rounded-full bg-signal px-1 text-[10px] font-bold text-white">
+          <span className="absolute -top-0.5 -right-0.5 inline-flex min-w-5 items-center justify-center rounded-full bg-signal px-1 text-[10px] font-bold text-ink-950">
             {unread > 9 ? "9+" : unread}
           </span>
         ) : null}

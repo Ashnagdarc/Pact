@@ -178,7 +178,7 @@ export function StoryStepWednesday() {
             initial={{ opacity: 0, x: 16 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.4 + index * 0.15 }}
-            className="rounded-2xl border border-white/[0.06] bg-white/[0.03] px-4 py-3 text-[14px] leading-snug text-white/45"
+            className="rounded-2xl border border-white/[0.06] bg-white/[0.03] px-4 py-3 text-[14px] leading-snug text-white/65"
           >
             &ldquo;{line}&rdquo;
           </motion.p>
@@ -292,7 +292,7 @@ export function StoryStepTogether() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.8 }}
-        className="mt-4 flex items-center gap-2.5 text-[13px] text-white/40"
+        className="mt-4 flex items-center gap-2.5 text-[13px] text-white/60"
       >
         <Handshake className="size-3.5 shrink-0 text-volt-500/80" />
         Real-time updates, not weekly guilt trips
@@ -325,7 +325,7 @@ export function StoryStepRecover() {
       <motion.div
         animate={{ y: [0, -4, 0] }}
         transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
-        className="mt-4 flex items-center gap-2.5 text-[13px] text-white/40"
+        className="mt-4 flex items-center gap-2.5 text-[13px] text-white/60"
       >
         <HandHeart className="size-3.5 shrink-0 text-volt-500/80" />
         Progress over perfection
@@ -472,7 +472,7 @@ export function StoryStepYourPact({
                 transition={{ delay: 0.35 + index * 0.08 }}
                 className="flex justify-between gap-4"
               >
-                <dt className="text-white/40">{label}</dt>
+                <dt className="text-white/60">{label}</dt>
                 <dd className="font-semibold text-white/90">{value}</dd>
               </motion.div>
             ))}

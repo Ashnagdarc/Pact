@@ -62,10 +62,10 @@ function ResetPasswordForm() {
   }
 
   return (
-    <main className="relative min-h-dvh overflow-hidden bg-ink-950 text-paper-100">
+    <main id="content" className="relative min-h-dvh overflow-hidden bg-ink-950 text-paper-100">
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(201,255,74,0.18),_transparent_55%),radial-gradient(ellipse_at_bottom_right,_rgba(88,140,255,0.16),_transparent_50%)]"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(255,82,38,0.18),_transparent_55%),radial-gradient(ellipse_at_bottom_right,_rgba(88,140,255,0.16),_transparent_50%)]"
       />
       <div className="relative mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center px-5 py-10">
         <p className="font-heading text-5xl font-extrabold tracking-tight text-volt-500">

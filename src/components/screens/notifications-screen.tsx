@@ -8,6 +8,7 @@ import { Bell, CheckCheck, Loader2 } from "lucide-react";
 
 import { api } from "@convex/_generated/api";
 import { SurfaceCard } from "@/components/cards/surface-card";
+import { EmptyState } from "@/components/feedback/empty-state";
 import { AppShell } from "@/components/navigation/app-shell";
 import { ConvexSetupScreen } from "@/components/screens/convex-setup-screen";
 import { Button } from "@/components/ui/button";
@@ -83,31 +84,13 @@ function NotificationsConnected() {
 
       <div className="mt-6 space-y-3">
         {notifications.length === 0 ? (
-          <SurfaceCard tone="ink" padding="lg" className="border border-white/10">
-            <div className="flex items-start gap-3">
-              <span className="inline-flex size-10 items-center justify-center rounded-full bg-white/5">
-                <Bell className="size-5 text-white/50" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="font-heading text-lg font-bold">No alerts yet</p>
-                <p className="mt-1 text-sm text-white/60">
-                  Check-ins, help requests, and rescue prompts will show up here.
-                </p>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <Button asChild className="rounded-full bg-signal text-ink-950">
-                    <Link href="/app">Go to Today</Link>
-                  </Button>
-                  <Button
-                    asChild
-                    variant="ghost"
-                    className="rounded-full border border-white/15"
-                  >
-                    <Link href="/app/pacts/new">Create a Pact</Link>
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </SurfaceCard>
+          <EmptyState
+            title="No alerts yet"
+            description="Check-ins, help requests, and rescue prompts will show up here."
+            primaryAction={{ href: "/app", label: "Go to Today" }}
+            secondaryAction={{ href: "/app/pacts/new", label: "Create a Pact" }}
+            icon={<Bell className="size-5 text-white/65" />}
+          />
         ) : (
           notifications.map((notification) => {
             const content = (
@@ -126,7 +109,7 @@ function NotificationsConnected() {
                     <p className="mt-1 text-sm text-white/75">
                       {notification.body}
                     </p>
-                    <p className="mt-2 text-[11px] font-semibold text-white/40">
+                    <p className="mt-2 text-xs font-semibold text-white/65">
                       {formatDistanceToNow(notification._creationTime, {
                         addSuffix: true,
                       })}

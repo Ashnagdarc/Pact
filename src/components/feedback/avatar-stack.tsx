@@ -39,7 +39,7 @@ export function AvatarStack({
           )}
         >
           {person.src ? <AvatarImage src={person.src} alt={person.name} /> : null}
-          <AvatarFallback className="bg-signal font-semibold text-white">
+          <AvatarFallback className="bg-signal font-semibold text-ink-950">
             {initials(person.name)}
           </AvatarFallback>
         </Avatar>

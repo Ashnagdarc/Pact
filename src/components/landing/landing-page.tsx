@@ -267,48 +267,25 @@ export function LandingPage() {
         </section>
 
         <section
-          id="founding-20"
-          className="relative scroll-mt-20 border-t border-white/8 px-5 py-20 sm:px-8 sm:py-28"
+          id="waitlist"
+          className="relative scroll-mt-20 border-t border-white/8 px-5 py-24 sm:px-8 sm:py-32"
         >
           <div className="mx-auto max-w-3xl text-center">
             <p className="text-sm font-semibold tracking-[0.14em] text-volt-500/80 uppercase">
               Founding 20 Beta
             </p>
             <h2 className="font-heading mt-3 text-[clamp(1.75rem,4vw,2.75rem)] leading-[1.1] font-bold tracking-tight">
-              Join the Founding 20
-            </h2>
-            <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-white/70 sm:text-lg">
-              We are inviting 10 accountability pairs to use PACT for 14 days,
-              complete regular check-ins, and help us improve the product.
-            </p>
-            <div className="mt-8">
-              <Button
-                asChild
-                className="h-12 rounded-full bg-volt-500 px-6 text-base font-semibold text-white hover:bg-volt-500/90"
-              >
-                <Link href="#waitlist">Get Free Beta Access</Link>
-              </Button>
-            </div>
-          </div>
-        </section>
-
-        <section
-          id="waitlist"
-          className="relative scroll-mt-20 border-t border-white/8 px-5 py-24 sm:px-8 sm:py-32"
-        >
-          <div className="mx-auto max-w-3xl text-center">
-            <h2 className="font-heading text-[clamp(1.75rem,4vw,2.75rem)] leading-[1.1] font-bold tracking-tight">
               Get private beta access
             </h2>
             <p className="mx-auto mt-5 max-w-xl text-base text-white/70 sm:text-lg">
-              Leave your email. We&apos;ll send a welcome note with a one-time
-              6-digit code and personal link so you can use PACT free during
-              testing.
+              We are inviting 10 accountability pairs for 14 days. Leave your
+              email — we&apos;ll send a welcome note with a one-time 6-digit code
+              and personal link so you can use PACT free during testing.
             </p>
             <div className="mt-8">
               <LandingBetaForm />
             </div>
-            <p className="mt-6 text-sm text-white/60">
+            <p className="mt-6 text-sm text-white/65">
               <Link
                 href="/sign-in?mode=sign-up"
                 className="underline-offset-2 hover:text-white/85 hover:underline"

@@ -126,7 +126,7 @@ export default function ProfilePage() {
             <h2 className="font-heading text-2xl font-bold tracking-tight">
               Partners
             </h2>
-            <Users className="size-4 text-white/45" />
+            <Users className="size-4 text-white/65" />
           </div>
           <SurfaceCard tone="ink" className="border border-white/10">
             {partners === undefined ? (
@@ -166,7 +166,7 @@ export default function ProfilePage() {
                             alt={partner.displayName}
                           />
                         ) : null}
-                        <AvatarFallback className="bg-signal text-xs font-semibold text-white">
+                        <AvatarFallback className="bg-signal text-xs font-semibold text-ink-950">
                           {initials}
                         </AvatarFallback>
                       </Avatar>
@@ -174,7 +174,7 @@ export default function ProfilePage() {
                         <p className="truncate text-sm font-semibold">
                           {partner.displayName}
                         </p>
-                        <p className="truncate text-xs text-white/45">
+                        <p className="truncate text-xs text-white/65">
                           {partner.pactTitles.join(" · ")}
                         </p>
                       </div>

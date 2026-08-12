@@ -207,7 +207,7 @@ function RescueScreenConnected({ commitmentId }: RescueScreenProps) {
         <section className="mt-5">
           <button
             type="button"
-            className="text-xs font-semibold text-white/45 underline-offset-2 hover:underline"
+            className="text-xs font-semibold text-white/65 underline-offset-2 hover:underline"
             onClick={() => setStep("blocker")}
           >
             ← Change reason ({blockerLabel[blocker]})
@@ -238,7 +238,7 @@ function RescueScreenConnected({ commitmentId }: RescueScreenProps) {
                 <p className="text-sm font-bold text-white">
                   {recoveryActionLabel[item]}
                   {index === 0 ? (
-                    <span className="ml-2 text-[10px] font-semibold uppercase tracking-wide text-volt-500">
+                    <span className="ml-2 text-xs font-semibold uppercase tracking-wide text-volt-500">
                       Suggested
                     </span>
                   ) : null}
@@ -256,7 +256,7 @@ function RescueScreenConnected({ commitmentId }: RescueScreenProps) {
         <section className="mt-5 space-y-4">
           <button
             type="button"
-            className="text-xs font-semibold text-white/45 underline-offset-2 hover:underline"
+            className="text-xs font-semibold text-white/65 underline-offset-2 hover:underline"
             onClick={() => setStep("action")}
           >
             ← Change recovery
@@ -267,7 +267,7 @@ function RescueScreenConnected({ commitmentId }: RescueScreenProps) {
 
           {(action === "reduce_scope" || action === "split") && (
             <SurfaceCard tone="ink" className="border border-white/10">
-              <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-white/45">
+              <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-white/65">
                 Revised title
               </label>
               <Input
@@ -280,7 +280,7 @@ function RescueScreenConnected({ commitmentId }: RescueScreenProps) {
 
           {action === "split" ? (
             <SurfaceCard tone="ink" className="border border-white/10">
-              <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-white/45">
+              <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-white/65">
                 Steps (one per line)
               </label>
               <Textarea
@@ -294,7 +294,7 @@ function RescueScreenConnected({ commitmentId }: RescueScreenProps) {
 
           {action === "reschedule" ? (
             <SurfaceCard tone="ink" className="border border-white/10">
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-white/45">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-white/65">
                 New due date
               </p>
               <div className="flex flex-wrap gap-2">
@@ -320,14 +320,14 @@ function RescueScreenConnected({ commitmentId }: RescueScreenProps) {
                   </button>
                 ))}
               </div>
-              <p className="mt-3 text-xs text-white/45">
+              <p className="mt-3 text-xs text-white/65">
                 Sets due to {format(revisedDueAt(), "MMM d, yyyy · h:mm a")}
               </p>
             </SurfaceCard>
           ) : null}
 
           <SurfaceCard tone="ink" className="border border-white/10">
-            <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-white/45">
+            <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-white/65">
               {commitment.pactId
                 ? "Note for your partner (optional)"
                 : "Optional note"}

@@ -39,7 +39,7 @@ export default async function TermsPage({ searchParams }: TermsPageProps) {
         </Link>
       </header>
 
-      <main className="relative z-10 mx-auto w-full max-w-3xl px-5 py-12 sm:px-8">
+      <main id="content" className="relative z-10 mx-auto w-full max-w-3xl px-5 py-12 sm:px-8">
         <h1 className="font-heading text-4xl font-extrabold tracking-tight">
           Terms
         </h1>

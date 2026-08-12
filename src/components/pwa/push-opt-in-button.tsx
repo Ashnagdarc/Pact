@@ -20,7 +20,7 @@ export function PushOptInButton({
 
   if (!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY) {
     return (
-      <p className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-white/45">
+      <p className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-white/65">
         Push keys are not configured yet. Set `NEXT_PUBLIC_VAPID_PUBLIC_KEY` and
         Convex `VAPID_*` env vars.
       </p>

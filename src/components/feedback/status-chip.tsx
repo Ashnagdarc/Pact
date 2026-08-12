@@ -2,6 +2,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 import {
+  statusIcon,
   statusLabel,
   statusTone,
   type CommitmentStatus,
@@ -32,6 +33,8 @@ type StatusChipProps = {
   label?: string;
   count?: number;
   className?: string;
+  /** Hide the status icon (e.g. filter chips that are not status-bound). */
+  hideIcon?: boolean;
 } & VariantProps<typeof chipVariants>;
 
 export function StatusChip({
@@ -40,12 +43,15 @@ export function StatusChip({
   count,
   tone,
   className,
+  hideIcon = false,
 }: StatusChipProps) {
   const resolvedTone = tone ?? (status ? statusTone[status] : "outline");
   const resolvedLabel = label ?? (status ? statusLabel[status] : undefined);
+  const Icon = status && !hideIcon ? statusIcon[status] : null;
 
   return (
     <span className={cn(chipVariants({ tone: resolvedTone }), className)}>
+      {Icon ? <Icon className="size-3.5 shrink-0" aria-hidden strokeWidth={2.4} /> : null}
       {resolvedLabel}
       {typeof count === "number" ? (
         <span className="inline-flex size-5 items-center justify-center rounded-full bg-black/20 text-[10px] font-bold">

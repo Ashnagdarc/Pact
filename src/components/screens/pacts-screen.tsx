@@ -7,6 +7,7 @@ import { useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { PactBoardCard } from "@/components/cards/pact-board-card";
 import { SurfaceCard } from "@/components/cards/surface-card";
+import { EmptyState } from "@/components/feedback/empty-state";
 import { AppShell } from "@/components/navigation/app-shell";
 import { ConvexSetupScreen } from "@/components/screens/convex-setup-screen";
 import { Button } from "@/components/ui/button";
@@ -77,24 +78,11 @@ function PactsScreenConnected() {
 
       <div className="mt-6 space-y-3">
         {(boards ?? []).length === 0 ? (
-          <SurfaceCard tone="ink" padding="lg" className="border border-white/10">
-            <p className="font-heading text-2xl font-bold tracking-tight">
-              Start your first Pact
-            </p>
-            <p className="mt-2 text-sm text-white/70">
-              Create a board, add commitments, and invite a partner to keep you
-              accountable.
-            </p>
-            <Button
-              asChild
-              className="mt-5 h-12 w-full rounded-full bg-signal text-base font-bold text-white"
-            >
-              <Link href="/app/pacts/new">
-                <Plus className="size-4" />
-                Create Pact
-              </Link>
-            </Button>
-          </SurfaceCard>
+          <EmptyState
+            title="Start your first Pact"
+            description="Create a board, add commitments, and invite a partner to keep you accountable."
+            primaryAction={{ href: "/app/pacts/new", label: "Create Pact" }}
+          />
         ) : (
           boards!.map((board) =>
             board ? (

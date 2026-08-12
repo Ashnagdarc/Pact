@@ -768,9 +768,9 @@ Design characteristics:
 - Bold editorial typography
 - Oversized numbers
 - Large rounded cards
-- Dark navy or black background
-- Electric yellow primary accent
-- Bright blue secondary accent
+- Soft charcoal / near-black background (`ink-950`)
+- Warm orange primary accent (`volt-500`)
+- Soft periwinkle secondary accent (`signal`)
 - Cream and white neutral cards
 - Coral for attention states
 - Mint for positive states
@@ -788,20 +788,22 @@ Design description:
 
 ## 18. Colour tokens
 
+Live source of truth: `src/app/globals.css`.
+
 ```css
 :root {
-  --ink-950: #050505;
-  --ink-900: #0F1521;
-  --ink-800: #101B2C;
-  --paper-100: #F7F7F2;
-  --cream-200: #F5EFD8;
-  --volt-500: #FFF768;
-  --signal-blue: #1685F8;
-  --coral-400: #E78965;
-  --mint-300: #C9E6B8;
-  --white: #FFFFFF;
-  --grey-300: #D6D6D2;
-  --grey-600: #707070;
+  --ink-950: #121212;
+  --ink-900: #1a1a1a;
+  --ink-800: #242424;
+  --paper-100: #ffffff;
+  --cream-200: #f2f2f4;
+  --volt-500: #ff5226;
+  --signal-blue: #9eb5ff;
+  --coral-400: #ff6b45;
+  --mint-300: #b8e0a8;
+  --white: #ffffff;
+  --grey-300: #d1d1d6;
+  --grey-600: #8e8e93;
 }
 ```
 
@@ -809,39 +811,42 @@ Design description:
 
 | Token | Purpose |
 |---|---|
-| `ink-900` | Primary dark background |
-| `ink-800` | Elevated dark surface |
-| `volt-500` | Primary CTA and feature cards |
-| `signal-blue` | Active states, links, progress |
+| `ink-950` | App canvas / page background |
+| `ink-900` | Elevated chrome (tab bar, panels) |
+| `ink-800` | Elevated dark surface / cards |
+| `volt-500` | Primary CTA, brand mark, feature cards |
+| `signal-blue` | Secondary CTAs, active/progress — **always pair with `ink-950` text** |
 | `cream-200` | Neutral cards and calm surfaces |
 | `coral-400` | Blocked, at-risk, attention |
 | `mint-300` | On-track and positive recovery |
-| `paper-100` | Light-mode background |
-| `white` | High-contrast text and cards |
+| `paper-100` | Light surfaces / high-contrast cards |
+| `white` | High-contrast text on dark |
 
 ### 18.2 Status colours
 
-| Status | Colour |
-|---|---|
-| Done | Mint |
-| On track | Blue |
-| Slipping | Yellow |
-| Blocked | Coral |
-| Need help | Coral with stronger icon treatment |
-| Paused | Grey |
+| Status | Colour | Icon channel |
+|---|---|---|
+| Done | Mint | Check |
+| On track | Signal (periwinkle) | Radio |
+| Slipping | Volt (orange) | Triangle alert |
+| Blocked | Coral | Octagon alert |
+| Need help | Coral | Helping hand |
+| Paused | Grey / muted | Pause |
 
-Do not rely on colour alone. Always add text and an icon.
+Do not rely on colour alone. Always add text and an icon (`StatusChip` + `statusIcon` in `src/lib/status.ts`).
 
 ---
 
 ## 19. Typography
 
-Implemented fonts (via `next/font`):
+Implemented fonts (via `next/font` in `src/app/layout.tsx`):
 
 ```text
-Display / brand: Syne
-Body / UI: DM Sans
+Display / brand: Plus Jakarta Sans (500–800)
+Body / UI: Plus Jakarta Sans (400–700)
 ```
+
+Both `--font-display` and `--font-body` use the same family for a soft geometric product look. Do not reintroduce Syne / DM Sans unless the brand direction changes deliberately.
 
 Fallback system stack:
 
@@ -869,6 +874,7 @@ Rules:
 - Keep paragraph width narrow on mobile.
 - Support browser text zoom.
 - Avoid thin text on bright backgrounds.
+- Secondary copy on dark surfaces should stay at or above `white/65` (never below `white/60` for metadata).
 
 ---
 
@@ -959,7 +965,7 @@ Build reusable components for:
 | Validation | Zod |
 | Icons | Lucide |
 | Dates | date-fns |
-| Fonts | Syne (display) + DM Sans (body) |
+| Fonts | Plus Jakarta Sans (display + body) |
 | Client state | React state / Convex subscriptions (no Zustand yet) |
 | Server data | Convex React client |
 | Auth client | Better Auth React client + `@better-auth/infra` (dash, sentinel) |

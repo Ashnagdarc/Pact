@@ -8,6 +8,7 @@ import { Loader2 } from "lucide-react";
 
 import { api } from "@convex/_generated/api";
 import { SurfaceCard } from "@/components/cards/surface-card";
+import { EmptyState } from "@/components/feedback/empty-state";
 import { StatusChip } from "@/components/feedback/status-chip";
 import { WeekBars } from "@/components/insights/week-bars";
 import { AppShell } from "@/components/navigation/app-shell";
@@ -96,27 +97,13 @@ function InsightsScreenConnected() {
       </div>
 
       {!hasActivity ? (
-        <SurfaceCard tone="ink" padding="lg" className="mt-6 border border-white/10">
-          <p className="font-heading text-2xl font-bold tracking-tight">
-            No signals this week
-          </p>
-          <p className="mt-2 text-sm text-white/70">
-            Check in on commitments or create a Pact to start building weekly
-            insights.
-          </p>
-          <div className="mt-5 flex flex-wrap gap-2">
-            <Button asChild className="rounded-full bg-signal text-ink-950">
-              <Link href="/app">Go to Today</Link>
-            </Button>
-            <Button
-              asChild
-              variant="ghost"
-              className="rounded-full border border-white/15"
-            >
-              <Link href="/app/pacts/new">Create a Pact</Link>
-            </Button>
-          </div>
-        </SurfaceCard>
+        <EmptyState
+          className="mt-6"
+          title="No signals this week"
+          description="Check in on commitments or create a Pact to start building weekly insights."
+          primaryAction={{ href: "/app", label: "Go to Today" }}
+          secondaryAction={{ href: "/app/pacts/new", label: "Create a Pact" }}
+        />
       ) : (
         <>
       <SurfaceCard tone="signal" padding="lg" className="mt-6 rounded-[2rem]">
@@ -131,7 +118,7 @@ function InsightsScreenConnected() {
       <SurfaceCard tone="ink" className="mt-4 border border-white/10">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="font-heading text-xl font-bold">Weekly rhythm</h2>
-          <span className="text-xs font-semibold text-white/45">
+          <span className="text-xs font-semibold text-white/65">
             {overview.checkInCount} check-ins
           </span>
         </div>
@@ -170,7 +157,7 @@ function InsightsScreenConnected() {
             ))}
           </div>
         ) : (
-          <p className="mt-3 text-sm text-white/45">No rescue blockers logged yet.</p>
+          <p className="mt-3 text-sm text-white/65">No rescue blockers logged yet.</p>
         )}
       </SurfaceCard>
         </>
@@ -185,17 +172,12 @@ function InsightsScreenConnected() {
         </p>
         <div className="mt-4 space-y-3">
           {pactHealth.length === 0 ? (
-            <SurfaceCard tone="ink" padding="lg" className="border border-white/10">
-              <p className="font-heading text-xl font-bold">
-                No Pacts to measure yet
-              </p>
-              <p className="mt-2 text-sm text-white/65">
-                Create a Pact to see shared health signals here.
-              </p>
-              <Button asChild className="mt-4 rounded-full bg-signal text-ink-950">
-                <Link href="/app/pacts/new">Create Pact</Link>
-              </Button>
-            </SurfaceCard>
+            <EmptyState
+              size="md"
+              title="No Pacts to measure yet"
+              description="Create a Pact to see shared health signals here."
+              primaryAction={{ href: "/app/pacts/new", label: "Create a Pact" }}
+            />
           ) : (
             pactHealth.map((row) =>
               row ? (
@@ -276,7 +258,7 @@ function MetricChip({
       className="rounded-[1.25rem] text-center"
     >
       <p className="text-2xl font-extrabold tracking-tight">{value}</p>
-      <p className="text-[11px] font-semibold opacity-70">{label}</p>
+      <p className="text-xs font-semibold opacity-70">{label}</p>
     </SurfaceCard>
   );
 }

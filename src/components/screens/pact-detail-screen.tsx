@@ -259,7 +259,7 @@ function PactDetailConnected({ pactId }: PactDetailScreenProps) {
             Commitments
           </h2>
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-white/45">
+            <span className="text-xs font-semibold text-white/65">
               {commitments.length}
             </span>
             <Link
@@ -283,7 +283,7 @@ function PactDetailConnected({ pactId }: PactDetailScreenProps) {
             </p>
             <Button
               asChild
-              className="mt-5 h-12 w-full rounded-full bg-signal text-base font-bold text-white"
+              className="mt-5 h-12 w-full rounded-full bg-signal text-base font-bold text-ink-950"
             >
               <Link href={`/app/new?pactId=${pact._id}`}>
                 <Plus className="size-4" />
@@ -316,7 +316,7 @@ function PactDetailConnected({ pactId }: PactDetailScreenProps) {
           <h2 className="font-heading text-2xl font-bold tracking-tight">
             Partners
           </h2>
-          <span className="text-xs font-semibold text-white/45">
+          <span className="text-xs font-semibold text-white/65">
             {acceptedMembers.length}
           </span>
         </div>
@@ -341,7 +341,7 @@ function PactDetailConnected({ pactId }: PactDetailScreenProps) {
                     {entry.user.avatarUrl ? (
                       <AvatarImage src={entry.user.avatarUrl} alt={name} />
                     ) : null}
-                    <AvatarFallback className="bg-signal text-xs font-semibold text-white">
+                    <AvatarFallback className="bg-signal text-xs font-semibold text-ink-950">
                       {initials}
                     </AvatarFallback>
                   </Avatar>
@@ -349,7 +349,7 @@ function PactDetailConnected({ pactId }: PactDetailScreenProps) {
                     <p className="truncate text-sm font-semibold">
                       {entry.user._id === userId ? `${name} (you)` : name}
                     </p>
-                    <p className="text-xs text-white/45">
+                    <p className="text-xs text-white/65">
                       {roleLabel(entry.membership.role)}
                     </p>
                   </div>
@@ -391,7 +391,7 @@ function PactDetailConnected({ pactId }: PactDetailScreenProps) {
                 <Button
                   type="button"
                   onClick={() => setInviteExpanded(true)}
-                  className="h-10 shrink-0 rounded-full bg-signal px-4 text-sm font-semibold text-white"
+                  className="h-10 shrink-0 rounded-full bg-signal px-4 text-sm font-semibold text-ink-950"
                 >
                   Share
                 </Button>
@@ -442,7 +442,7 @@ function PactDetailConnected({ pactId }: PactDetailScreenProps) {
               </Button>
 
               <SurfaceCard tone="ink" className="border border-white/10">
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-white/45">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-white/65">
                   Privacy
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -474,7 +474,7 @@ function PactDetailConnected({ pactId }: PactDetailScreenProps) {
                     </button>
                   ))}
                 </div>
-                <p className="mt-3 text-xs text-white/45">
+                <p className="mt-3 text-xs text-white/65">
                   {privacyHint[pact.privacyLevel as keyof typeof privacyHint]}
                 </p>
               </SurfaceCard>

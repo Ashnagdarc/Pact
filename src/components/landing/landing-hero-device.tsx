@@ -278,7 +278,7 @@ export function LandingHeroDevice() {
         <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-[linear-gradient(180deg,rgba(255,255,255,0.07)_0%,transparent_100%)]" />
         <div className="relative flex items-center justify-between px-5 pt-5 pb-3">
           <div>
-            <p className="text-[0.65rem] font-semibold tracking-[0.14em] text-white/40 uppercase">
+            <p className="text-xs font-semibold tracking-[0.14em] text-white/65 uppercase">
               Today
             </p>
             <p className="font-heading mt-1 text-2xl font-extrabold tracking-tight text-volt-500">

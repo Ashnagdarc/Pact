@@ -433,7 +433,7 @@ function CommitmentDetailConnected({
           className="mt-3 rounded-2xl border-white/10 bg-white/5 text-white placeholder:text-white/35"
         />
         {draftHint ? (
-          <p className="mt-1.5 text-xs text-white/40">{draftHint}</p>
+          <p className="mt-1.5 text-xs text-white/60">{draftHint}</p>
         ) : null}
         {uploadError ? (
           <p className="mt-2 text-sm text-coral-400">{uploadError}</p>
@@ -537,7 +537,7 @@ function CommitmentDetailConnected({
                   <p className="text-sm font-semibold">
                     {item.caption ?? item.fileType}
                   </p>
-                  <p className="mt-1 text-xs text-white/45">
+                  <p className="mt-1 text-xs text-white/65">
                     {format(item._creationTime, "MMM d · h:mm a")}
                   </p>
                   {fileUrl && !item.fileType.startsWith("image/") ? (
@@ -579,7 +579,7 @@ function CommitmentDetailConnected({
                 {plan.note ? (
                   <p className="mt-2 text-sm text-white/75">{plan.note}</p>
                 ) : null}
-                <p className="mt-2 text-xs font-semibold capitalize text-white/45">
+                <p className="mt-2 text-xs font-semibold capitalize text-white/65">
                   {plan.approvalStatus.replaceAll("_", " ")}
                 </p>
                 {plan.approvalStatus === "pending" &&
@@ -596,7 +596,7 @@ function CommitmentDetailConnected({
                         });
                       })
                     }
-                    className="mt-3 h-10 rounded-full bg-signal text-sm font-bold text-white"
+                    className="mt-3 h-10 rounded-full bg-signal text-sm font-bold text-ink-950"
                   >
                     Acknowledge as partner
                   </Button>
@@ -631,7 +631,7 @@ function CommitmentDetailConnected({
                       {user?.displayName ?? "Someone"} ·{" "}
                       {checkInSignalLabel[checkIn.signal]}
                     </p>
-                    <p className="mt-1 text-xs text-white/45">
+                    <p className="mt-1 text-xs text-white/65">
                       {format(checkIn._creationTime, "MMM d · h:mm a")}
                     </p>
                     {checkIn.note ? (
@@ -673,7 +673,7 @@ function CommitmentDetailConnected({
 
                 {checkIn.userId !== userId ? (
                   <div className="mt-3">
-                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-white/40">
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-white/60">
                       Partner response
                     </p>
                     <div className="flex flex-wrap gap-2">

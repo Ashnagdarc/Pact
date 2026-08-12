@@ -1,3 +1,13 @@
+import type { LucideIcon } from "lucide-react";
+import {
+  Check,
+  CirclePause,
+  HandHelping,
+  OctagonAlert,
+  Radio,
+  TriangleAlert,
+} from "lucide-react";
+
 export const commitmentStatuses = [
   "done",
   "on_track",
@@ -28,4 +38,13 @@ export const statusTone: Record<
   blocked: "coral",
   need_help: "coral",
   paused: "muted",
+};
+
+export const statusIcon: Record<CommitmentStatus, LucideIcon> = {
+  done: Check,
+  on_track: Radio,
+  slipping: TriangleAlert,
+  blocked: OctagonAlert,
+  need_help: HandHelping,
+  paused: CirclePause,
 };

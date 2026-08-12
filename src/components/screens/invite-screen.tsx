@@ -186,7 +186,7 @@ function InviteScreenConnected({ token }: InviteScreenProps) {
       ) : (
         <>
           <SurfaceCard tone="ink" className="mt-4 border border-white/10">
-            <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-white/45">
+            <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-white/65">
               Your name
             </label>
             <Input

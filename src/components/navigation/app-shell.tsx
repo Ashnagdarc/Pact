@@ -18,6 +18,11 @@ export function AppShell({
 }: AppShellProps) {
   return (
     <div className="relative min-h-dvh overflow-hidden bg-ink-950 text-white">
+      {/* Desktop framing: keep the mobile column intentional on wide screens */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-y-0 left-1/2 hidden w-full max-w-md -translate-x-1/2 border-x border-white/[0.06] lg:block"
+      />
       <main
         id="content"
         className={cn(

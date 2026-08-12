@@ -70,7 +70,7 @@ export function OnboardingChoice({
               <p
                 className={cn(
                   "mt-1 text-[13px] leading-relaxed",
-                  selected ? "text-ink-950/65" : "text-white/45",
+                  selected ? "text-ink-950/65" : "text-white/65",
                 )}
               >
                 {description}

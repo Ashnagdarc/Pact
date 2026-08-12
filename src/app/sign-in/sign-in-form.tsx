@@ -123,10 +123,10 @@ export default function SignInForm() {
   }
 
   return (
-    <main className="relative min-h-dvh overflow-hidden bg-ink-950 text-paper-100">
+    <main id="content" className="relative min-h-dvh overflow-hidden bg-ink-950 text-paper-100">
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(201,255,74,0.18),_transparent_55%),radial-gradient(ellipse_at_bottom_right,_rgba(88,140,255,0.16),_transparent_50%)]"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(255,82,38,0.18),_transparent_55%),radial-gradient(ellipse_at_bottom_right,_rgba(88,140,255,0.16),_transparent_50%)]"
       />
       <div className="relative mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center px-5 py-10">
         <p className="font-heading text-5xl font-extrabold tracking-tight text-volt-500">
@@ -173,7 +173,7 @@ export default function SignInForm() {
                 className="h-12 rounded-2xl border-white/10 bg-white/5 tracking-[0.35em]"
               />
               {fromBetaLink ? (
-                <span className="text-xs font-normal text-white/45">
+                <span className="text-xs font-normal text-white/65">
                   Your link already unlocked access - only enter the code from
                   your welcome email if account creation fails.
                 </span>
@@ -271,7 +271,7 @@ export default function SignInForm() {
         {mode === "sign-up" ? (
           <Link
             href="/#waitlist"
-            className="mt-4 text-center text-xs text-white/40 underline-offset-2 hover:underline"
+            className="mt-4 text-center text-xs text-white/60 underline-offset-2 hover:underline"
           >
             Don&apos;t have a code? Get private beta access
           </Link>
@@ -279,7 +279,7 @@ export default function SignInForm() {
 
         <Link
           href="/"
-          className="mt-6 text-center text-xs text-white/40 underline-offset-2 hover:underline"
+          className="mt-6 text-center text-xs text-white/60 underline-offset-2 hover:underline"
         >
           Back to home
         </Link>

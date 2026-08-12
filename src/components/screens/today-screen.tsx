@@ -13,6 +13,7 @@ import { PactBoardCard } from "@/components/cards/pact-board-card";
 import { StatHero } from "@/components/cards/stat-hero";
 import { SurfaceCard } from "@/components/cards/surface-card";
 import { TodayPromptCard } from "@/components/cards/today-prompt-card";
+import { EmptyState } from "@/components/feedback/empty-state";
 import { AppShell } from "@/components/navigation/app-shell";
 import { FilterChips } from "@/components/navigation/filter-chips";
 import { NotificationBell } from "@/components/navigation/notification-bell";
@@ -204,27 +205,16 @@ export function TodayScreen() {
               (boards?.length ?? 0) === 0;
             if (!emptyHome) return null;
             return (
-              <SurfaceCard tone="ink" className="mb-5 border border-white/10">
-                <p className="font-heading text-2xl font-bold tracking-tight">
-                  Start with one commitment
-                </p>
-                <p className="mt-2 text-sm text-white/70">
-                  Add something due today: a personal task or a shared pact
-                  commitment. Keep it small.
-                </p>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <Button asChild className="rounded-full bg-volt-500 text-white">
-                    <Link href="/app/new">Add commitment</Link>
-                  </Button>
-                  <Button
-                    asChild
-                    variant="ghost"
-                    className="rounded-full border border-white/15"
-                  >
-                    <Link href="/app/pacts/new">Create a Pact</Link>
-                  </Button>
-                </div>
-              </SurfaceCard>
+              <EmptyState
+                className="mb-5"
+                title="Start with one commitment"
+                description="Add something due today: a personal task or a shared pact commitment. Keep it small."
+                primaryAction={{ href: "/app/new", label: "Add commitment" }}
+                secondaryAction={{
+                  href: "/app/pacts/new",
+                  label: "Create a Pact",
+                }}
+              />
             );
           })()}
 
@@ -268,40 +258,30 @@ export function TodayScreen() {
               <h2 className="font-heading text-2xl font-bold tracking-tight">
                 Today&apos;s focus
               </h2>
-              <span className="text-xs font-semibold text-white/45">
+              <span className="text-xs font-semibold text-white/65">
                 {filteredCommitments.length} due
               </span>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               {filteredCommitments.length === 0 ? (
-                <SurfaceCard
-                  tone="ink"
-                  className="col-span-2 border border-white/10"
-                >
-                  <p className="font-heading text-xl font-bold">
-                    Nothing in focus
-                  </p>
-                  <p className="mt-2 text-sm text-white/55">
-                    {filter === "blocked"
+                <EmptyState
+                  className="col-span-2"
+                  size="md"
+                  title="Nothing in focus"
+                  description={
+                    filter === "blocked"
                       ? "No blocked commitments right now."
                       : filter === "pacts"
                         ? "No pact commitments due today."
-                        : "Add a commitment or personal task to fill today’s focus."}
-                  </p>
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <Button asChild className="rounded-full bg-signal text-ink-950">
-                      <Link href="/app/new">Add commitment</Link>
-                    </Button>
-                    <Button
-                      asChild
-                      variant="ghost"
-                      className="rounded-full border border-white/15"
-                    >
-                      <Link href="/app/pacts">Browse pacts</Link>
-                    </Button>
-                  </div>
-                </SurfaceCard>
+                        : "Add a commitment or personal task to fill today’s focus."
+                  }
+                  primaryAction={{ href: "/app/new", label: "Add commitment" }}
+                  secondaryAction={{
+                    href: "/app/pacts",
+                    label: "Browse pacts",
+                  }}
+                />
               ) : (
                 filteredCommitments.map((commitment, index) => {
                 const span =
@@ -351,7 +331,7 @@ export function TodayScreen() {
                 <h2 className="font-heading text-2xl font-bold tracking-tight">
                   Personal tasks
                 </h2>
-                <span className="text-xs font-semibold text-white/45">
+                <span className="text-xs font-semibold text-white/65">
                   {todayTasks?.length ?? 0}
                 </span>
               </div>

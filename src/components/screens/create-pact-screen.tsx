@@ -153,7 +153,7 @@ function CreatePactForm() {
         <Button
           type="submit"
           disabled={submitting}
-          className="h-14 w-full rounded-full bg-signal text-base font-bold text-white hover:bg-signal/90"
+          className="h-14 w-full rounded-full bg-signal text-base font-bold text-ink-950 hover:bg-signal/90"
         >
           {submitting ? (
             <>
@@ -213,7 +213,7 @@ function CreatePactForm() {
             />
 
             <SurfaceCard tone="ink" className="border border-white/10">
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-white/45">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-white/65">
                 Privacy
               </p>
               <div className="flex flex-wrap gap-2">
@@ -235,13 +235,13 @@ function CreatePactForm() {
                   </button>
                 ))}
               </div>
-              <p className="mt-3 text-xs text-white/45">
+              <p className="mt-3 text-xs text-white/65">
                 {privacyHint[selectedPrivacy]}
               </p>
             </SurfaceCard>
 
             <SurfaceCard tone="ink" className="border border-white/10">
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-white/45">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-white/65">
                 Board color
               </p>
               <div className="flex flex-wrap gap-2">
@@ -287,7 +287,7 @@ function ChoiceCard<T extends string>({
 }) {
   return (
     <SurfaceCard tone="ink" className="border border-white/10">
-      <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-white/45">
+      <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-white/65">
         {label}
       </p>
       <div className="flex flex-wrap gap-2">
