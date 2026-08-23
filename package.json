@@ -2,6 +2,7 @@
   "name": "pact",
   "version": "0.1.0",
   "private": true,
+  "description": "Personal accountability PWA for commitments, progress, and recovery.",
   "scripts": {
     "dev": "next dev",
     "dev:app": "next dev",
