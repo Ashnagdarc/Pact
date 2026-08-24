@@ -1,4 +1,0 @@
-[    1777ms] [WARNING] The ScriptProcessorNode is deprecated. Use AudioWorkletNode instead. (https://bit.ly/audio-worklet) @ https://pact-flowtag-projects.vercel.app/_next/static/chunks/3wumo87scmp6s.js:0
-[    1777ms] [WARNING] The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio @ https://pact-flowtag-projects.vercel.app/_next/static/chunks/3wumo87scmp6s.js:0
-[    3780ms] [WARNING] [Dash] Identify request failed: AbortError: signal is aborted without reason
-    at https://pact-flowtag-projects.vercel.app/_next/static/chunks/3wumo87scmp6s.js:1:7014 @ https://pact-flowtag-projects.vercel.app/_next/static/chunks/3wumo87scmp6s.js:0
